@@ -3,6 +3,8 @@ package com.example.todolist.feature.todolist.presentation.todolist.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,8 +22,9 @@ fun TransparentHintTextField(
     onValueChange: (String) -> Unit,
     textStyle: TextStyle = TextStyle(),
     singleLine: Boolean = false,
-    onFocusChange: (FocusState) -> Unit
-) {
+    keyboardOptions: KeyboardOptions? = null,
+    keyboardActions: KeyboardActions? = null
+){
     Box(
         modifier = modifier
     ) {
@@ -31,10 +34,9 @@ fun TransparentHintTextField(
             singleLine = singleLine,
             textStyle = textStyle,
             modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged {
-                    onFocusChange(it)
-                }
+                .fillMaxWidth(),
+            keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
+            keyboardActions = keyboardActions ?: KeyboardActions.Default
         )
         if(isHintVisible) {
             Text(text = hint, style = textStyle, color = Color.DarkGray)

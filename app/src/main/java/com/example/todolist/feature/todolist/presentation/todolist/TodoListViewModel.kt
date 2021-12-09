@@ -37,22 +37,16 @@ class TodoListViewModel @Inject constructor(
                 _taskItemContent.value = taskItemContent.value.copy(
                     text = event.value
                 )
-            }
-            is TodoListEvent.ChangeTaskListNameFocus -> {
                 _taskItemContent.value = taskItemContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            taskItemContent.value.text.isBlank()
+                    isHintVisible = taskItemContent.value.text.isBlank()
                 )
             }
             is TodoListEvent.EnterTaskListName -> {
                 _taskListName.value = taskListName.value.copy(
                     text = event.value
                 )
-            }
-            is TodoListEvent.ChangeTaskListNameFocus -> {
                 _taskListName.value = taskListName.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            taskListName.value.text.isBlank()
+                    isHintVisible = taskListName.value.text.isBlank()
                 )
             }
 
