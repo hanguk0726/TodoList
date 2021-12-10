@@ -2,16 +2,23 @@ package com.example.todolist.feature.todolist.presentation.todolist.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun TransparentHintTextField(
@@ -36,10 +43,11 @@ fun TransparentHintTextField(
             modifier = Modifier
                 .fillMaxWidth(),
             keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
-            keyboardActions = keyboardActions ?: KeyboardActions.Default
+            keyboardActions = keyboardActions ?: KeyboardActions.Default,
+            cursorBrush = SolidColor(MaterialTheme.colors.secondary)
         )
         if(isHintVisible) {
-            Text(text = hint, style = textStyle, color = Color.DarkGray)
+            Text(text = hint, style = textStyle, color = MaterialTheme.colors.onSurface)
         }
     }
 }

@@ -7,7 +7,8 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 
 @Database(
     entities = [TaskList::class, TaskItem::class],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 abstract class TodoListDatabase: RoomDatabase() {
 
