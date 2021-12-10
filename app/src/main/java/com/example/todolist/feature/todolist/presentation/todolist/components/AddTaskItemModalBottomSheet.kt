@@ -41,13 +41,9 @@ fun AddTaskItemModalBottomSheet(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val bringIntoViewRequester = BringIntoViewRequester()
     if (isShowing) {
         SideEffect {
             focusRequester.requestFocus()
-            scope.launch {
-                bringIntoViewRequester.bringIntoView()
-            }
         }
         shouldShowMainBottomSheetScaffold.value = false
     } else {
@@ -67,8 +63,6 @@ fun AddTaskItemModalBottomSheet(
     )
 
     ModalBottomSheetLayout(
-        modifier = Modifier.
-            bringIntoViewRequester(bringIntoViewRequester),
         sheetState = state,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),

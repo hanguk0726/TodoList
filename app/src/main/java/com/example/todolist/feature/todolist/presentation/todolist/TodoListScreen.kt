@@ -1,9 +1,11 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -17,13 +19,19 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
+import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.imePadding
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -40,44 +48,62 @@ fun TodoListScreen(
     val taskListNameState = viewModel.taskListName.value
 
 
-    val mainBottomSheetScaffoldState = rememberBottomSheetScaffoldState()
-    val shouldShowMainBottomSheetScaffold = remember { mutableStateOf(value = false) }
+    val mainScaffoldState = rememberScaffoldState()
+    val shouldShowMainBottomSheetScaffold = remember { mutableStateOf(value = true) }
 
     val coroutineScope = rememberCoroutineScope()
 
     val addTaskItemModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val addTaskItemFocusRequester = remember { FocusRequester() }
 
+
     AnimatedVisibility(
         visible = shouldShowMainBottomSheetScaffold.value,
-        enter = scaleIn() + fadeIn(),
-        exit = scaleOut() + fadeOut(),
+        enter = fadeIn() + slideIn(
+            animationSpec = TweenSpec(durationMillis = 200)
+        ) { fullSize -> IntOffset(
+            0,
+            fullSize.height
+        ) },
+        exit = fadeOut() + slideOut(
+            animationSpec = TweenSpec(durationMillis = 200)
+        ) { fullSize -> IntOffset(
+            0,
+            fullSize.height
+        ) } ,
     ) {
-        BottomSheetScaffold(
-            sheetContent = {
-
+        Scaffold(
+            scaffoldState = mainScaffoldState,
+            content = {
             },
-            sheetShape = RectangleShape,
-            floatingActionButtonPosition = FabPosition.Center,
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
+                            shouldShowMainBottomSheetScaffold.value = !shouldShowMainBottomSheetScaffold.value
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {
                                 addTaskItemModalBottomSheetState.show()
                             }
                         }
-                    }) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "add new task item")
+                    },
+                ) {
+                    Icon(Icons.Filled.Add,"add new task item")
                 }
             },
-            scaffoldState = mainBottomSheetScaffoldState
-        ) {
-        }
-    }
+            isFloatingActionButtonDocked = true,
+            floatingActionButtonPosition = FabPosition.Center,
 
+            bottomBar = {
+                BottomAppBar(
+                    cutoutShape = RoundedCornerShape(50),
+                    content = {
+                    }
+                )
+            }
+        )
+    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
