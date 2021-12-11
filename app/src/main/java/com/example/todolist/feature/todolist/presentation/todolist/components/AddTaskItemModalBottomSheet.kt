@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.DarkGray
 import com.example.todolist.ui.theme.ScrimColor
 import com.google.accompanist.insets.imePadding
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -39,16 +41,15 @@ fun AddTaskItemModalBottomSheet(
     shouldShowMainBottomSheetScaffold: MutableState<Boolean>,
     textField: @Composable () -> Unit,
 ) {
-
     val isShowing = state.targetValue != ModalBottomSheetValue.Hidden
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (isShowing) {
+        shouldShowMainBottomSheetScaffold.value = false
         SideEffect {
             focusRequester.requestFocus()
         }
-        shouldShowMainBottomSheetScaffold.value = false
     } else {
         shouldShowMainBottomSheetScaffold.value = true
         keyboardController?.hide()
@@ -68,6 +69,7 @@ fun AddTaskItemModalBottomSheet(
     ModalBottomSheetLayout(
         modifier = Modifier.imePadding(),
         sheetState = state,
+        sheetElevation = 0.dp,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
         sheetContent = {

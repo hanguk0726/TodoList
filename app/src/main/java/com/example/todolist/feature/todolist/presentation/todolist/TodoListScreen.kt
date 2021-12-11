@@ -3,6 +3,7 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 
@@ -75,7 +77,6 @@ fun TodoListScreen(
         },
     ) {
         Scaffold(
-            backgroundColor = Color.Gray,
             scaffoldState = mainScaffoldState,
             content = {
             },
@@ -86,8 +87,6 @@ fun TodoListScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            shouldShowMainBottomSheetScaffold.value =
-                                !shouldShowMainBottomSheetScaffold.value
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {

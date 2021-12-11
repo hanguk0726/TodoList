@@ -37,7 +37,9 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
                 TodoListTheme {
-                    ProvideWindowInsets {
+                    ProvideWindowInsets(
+                        windowInsetsAnimationsEnabled = false
+                    ) {
                     Surface(color = MaterialTheme.colors.background) {
                         val navController = rememberNavController()
                         NavHost(
