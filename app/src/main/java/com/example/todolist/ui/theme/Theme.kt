@@ -1,11 +1,11 @@
 package com.example.todolist.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 // White도 정의
 private val DarkColorPalette = darkColors(
@@ -33,12 +33,22 @@ private val LightColorPalette = lightColors(
 
 @Composable
 fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
-    val colors = if (darkTheme) {
+    val systemUiController = rememberSystemUiController()
+    var colors = if(darkTheme){
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent
+        )
         DarkColorPalette
-    } else {
+    }else{
+        systemUiController.setStatusBarColor(
+            color = Color.White
+        )
         LightColorPalette
     }
-
+    systemUiController.setNavigationBarColor(
+        color = DarkGray,
+        navigationBarContrastEnforced = false
+    )
     MaterialTheme(
         colors = colors,
         typography = Typography,

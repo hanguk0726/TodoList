@@ -3,6 +3,7 @@ package com.example.todolist.feature.todolist.presentation.todolist.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +22,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import com.example.todolist.ui.theme.DarkGray
 import com.example.todolist.ui.theme.ScrimColor
+import com.google.accompanist.insets.imePadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -63,6 +66,7 @@ fun AddTaskItemModalBottomSheet(
     )
 
     ModalBottomSheetLayout(
+        modifier = Modifier.imePadding(),
         sheetState = state,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),

@@ -3,8 +3,8 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,8 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntOffset
@@ -30,10 +28,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.imePadding
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
-import java.util.*
 
 @ExperimentalFoundationApi
 @ExperimentalAnimationApi
@@ -44,6 +41,7 @@ fun TodoListScreen(
     navController: NavController,
     viewModel: TodoListViewModel = hiltViewModel()
 ) {
+
     val taskItemContentState = viewModel.taskItemContent.value
     val taskListNameState = viewModel.taskListName.value
 
@@ -53,34 +51,43 @@ fun TodoListScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val addTaskItemModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val addTaskItemModalBottomSheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val addTaskItemFocusRequester = remember { FocusRequester() }
-
 
     AnimatedVisibility(
         visible = shouldShowMainBottomSheetScaffold.value,
         enter = fadeIn() + slideIn(
             animationSpec = TweenSpec(durationMillis = 200)
-        ) { fullSize -> IntOffset(
-            0,
-            fullSize.height
-        ) },
+        ) { fullSize ->
+            IntOffset(
+                0,
+                fullSize.height
+            )
+        },
         exit = fadeOut() + slideOut(
             animationSpec = TweenSpec(durationMillis = 200)
-        ) { fullSize -> IntOffset(
-            0,
-            fullSize.height
-        ) } ,
+        ) { fullSize ->
+            IntOffset(
+                0,
+                fullSize.height
+            )
+        },
     ) {
         Scaffold(
+            backgroundColor = Color.Gray,
             scaffoldState = mainScaffoldState,
             content = {
+            },
+            topBar = {
+                Spacer(modifier = Modifier.statusBarsPadding())
             },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            shouldShowMainBottomSheetScaffold.value = !shouldShowMainBottomSheetScaffold.value
+                            shouldShowMainBottomSheetScaffold.value =
+                                !shouldShowMainBottomSheetScaffold.value
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {
@@ -89,7 +96,7 @@ fun TodoListScreen(
                         }
                     },
                 ) {
-                    Icon(Icons.Filled.Add,"add new task item")
+                    Icon(Icons.Filled.Add, "add new task item")
                 }
             },
             isFloatingActionButtonDocked = true,
@@ -97,9 +104,11 @@ fun TodoListScreen(
 
             bottomBar = {
                 BottomAppBar(
+                    modifier = Modifier.navigationBarsPadding(),
                     cutoutShape = RoundedCornerShape(50),
+                    elevation = 0.dp,
                     content = {
-                    }
+                    },
                 )
             }
         )
@@ -126,7 +135,7 @@ fun TodoListScreen(
                     .focusRequester(addTaskItemFocusRequester),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
-                    onDone = {keyboardController?.hide()})
+                    onDone = { keyboardController?.hide() })
             )
         }
     )
