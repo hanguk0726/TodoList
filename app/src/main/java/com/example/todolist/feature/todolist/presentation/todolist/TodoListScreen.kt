@@ -31,6 +31,7 @@ import com.example.todolist.feature.todolist.presentation.todolist.components.Ad
 import com.example.todolist.feature.todolist.presentation.todolist.components.MenuModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
+import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
@@ -157,9 +158,8 @@ fun TodoListScreen(
         state = menuModalBottomSheetState,
         items = listOf {
             ListItem(
-                //새 목록 만들기 페이지로 포워드
                 modifier = Modifier.clickable {
-
+                    navController.navigate(Screen.AddEditTaskListScreen.route)
                 },
                 icon = { Icon(Icons.Filled.Add, "add new task list") },
                 text = { Text("새 목록 만들기") })

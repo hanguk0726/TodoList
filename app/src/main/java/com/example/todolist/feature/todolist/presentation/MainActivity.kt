@@ -13,6 +13,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddTaskListScreen
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListScreen
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.ui.theme.TodoListTheme
@@ -37,10 +38,15 @@ class MainActivity : ComponentActivity() {
                         val navController = rememberNavController()
                         NavHost(
                             navController = navController,
-                            startDestination = Screen.TodoListScreen.route
+                            startDestination = Screen.AddEditTaskListScreen.route
                         ) {
                             composable(route = Screen.TodoListScreen.route) {
                                 TodoListScreen(
+                                    navController = navController
+                                )
+                            }
+                            composable(route = Screen.AddEditTaskListScreen.route) {
+                                AddTaskListScreen(
                                     navController = navController
                                 )
                             }

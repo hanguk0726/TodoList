@@ -8,13 +8,19 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
+import com.example.todolist.ui.theme.LightBlack
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsPadding
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -23,6 +29,9 @@ fun AddTaskListScreen(
     viewModel: AddEditTaskListViewModel = hiltViewModel()
 ) {
 // 저장 이후 수정도
+    rememberSystemUiController().setSystemBarsColor(
+        color = LightBlack
+    )
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
 
@@ -43,13 +52,23 @@ fun AddTaskListScreen(
         }
     }
     Scaffold(
+        backgroundColor = LightBlack,
         scaffoldState = scaffoldState,
+        topBar = {
+            Spacer(modifier = Modifier.statusBarsPadding())
+        },
+        bottomBar = {
+            Spacer(modifier = Modifier.navigationBarsPadding())
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize(),
         ) {
-            Row {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
                     modifier = Modifier
                         .clickable {
@@ -60,6 +79,7 @@ fun AddTaskListScreen(
                     Icon(Icons.Default.Close, "close add task list screen")
                 }
                 Text("새 목록 만들기")
+                Spacer(modifier = Modifier.weight(1.0f))
                 PureTextButton(text = "완료", textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)) {
                     viewModel.onEvent(AddEditTaskListEvent.SaveTaskList)
                 }
