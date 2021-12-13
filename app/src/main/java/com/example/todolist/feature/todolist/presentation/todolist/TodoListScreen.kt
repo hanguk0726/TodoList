@@ -3,7 +3,6 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
+import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 
@@ -136,6 +135,9 @@ fun TodoListScreen(
                 keyboardActions = KeyboardActions(
                     onDone = { keyboardController?.hide() })
             )
+        },
+        actionButton = {
+            PureTextButton(text = "저장", textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f), onClick = {})
         }
     )
 }

@@ -3,11 +3,16 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
+import com.example.todolist.feature.todolist.domain.util.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 //savedStateHandle
@@ -30,6 +35,19 @@ class TodoListViewModel @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    private var getTaskListJob: Job? = null
+
+    private val _taskListsState = mutableStateOf(TaskListsState())
+    val taskListsState: State<TaskListsState> = _taskListsState
+
+
+    init {
+        getTaskLists()
+        if(taskListsState.value.taskLists.isEmpty()){
+            onEvent()
+        }
+    }
 
     fun onEvent(event: TodoListEvent) {
         when(event) {
@@ -74,6 +92,17 @@ class TodoListViewModel @Inject constructor(
 
             }
         }
+    }
+
+    private fun getTaskLists() {
+        getTaskListJob?.cancel()
+        getTaskListJob = taskListUseCases.getTaskLists()
+            .onEach {  taskLists ->
+                _taskListsState.value = taskListsState.value.copy(
+                    taskLists = taskLists
+                )
+            }
+            .launchIn(viewModelScope)
     }
 
     sealed class UiEvent {

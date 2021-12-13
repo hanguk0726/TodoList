@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.map
 class GetTaskLists(
     private val repository: TaskListRepository
 ) {
-
     @Throws(InvalidTaskListException::class)
     operator fun invoke(
         order: OrderType = OrderType.Descending

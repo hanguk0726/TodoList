@@ -12,8 +12,8 @@ private val DarkColorPalette = darkColors(
     primary = Purple200,
     primaryVariant = Purple700,
     secondary = Teal200,
-    surface = DarkGray,
-    onSurface = LightGray
+    surface = Color.DarkGray,
+    onSurface = Color.LightGray
 )
 
 private val LightColorPalette = lightColors(
@@ -34,24 +34,29 @@ private val LightColorPalette = lightColors(
 @Composable
 fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val systemUiController = rememberSystemUiController()
-    var colors = if(darkTheme){
+
+    lateinit var colors : Colors
+    lateinit var typography: Typography
+    if(darkTheme){
         systemUiController.setStatusBarColor(
             color = Color.Transparent
         )
-        DarkColorPalette
+        colors = DarkColorPalette
+        typography = TypographyInDarkTheme
     }else{
         systemUiController.setStatusBarColor(
             color = Color.White
         )
-        LightColorPalette
+        colors = LightColorPalette
+        typography = TypographyInLightTheme
     }
     systemUiController.setNavigationBarColor(
-        color = DarkGray,
+        color = Color.DarkGray,
         navigationBarContrastEnforced = false
     )
     MaterialTheme(
         colors = colors,
-        typography = Typography,
+        typography = typography,
         shapes = Shapes,
         content = content
     )
