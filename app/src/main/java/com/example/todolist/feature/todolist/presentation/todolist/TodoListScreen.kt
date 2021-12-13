@@ -3,6 +3,7 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
+import com.example.todolist.feature.todolist.presentation.todolist.components.MenuModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
@@ -55,6 +58,9 @@ fun TodoListScreen(
     val addTaskItemModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val addTaskItemFocusRequester = remember { FocusRequester() }
+
+    val menuModalBottomSheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
     AnimatedVisibility(
         visible = shouldShowMainBottomSheetScaffold.value,
@@ -106,6 +112,13 @@ fun TodoListScreen(
                     cutoutShape = RoundedCornerShape(50),
                     elevation = 0.dp,
                     content = {
+                              IconButton(onClick = {
+                                  coroutineScope.launch {
+                                      menuModalBottomSheetState.show()
+                                  }
+                              }) {
+                                  Icon(Icons.Default.Menu, "show menu")
+                              }
                     },
                 )
             }
@@ -136,8 +149,22 @@ fun TodoListScreen(
                     onDone = { keyboardController?.hide() })
             )
         },
-        actionButton = {
+        addButton = {
             PureTextButton(text = "저장", textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f), onClick = {})
+        }
+    )
+
+
+    MenuModalBottomSheet(
+        scope = coroutineScope,
+        state = menuModalBottomSheetState,
+        items = listOf {
+            ListItem(
+                modifier = Modifier.clickable {
+
+                },
+                icon = { Icon(Icons.Filled.Add, "add new task list") },
+                text = { Text("새 목록 만들기") })
         }
     )
 }

@@ -32,7 +32,7 @@ fun AddTaskItemModalBottomSheet(
     focusRequester: FocusRequester,
     shouldShowMainBottomSheetScaffold: MutableState<Boolean>,
     textField: @Composable () -> Unit,
-    actionButton: @Composable () -> Unit
+    addButton: @Composable () -> Unit
 ) {
     val isShowing = state.targetValue != ModalBottomSheetValue.Hidden
 
@@ -80,7 +80,7 @@ fun AddTaskItemModalBottomSheet(
                     .padding(top = 16.dp, bottom = 24.dp, end = 24.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                actionButton()
+                addButton()
             }
         },
     ) {

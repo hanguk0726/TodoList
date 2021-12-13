@@ -45,7 +45,8 @@ class TodoListViewModel @Inject constructor(
     init {
         getTaskLists()
         if(taskListsState.value.taskLists.isEmpty()){
-            onEvent()
+            _taskListName.value = TodoListTextFieldState("할 일 목록")
+            onEvent(TodoListEvent.saveTaskList)
         }
     }
 
