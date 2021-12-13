@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.domain.util.OrderType
@@ -13,6 +14,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import java.lang.Exception
 import javax.inject.Inject
 
 //savedStateHandle
@@ -23,10 +26,6 @@ class TodoListViewModel @Inject constructor(
     private val taskListUseCases: TaskListUseCases,
 ) : ViewModel() {
 
-    private val _taskListName = mutableStateOf(TodoListTextFieldState(
-        hint = "새 목록 이름"
-    ))
-    val taskListName: State<TodoListTextFieldState> = _taskListName
 
     private val _taskItemContent = mutableStateOf(TodoListTextFieldState(
         hint = "새 할 일"
@@ -42,11 +41,11 @@ class TodoListViewModel @Inject constructor(
     val taskListsState: State<TaskListsState> = _taskListsState
 
 
+
     init {
         getTaskLists()
         if(taskListsState.value.taskLists.isEmpty()){
-            _taskListName.value = TodoListTextFieldState("할 일 목록")
-            onEvent(TodoListEvent.saveTaskList)
+            initializeFirstTaskList("할 일 목록")
         }
     }
 
@@ -60,38 +59,27 @@ class TodoListViewModel @Inject constructor(
                     isHintVisible = taskItemContent.value.text.isBlank()
                 )
             }
-            is TodoListEvent.EnterTaskListName -> {
-                _taskListName.value = taskListName.value.copy(
-                    text = event.value
-                )
-                _taskListName.value = taskListName.value.copy(
-                    isHintVisible = taskListName.value.text.isBlank()
-                )
-            }
 
-            is TodoListEvent.completeTaskItem -> {
+            is TodoListEvent.CompleteTaskItem -> {
 
             }
 
-            is TodoListEvent.deleteTaskItem -> {
+            is TodoListEvent.DeleteTaskItem -> {
 
             }
 
-            is TodoListEvent.deleteTaskList -> {
+            is TodoListEvent.DeleteTaskList -> {
 
             }
 
-            is TodoListEvent.restoreTaskItemFromCompletion -> {
+            is TodoListEvent.RestoreTaskItemFromCompletion -> {
 
             }
 
-            is TodoListEvent.saveTaskItem -> {
+            is TodoListEvent.SaveTaskItem -> {
 
             }
 
-            is TodoListEvent.saveTaskList -> {
-
-            }
         }
     }
 
@@ -104,6 +92,26 @@ class TodoListViewModel @Inject constructor(
                 )
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun initializeFirstTaskList(name: String) {
+        viewModelScope.launch {
+            try {
+                taskListUseCases.addTaskList(
+                    TaskList(
+                        name = name,
+                        lastModificationTimestamp = System.currentTimeMillis(),
+                        id = null
+                    )
+                )
+            } catch(e: Exception) {
+                _eventFlow.emit(
+                    UiEvent.ShowSnackbar(
+                        message = e.message ?: "Couldn't create a task list"
+                    )
+                )
+            }
+        }
     }
 
     sealed class UiEvent {

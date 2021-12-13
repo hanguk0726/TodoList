@@ -21,7 +21,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntOffset
@@ -47,13 +46,11 @@ fun TodoListScreen(
 ) {
 
     val taskItemContentState = viewModel.taskItemContent.value
-    val taskListNameState = viewModel.taskListName.value
-
 
     val mainScaffoldState = rememberScaffoldState()
     val shouldShowMainBottomSheetScaffold = remember { mutableStateOf(value = true) }
 
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     val addTaskItemModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -91,7 +88,7 @@ fun TodoListScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
-                        coroutineScope.launch {
+                        scope.launch {
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {
@@ -112,13 +109,13 @@ fun TodoListScreen(
                     cutoutShape = RoundedCornerShape(50),
                     elevation = 0.dp,
                     content = {
-                              IconButton(onClick = {
-                                  coroutineScope.launch {
-                                      menuModalBottomSheetState.show()
-                                  }
-                              }) {
-                                  Icon(Icons.Default.Menu, "show menu")
-                              }
+                        IconButton(onClick = {
+                          scope.launch {
+                              menuModalBottomSheetState.show()
+                          }
+                        }) {
+                          Icon(Icons.Default.Menu, "show menu")
+                        }
                     },
                 )
             }
@@ -128,7 +125,7 @@ fun TodoListScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     AddTaskItemModalBottomSheet(
-        scope = coroutineScope,
+        scope = scope,
         state = addTaskItemModalBottomSheetState,
         focusRequester = addTaskItemFocusRequester,
         shouldShowMainBottomSheetScaffold = shouldShowMainBottomSheetScaffold,
@@ -156,10 +153,11 @@ fun TodoListScreen(
 
 
     MenuModalBottomSheet(
-        scope = coroutineScope,
+        scope = scope,
         state = menuModalBottomSheetState,
         items = listOf {
             ListItem(
+                //새 목록 만들기 페이지로 포워드
                 modifier = Modifier.clickable {
 
                 },
@@ -167,4 +165,5 @@ fun TodoListScreen(
                 text = { Text("새 목록 만들기") })
         }
     )
+
 }
