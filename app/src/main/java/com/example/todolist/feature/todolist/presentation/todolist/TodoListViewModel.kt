@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -40,14 +41,8 @@ class TodoListViewModel @Inject constructor(
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
 
-
-
     init {
         getTaskLists()
-        if(taskListsState.value.taskLists.isEmpty()){
-            initializeFirstTaskList("할 일 목록")
-            getTaskLists()
-        }
     }
 
     fun onEvent(event: TodoListEvent) {
@@ -88,23 +83,30 @@ class TodoListViewModel @Inject constructor(
         getTaskListJob?.cancel()
         getTaskListJob = taskListUseCases.getTaskLists()
             .onEach {  taskLists ->
-                _taskListsState.value = taskListsState.value.copy(
-                    taskLists = taskLists
-                )
+                println("my logger test ::${taskLists}")
+                if(taskLists.isEmpty()){
+                    val initialTaskList = TaskList(
+                        name = "할 일 목록",
+                        lastModificationTimestamp = System.currentTimeMillis(),
+                        id = null
+                    )
+                    initializeFirstTaskList(initialTaskList)
+                    _taskListsState.value = taskListsState.value.copy(
+                        taskLists = listOf(initialTaskList)
+                    )
+                } else {
+                    _taskListsState.value = taskListsState.value.copy(
+                        taskLists = taskLists
+                    )
+                }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun initializeFirstTaskList(name: String) {
+    private fun initializeFirstTaskList(taskList: TaskList) {
         viewModelScope.launch {
             try {
-                taskListUseCases.addTaskList(
-                    TaskList(
-                        name = name,
-                        lastModificationTimestamp = System.currentTimeMillis(),
-                        id = null
-                    )
-                )
+                taskListUseCases.addTaskList(taskList)
             } catch(e: Exception) {
                 _eventFlow.emit(
                     UiEvent.ShowSnackbar(

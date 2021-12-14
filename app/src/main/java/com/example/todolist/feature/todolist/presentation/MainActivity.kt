@@ -22,10 +22,12 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @ExperimentalFoundationApi
-    @ExperimentalAnimationApi
-    @ExperimentalComposeUiApi
-    @ExperimentalMaterialApi
+    @OptIn(
+        ExperimentalFoundationApi::class,
+        ExperimentalAnimationApi::class,
+        ExperimentalComposeUiApi::class,
+        ExperimentalMaterialApi::class
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
