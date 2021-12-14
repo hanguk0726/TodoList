@@ -31,6 +31,8 @@ private val LightColorPalette = lightColors(
     */
 )
 
+
+// lightTheme check
 @Composable
 fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val systemUiController = rememberSystemUiController()
@@ -38,18 +40,16 @@ fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composab
     lateinit var colors : Colors
     lateinit var typography: Typography
     if(darkTheme){
-        systemUiController.setStatusBarColor(
-            color = Color.Transparent
-        )
+
         colors = DarkColorPalette
         typography = TypographyInDarkTheme
     }else{
-        systemUiController.setStatusBarColor(
-            color = Color.White
-        )
         colors = LightColorPalette
         typography = TypographyInLightTheme
     }
+    systemUiController.setStatusBarColor(
+        color = Color.Transparent
+    )
     systemUiController.setNavigationBarColor(
         color = Color.DarkGray,
         navigationBarContrastEnforced = false

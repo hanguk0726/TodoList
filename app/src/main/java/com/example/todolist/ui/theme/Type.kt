@@ -34,6 +34,6 @@ val TypographyInDarkTheme = Typography(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        color = Color.White
+        color = DarkWhite
     )
 )

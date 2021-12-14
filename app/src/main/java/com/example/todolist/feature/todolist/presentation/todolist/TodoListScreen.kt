@@ -3,9 +3,12 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,27 +16,32 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
 import com.example.todolist.feature.todolist.presentation.todolist.components.AddTaskItemModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.MenuModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.example.todolist.feature.todolist.presentation.util.Screen
+import com.example.todolist.ui.theme.LightBlack
 import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.insets.statusBarsPadding
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
 @ExperimentalFoundationApi
@@ -45,8 +53,18 @@ fun TodoListScreen(
     navController: NavController,
     viewModel: TodoListViewModel = hiltViewModel()
 ) {
+    rememberSystemUiController().run{
+        setNavigationBarColor(
+            color = Color.DarkGray
+        )
+        setStatusBarColor(
+            color = Color.Transparent
+        )
+    }
 
     val taskItemContentState = viewModel.taskItemContent.value
+
+    val taskListsState = viewModel.taskListsState.value
 
     val mainScaffoldState = rememberScaffoldState()
     val shouldShowMainBottomSheetScaffold = remember { mutableStateOf(value = true) }
@@ -59,6 +77,10 @@ fun TodoListScreen(
 
     val menuModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+
+    LaunchedEffect(key1 = true) {
+        menuModalBottomSheetState.hide()
+    }
 
     AnimatedVisibility(
         visible = shouldShowMainBottomSheetScaffold.value,
@@ -80,11 +102,13 @@ fun TodoListScreen(
         },
     ) {
         Scaffold(
+            backgroundColor = LightBlack,
             scaffoldState = mainScaffoldState,
-            content = {
-            },
             topBar = {
-                Spacer(modifier = Modifier.statusBarsPadding())
+                Spacer(modifier = Modifier
+                    .statusBarsHeight()
+                    .fillMaxWidth()
+                )
             },
             floatingActionButton = {
                 FloatingActionButton(
@@ -120,7 +144,28 @@ fun TodoListScreen(
                     },
                 )
             }
-        )
+        ) {
+            Column {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)) {
+                    Text("Task",
+                    Modifier
+                        .fillMaxWidth(),
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center)
+                }
+                SemiTransparentDivider()
+                LazyRow {
+                    items(taskListsState.taskLists) {
+                        taskList ->
+
+                        // tab layouy view pager
+                    }
+                }
+            }
+        }
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current

@@ -1,6 +1,5 @@
 package com.example.todolist.feature.todolist.presentation.addEditTaskList
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -11,13 +10,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
-import com.example.todolist.ui.theme.LightBlack
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -30,7 +29,7 @@ fun AddTaskListScreen(
 ) {
 // 저장 이후 수정도
     rememberSystemUiController().setSystemBarsColor(
-        color = LightBlack
+        color = MaterialTheme.colors.background
     )
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
@@ -39,7 +38,7 @@ fun AddTaskListScreen(
 
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
-            when(event) {
+            when (event) {
                 is AddEditTaskListViewModel.UiEvent.ShowSnackbar -> {
                     scaffoldState.snackbarHostState.showSnackbar(
                         message = event.message
@@ -51,8 +50,9 @@ fun AddTaskListScreen(
             }
         }
     }
+
     Scaffold(
-        backgroundColor = LightBlack,
+        Modifier.fillMaxSize(),
         scaffoldState = scaffoldState,
         topBar = {
             Spacer(modifier = Modifier.statusBarsPadding())
@@ -63,48 +63,48 @@ fun AddTaskListScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .clickable {
-                            navController.navigateUp()
-                        }
-                        .padding(8.dp)
-                ){
-                    Icon(Icons.Default.Close, "close add task list screen")
+                IconButton(onClick = {
+                    navController.navigateUp()
+                }) {
+                    Icon(
+                        Icons.Default.Close,
+                        "close add task list screen",
+                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                    )
                 }
-                Text("새 목록 만들기")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("새 목록 만들기", fontSize = 20.sp)
                 Spacer(modifier = Modifier.weight(1.0f))
-                PureTextButton(text = "완료", textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)) {
+                PureTextButton(
+                    text = "완료",
+                    textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                ) {
                     viewModel.onEvent(AddEditTaskListEvent.SaveTaskList)
                 }
             }
 
-            Divider(
-                color = Color.Gray,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .height(1.dp)
-            )
+            SemiTransparentDivider()
 
             TransparentHintTextField(
+                modifier = Modifier.padding(16.dp),
                 text = taskListNameState.text,
                 hint = taskListNameState.hint,
+                textStyle = MaterialTheme.typography.body1,
+                isHintVisible = taskListNameState.isHintVisible,
                 onValueChange = {
                     viewModel.onEvent(AddEditTaskListEvent.EnterTaskListName(it))
                 }
             )
-            Divider(
-                color = Color.Gray,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .height(1.dp)
-            )
+
+            SemiTransparentDivider()
         }
     }
 }

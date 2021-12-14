@@ -46,6 +46,7 @@ class TodoListViewModel @Inject constructor(
         getTaskLists()
         if(taskListsState.value.taskLists.isEmpty()){
             initializeFirstTaskList("할 일 목록")
+            getTaskLists()
         }
     }
 

@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                         val navController = rememberNavController()
                         NavHost(
                             navController = navController,
-                            startDestination = Screen.AddEditTaskListScreen.route
+                            startDestination = Screen.TodoListScreen.route
                         ) {
                             composable(route = Screen.TodoListScreen.route) {
                                 TodoListScreen(

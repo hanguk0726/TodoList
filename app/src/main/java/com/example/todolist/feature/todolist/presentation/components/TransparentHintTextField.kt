@@ -47,7 +47,7 @@ fun TransparentHintTextField(
             cursorBrush = SolidColor(MaterialTheme.colors.secondary)
         )
         if(isHintVisible) {
-            Text(text = hint, style = textStyle, color = MaterialTheme.colors.onSurface)
+            Text(text = hint, style = textStyle, color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))
         }
     }
 }
