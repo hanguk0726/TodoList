@@ -9,12 +9,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -143,9 +145,22 @@ fun TodoListScreen(
                     textAlign = TextAlign.Center
                 )
             }
-            SemiTransparentDivider()
+
             if(taskListsState.taskLists.isNotEmpty()){
-                TabRow(selectedTabIndex = tabIndex) {
+                ScrollableTabRow(
+                    selectedTabIndex = tabIndex,
+                    edgePadding = 8.dp,
+                    backgroundColor = LightBlack,
+                    indicator =  @Composable { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            Modifier
+                                .tabIndicatorOffset(tabPositions[tabIndex])
+                                .clip(RoundedCornerShape(
+                                    topStart = 8.dp,
+                                    topEnd = 8.dp,
+                                ))
+                        )
+                    }) {
                     taskListsState.taskLists.forEachIndexed { index, taskList ->
                         Tab(selected = tabIndex == index, onClick = {
                             tabIndex = index
@@ -153,8 +168,17 @@ fun TodoListScreen(
                             Text(text = taskList.name)
                         })
                     }
+                    TextButton(onClick = { navController.navigate(Screen.AddEditTaskListScreen.route) },
+                    modifier = Modifier.padding(start = 16.dp)) {
+                        Icon(Icons.Filled.Add, "add new task list",
+                            tint = MaterialTheme.colors.onSurface)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("새 목록", fontSize = 14.sp)
+                    }
                 }
             }
+
+            SemiTransparentDivider()
         }
     }
 
