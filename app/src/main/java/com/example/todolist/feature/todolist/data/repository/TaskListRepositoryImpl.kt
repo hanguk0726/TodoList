@@ -16,7 +16,7 @@ class TaskListRepositoryImpl(
         return dao.getTaskListById(id)
     }
 
-    override suspend fun insertTaskList(taskList: TaskList) {
+    override suspend fun insertTaskList(taskList: TaskList) : Long {
         return dao.insertTaskList(taskList)
     }
 

@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -85,9 +86,18 @@ fun TodoListScreen(
         initialPage = 0,
     )
 
-    LaunchedEffect(key1 = true) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+// 3 개 탭은 미리 로드해야하며 트리거도 바꿔야할 수 있다.
+    LaunchedEffect(key1 = true, key2 = pagerState.currentPageOffset) {
         menuModalBottomSheetState.hide()
+        if (taskListsState.taskLists.isNotEmpty()) {
+            val index = pagerState.currentPage
+            val id = taskListsState.taskLists[index].id
+            viewModel.onEvent(TodoListEvent.SwipeTaskListPager(id!!))
+        }
     }
+
 
     Scaffold(
         backgroundColor = LightBlack,
@@ -196,7 +206,6 @@ fun TodoListScreen(
                     }
                 }
                 SemiTransparentDivider()
-                // view pager + 현재 taskList에 종속된 taskItems
 
                 HorizontalPager(
                     taskListsState.taskLists.size,
@@ -206,15 +215,16 @@ fun TodoListScreen(
                     Box(
                         Modifier.fillMaxSize()
                     ){
-                        Text("${index}")
+//                        Text("$index")
+                            Text("${viewModel.taskListId.value}")
+//                        if(viewModel.taskListId.value != null){
+//                        }
                     }
                 }
             }
         }
     }
 
-
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     AddTaskItemModalBottomSheet(
         scope = scope,
@@ -242,7 +252,9 @@ fun TodoListScreen(
             PureTextButton(
                 text = "저장",
                 textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                onClick = {})
+                onClick = {
+                    viewModel.onEvent(TodoListEvent.SaveTaskItem)
+                })
         }
     )
 

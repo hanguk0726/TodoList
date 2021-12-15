@@ -9,7 +9,7 @@ interface TaskListRepository {
 
     suspend fun getTaskListById(id: Int): TaskList?
 
-    suspend fun insertTaskList(taskList: TaskList)
+    suspend fun insertTaskList(taskList: TaskList) : Long
 
     suspend fun deleteTaskList(taskList: TaskList)
 }

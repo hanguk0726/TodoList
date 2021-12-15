@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.lang.Exception
 import javax.inject.Inject
 
@@ -27,11 +28,15 @@ class TodoListViewModel @Inject constructor(
     private val taskListUseCases: TaskListUseCases,
 ) : ViewModel() {
 
+    private val _taskListId = mutableStateOf<Int?>(null)
+    val taskListId: State<Int?> = _taskListId
+
 
     private val _taskItemContent = mutableStateOf(TodoListTextFieldState(
         hint = "새 할 일"
     ))
     val taskItemContent: State<TodoListTextFieldState> = _taskItemContent
+
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -49,11 +54,10 @@ class TodoListViewModel @Inject constructor(
         when(event) {
             is TodoListEvent.EnterTaskItemContent -> {
                 _taskItemContent.value = taskItemContent.value.copy(
-                    text = event.value
-                )
-                _taskItemContent.value = taskItemContent.value.copy(
+                    text = event.value,
                     isHintVisible = taskItemContent.value.text.isBlank()
                 )
+
             }
 
             is TodoListEvent.CompleteTaskItem -> {
@@ -76,6 +80,9 @@ class TodoListViewModel @Inject constructor(
 
             }
 
+            is TodoListEvent.SwipeTaskListPager -> {
+                _taskListId.value = mutableStateOf(event.taskListId).value
+            }
         }
     }
 
@@ -83,16 +90,15 @@ class TodoListViewModel @Inject constructor(
         getTaskListJob?.cancel()
         getTaskListJob = taskListUseCases.getTaskLists()
             .onEach {  taskLists ->
-                println("my logger test ::${taskLists}")
                 if(taskLists.isEmpty()){
                     val initialTaskList = TaskList(
                         name = "할 일 목록",
                         lastModificationTimestamp = System.currentTimeMillis(),
                         id = null
                     )
-                    initializeFirstTaskList(initialTaskList)
+                    val taskListId = initializeFirstTaskList(initialTaskList)
                     _taskListsState.value = taskListsState.value.copy(
-                        taskLists = listOf(initialTaskList)
+                        taskLists = listOf(initialTaskList.copy(id = taskListId))
                     )
                 } else {
                     _taskListsState.value = taskListsState.value.copy(
@@ -103,18 +109,18 @@ class TodoListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun initializeFirstTaskList(taskList: TaskList) {
-        viewModelScope.launch {
-            try {
-                taskListUseCases.addTaskList(taskList)
+    private suspend fun initializeFirstTaskList(taskList: TaskList): Int =
+        withContext(viewModelScope.coroutineContext) {
+            return@withContext try {
+                taskListUseCases.addTaskList(taskList).toInt()
             } catch(e: Exception) {
                 _eventFlow.emit(
                     UiEvent.ShowSnackbar(
                         message = e.message ?: "Couldn't create a task list"
                     )
                 )
+                -1
             }
-        }
     }
 
     sealed class UiEvent {

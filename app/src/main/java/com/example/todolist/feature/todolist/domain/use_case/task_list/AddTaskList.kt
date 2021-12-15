@@ -9,10 +9,10 @@ class AddTaskList(
 ) {
 
     @Throws(InvalidTaskListException::class)
-    suspend operator fun invoke(taskList: TaskList) {
+    suspend operator fun invoke(taskList: TaskList) : Long {
         if(taskList.name.isBlank()){
             throw InvalidTaskListException("the name of the list can't be empty")
         }
-        repository.insertTaskList(taskList)
+        return repository.insertTaskList(taskList)
     }
 }

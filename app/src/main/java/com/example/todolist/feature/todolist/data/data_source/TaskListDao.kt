@@ -14,7 +14,7 @@ interface TaskListDao {
     suspend fun getTaskListById(id: Int): TaskList?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTaskList(TaskList: TaskList)
+    suspend fun insertTaskList(TaskList: TaskList): Long
 
     @Delete
     suspend fun deleteTaskList(TaskList: TaskList)
