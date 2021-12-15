@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import com.example.todolist.TodoListApp
 import com.example.todolist.feature.todolist.data.data_source.TodoListDatabase
 import com.example.todolist.feature.todolist.data.repository.TaskItemRepositoryImpl
 import com.example.todolist.feature.todolist.data.repository.TaskListRepositoryImpl
@@ -24,8 +25,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    private val Context.dataStore by preferencesDataStore("settings")
-
+    @Singleton
+    @Provides
+    fun provideApplicationContext(): Context = TodoListApp()
 
     @Provides
     @Singleton
@@ -72,9 +74,5 @@ object AppModule {
         )
     }
 
-    @Singleton
-    fun dataStore (@ApplicationContext appContext: Context): DataStore<Preferences> {
-        return appContext.dataStore
-    }
 
 }

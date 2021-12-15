@@ -1,20 +1,20 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.todolist.di.AppModule
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,12 +28,14 @@ import javax.inject.Inject
 class TodoListViewModel @Inject constructor(
     private val taskItemUseCases: TaskItemUseCases,
     private val taskListUseCases: TaskListUseCases,
-    private val dataStore: DataStore<Preferences>
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     companion object{
        const val TASK_LIST_POSITION_KEY = "task_list_position_key"
     }
+
+    private val Context.dataStore by preferencesDataStore("settings")
 
     private var initTaskListIndex = true
 
@@ -98,6 +100,7 @@ class TodoListViewModel @Inject constructor(
                                 taskListId = taskListId.value!!
                             )
                         )
+                        println("mylogger saved ::${taskItemContent.value.text}")
                         _eventFlow.emit(UiEvent.SaveTaskItem)
                     } catch(e: InvalidTaskItemException) {
                         _eventFlow.emit(
@@ -108,21 +111,29 @@ class TodoListViewModel @Inject constructor(
                     }
                 }
             }
-
+            is TodoListEvent.ChangeTaskList -> {
+                _taskListId.value = mutableStateOf(event.changedTaskListId).value
+            }
             is TodoListEvent.GetTaskItemsByTaskListId -> {
-                _taskListId.value = mutableStateOf(event.taskListId).value
+                getTaskItemsByTaskListId(event.taskListId)
             }
         }
     }
-    // pager index를 3개를 holding하는 data class의 state를 만들어 관리해야할 듯 하다.
+
     private fun getTaskItemsByTaskListId(targetTaskListId : Long) {
         getTaskItemsJob?.cancel()
+        println("mylogger called targetTaskListId ::$targetTaskListId")
         getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
             targetTaskListId
         ).onEach { taskItems ->
             _taskItemsState.value = taskItemsState.value.copy(
                     taskItems = taskItems
                 )
+            println("mylogger called size ::${taskItems.size}")
+            if(taskItems.isNotEmpty()){
+
+            println("mylogger chekc id ::${taskItems.first().taskListId}")
+            }
             }
             .launchIn(viewModelScope)
     }
@@ -147,7 +158,7 @@ class TodoListViewModel @Inject constructor(
                     )
                 }
                 if(initTaskListIndex){
-                    _eventFlow.emit(UiEvent.InitialTaskListIndex(readLastTaskListIndex()))
+                    _eventFlow.emit(UiEvent.InitialTaskListIndex(readLastSelectedTaskListIndex()))
                     initTaskListIndex = false
                 }
             }
@@ -168,16 +179,16 @@ class TodoListViewModel @Inject constructor(
             }
     }
 
-    suspend fun saveLastTaskListIndex(position: Int) {
+    suspend fun saveLastSelectedTaskListIndex(position: Int) {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)
-        dataStore.edit { settings ->
+        appContext.dataStore.edit { settings ->
             settings[dataStoreKey] = position
         }
     }
 
-    suspend fun readLastTaskListIndex(): Int {
+    suspend fun readLastSelectedTaskListIndex(): Int {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)
-        return dataStore.data.map { preferences ->
+        return appContext.dataStore.data.map { preferences ->
             preferences[dataStoreKey] ?: 0
         }.first()
     }

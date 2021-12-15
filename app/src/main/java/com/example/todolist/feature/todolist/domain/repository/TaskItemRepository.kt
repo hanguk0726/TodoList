@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface TaskItemRepository {
 
-    fun getTaskItemsByTaskListId(taskListId: Long): Flow<List<TaskItem>>
+    fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>>
 
     suspend fun getTaskItemById(id: Long): TaskItem?
 

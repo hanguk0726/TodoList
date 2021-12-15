@@ -10,11 +10,12 @@ class TaskItemRepositoryImpl(
     private val dao: TaskItemDao
 ) : TaskItemRepository {
 
-    override fun getTaskItemsByTaskListId(taskListId: Int): Flow<List<TaskItem>> {
-        return dao.getTaskItemsByTaskListId(taskListId)
+
+    override fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>> {
+        return dao.getTaskItemsByTaskListId(id)
     }
 
-    override suspend fun getTaskItemById(id: Int): TaskItem? {
+    override suspend fun getTaskItemById(id: Long): TaskItem? {
         return dao.getTaskItemById(id)
     }
 

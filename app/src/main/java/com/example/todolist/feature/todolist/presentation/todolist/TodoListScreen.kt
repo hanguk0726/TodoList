@@ -3,7 +3,10 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,15 +36,17 @@ import com.example.todolist.ui.theme.LightBlack
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsHeight
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.pager.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
+import kotlin.math.max
 
 
 @OptIn(
+    ExperimentalSnapperApi::class,
     ExperimentalPagerApi::class,
     ExperimentalFoundationApi::class,
     ExperimentalAnimationApi::class,
@@ -79,24 +84,24 @@ fun TodoListScreen(
     val menuModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
+    val taskItemsState = viewModel.taskItemsState.value
+
     val pagerState = rememberPagerState(
         initialPage = 0,
     )
 
     val keyboardController = LocalSoftwareKeyboardController.current
 // 3 개 탭은 미리 로드해야하며 트리거도 바꿔야할 수 있다.
-    LaunchedEffect(key1 = true, key2 = pagerState.targetPage) {
+    LaunchedEffect(key1 = true, key2 = pagerState.currentPage) {
         menuModalBottomSheetState.hide()
-        if (taskListsState.taskLists.isNotEmpty()) {
-            val index = pagerState.targetPage
-            val id = taskListsState.taskLists[index].id
-            viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(id!!))
-        }
-        viewModel.saveLastTaskListIndex(pagerState.currentPage)
+        viewModel.saveLastSelectedTaskListIndex(pagerState.currentPage)
         viewModel.eventFlow.collectLatest { event ->
             when(event) {
                 is TodoListViewModel.UiEvent.InitialTaskListIndex -> {
                     pagerState.scrollToPage(event.index)
+                }
+                is TodoListViewModel.UiEvent.SaveTaskItem -> {
+                    addTaskItemModalBottomSheetState.hide()
                 }
             }
         }
@@ -175,7 +180,7 @@ fun TodoListScreen(
                     indicator = @Composable { tabPositions ->
                         TabRowDefaults.Indicator(
                             Modifier
-                                .tabIndicatorOffset(tabPositions[pagerState.currentPage])
+                                .pagerTabIndicatorOffset(pagerState, tabPositions)
                                 .clip(
                                     RoundedCornerShape(
                                         topStart = 8.dp,
@@ -212,16 +217,33 @@ fun TodoListScreen(
 
                 HorizontalPager(
                     taskListsState.taskLists.size,
-                    state = pagerState
-                ) { index ->
-//                    LazyColumn(content = {})
-                    Box(
-                        Modifier.fillMaxSize()
-                    ){
-//                        Text("$index")
-                            Text("${viewModel.taskListId.value}")
-//                        if(viewModel.taskListId.value != null){
-//                        }
+                    state = pagerState,
+                    flingBehavior = rememberFlingBehaviorMultiplier(
+                        multiplier = 0.5f,
+                        baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
+                ),
+                ) {
+//  탭 이름 판정과 탭 내용 판정을 빨리 바꾸는 것은 로직상 연관될 수 있다. -> 먼저 체크하기
+//                    LaunchedEffect(key1 = pagerState.currentPageOffset){
+//                        val targetDistance = (pagerState.targetPage - pagerState.currentPage).absoluteValue
+//                        // Our normalized fraction over the target distance
+//                        val fraction = (pagerState.currentPageOffset / max(targetDistance, 1)).absoluteValue
+//                        println("mylogger :: targetDistance ${targetDistance}//fraction ${fraction}" )
+//
+//                    }
+                    LaunchedEffect(key1 = pagerState.currentPage){
+                        val id = taskListsState.taskLists[pagerState.currentPage].id
+                        viewModel.onEvent(TodoListEvent.ChangeTaskList(id!!))
+                        viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(id!!))
+                        println("mylogger :: taskItemsState.taskItems :: ${taskItemsState.taskItems.size}")
+                    }
+                    Text(" ///${taskListsState.taskLists.size}")
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        items(taskItemsState.taskItems) { taskItem ->
+                            ListItem(
+                                text = { Text(taskItem.content) }
+                            )
+                        }
                     }
                 }
             }
