@@ -12,12 +12,12 @@ class GetTaskLists(
 ) {
     @Throws(InvalidTaskListException::class)
     operator fun invoke(
-        order: OrderType = OrderType.Descending
+        order: OrderType = OrderType.Ascending
     ): Flow<List<TaskList>> {
         return repository.getTaskLists().map{ taskLists ->
             when(order) {
-                is OrderType.Ascending -> taskLists.sortedBy{ it.lastModificationTimestamp }
-                is OrderType.Descending -> taskLists.sortedByDescending { it.lastModificationTimestamp }
+                is OrderType.Ascending -> taskLists.sortedBy{ it.createdTimestamp }
+                is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
             }
         }
     }

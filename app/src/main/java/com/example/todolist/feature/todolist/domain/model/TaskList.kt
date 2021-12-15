@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 @Entity
 data class TaskList(
     val name: String,
-    val lastModificationTimestamp: Long,
-    @PrimaryKey val id: Int? = null
+    val createdTimestamp: Long = System.currentTimeMillis(),
+    @PrimaryKey val id: Long? = null
 )
 
 class InvalidTaskListException(message: String): Exception(message)

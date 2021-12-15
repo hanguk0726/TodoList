@@ -7,9 +7,11 @@ interface TaskListRepository {
 
     fun getTaskLists(): Flow<List<TaskList>>
 
-    suspend fun getTaskListById(id: Int): TaskList?
+    suspend fun getTaskListById(id: Long): TaskList?
 
     suspend fun insertTaskList(taskList: TaskList) : Long
 
     suspend fun deleteTaskList(taskList: TaskList)
+
+    suspend fun updateTaskList(TaskList: TaskList)
 }

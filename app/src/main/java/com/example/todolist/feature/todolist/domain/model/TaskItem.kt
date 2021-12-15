@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 @Entity
 data class TaskItem(
     val content: String,
-    val completed: Boolean,
-    val timestamp: Long,
+    val completed: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis(),
     val taskListId: Long,
     @PrimaryKey val id: Int? = null
 )

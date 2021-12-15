@@ -12,7 +12,7 @@ class TaskListRepositoryImpl(
         return dao.getTaskLists()
     }
 
-    override suspend fun getTaskListById(id: Int): TaskList? {
+    override suspend fun getTaskListById(id: Long): TaskList? {
         return dao.getTaskListById(id)
     }
 
@@ -23,4 +23,9 @@ class TaskListRepositoryImpl(
     override suspend fun deleteTaskList(taskList: TaskList) {
         return dao.deleteTaskList(taskList)
     }
+
+    override suspend fun updateTaskList(taskList: TaskList) {
+        return dao.updateTaskList(taskList)
+    }
+
 }

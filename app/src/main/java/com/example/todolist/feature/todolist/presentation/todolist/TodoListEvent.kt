@@ -3,7 +3,7 @@ package com.example.todolist.feature.todolist.presentation.todolist
 
 sealed class TodoListEvent{
     data class EnterTaskItemContent(val value: String): TodoListEvent()
-    data class SwipeTaskListPager(val taskListId: Int): TodoListEvent()
+    data class GetTaskItemsByTaskListId(val taskListId: Long): TodoListEvent()
     object DeleteTaskList: TodoListEvent()
     object CompleteTaskItem: TodoListEvent()
     object RestoreTaskItemFromCompletion: TodoListEvent()

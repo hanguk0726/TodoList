@@ -8,7 +8,7 @@ class GetTaskItemById(
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(id: Int) {
+    suspend operator fun invoke(id: Long) {
         repository.getTaskItemById(id)
     }
 }

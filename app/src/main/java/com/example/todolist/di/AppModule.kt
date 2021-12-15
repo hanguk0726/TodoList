@@ -1,6 +1,10 @@
 package com.example.todolist.di
 
 import android.app.Application
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.example.todolist.feature.todolist.data.data_source.TodoListDatabase
 import com.example.todolist.feature.todolist.data.repository.TaskItemRepositoryImpl
@@ -12,12 +16,16 @@ import com.example.todolist.feature.todolist.domain.use_case.task_list.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    private val Context.dataStore by preferencesDataStore("settings")
+
 
     @Provides
     @Singleton
@@ -48,7 +56,8 @@ object AppModule {
             addTaskList = AddTaskList(repository),
             deleteTaskList = DeleteTaskList(repository),
             getTaskListById = GetTaskListById(repository),
-            getTaskLists = GetTaskLists(repository)
+            getTaskLists = GetTaskLists(repository),
+            updateTaskList = UpdateTaskList(repository)
         )
     }
 
@@ -62,4 +71,10 @@ object AppModule {
             getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository)
         )
     }
+
+    @Singleton
+    fun dataStore (@ApplicationContext appContext: Context): DataStore<Preferences> {
+        return appContext.dataStore
+    }
+
 }

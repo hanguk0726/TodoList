@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 class TaskItemRepositoryImpl(
     private val dao: TaskItemDao
 ) : TaskItemRepository {
+
     override fun getTaskItemsByTaskListId(taskListId: Int): Flow<List<TaskItem>> {
         return dao.getTaskItemsByTaskListId(taskListId)
     }

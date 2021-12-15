@@ -4,12 +4,12 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskListExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 
-class GetTaskListById(
+class UpdateTaskList(
     private val repository: TaskListRepository
 ) {
 
     @Throws(InvalidTaskListException::class)
-    suspend operator fun invoke(id: Long): TaskList? {
-        return repository.getTaskListById(id)
+    suspend operator fun invoke(taskList: TaskList) {
+        repository.updateTaskList(taskList)
     }
 }

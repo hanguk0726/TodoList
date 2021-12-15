@@ -29,7 +29,7 @@ class AddEditTaskListViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    private var currentTaskListId: Int? = null
+    private var currentTaskListId: Long? = null
 
     fun onEvent(event: AddEditTaskListEvent) {
         when (event) {
@@ -47,7 +47,6 @@ class AddEditTaskListViewModel @Inject constructor(
                         taskListUseCases.addTaskList(
                             TaskList(
                                 name = taskListName.value.text,
-                                lastModificationTimestamp = System.currentTimeMillis(),
                                 id = currentTaskListId
                             )
                         )

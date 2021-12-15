@@ -11,7 +11,7 @@ interface TaskListDao {
     fun getTaskLists(): Flow<List<TaskList>>
 
     @Query("SELECT * FROM TaskList WHERE id = :id")
-    suspend fun getTaskListById(id: Int): TaskList?
+    suspend fun getTaskListById(id: Long): TaskList?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTaskList(TaskList: TaskList): Long
@@ -19,4 +19,6 @@ interface TaskListDao {
     @Delete
     suspend fun deleteTaskList(TaskList: TaskList)
 
+    @Update
+    suspend fun updateTaskList(TaskList: TaskList)
 }

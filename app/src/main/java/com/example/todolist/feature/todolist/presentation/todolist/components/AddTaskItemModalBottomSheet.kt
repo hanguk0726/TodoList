@@ -14,7 +14,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -31,7 +30,7 @@ fun AddTaskItemModalBottomSheet(
     scope: CoroutineScope,
     state: ModalBottomSheetState,
     focusRequester: FocusRequester,
-    shouldShowMainBottomSheetScaffold: MutableState<Boolean>,
+    showMainBottomSheetScaffold: MutableState<Boolean>,
     textField: @Composable () -> Unit,
     addButton: @Composable () -> Unit
 ) {
@@ -40,12 +39,12 @@ fun AddTaskItemModalBottomSheet(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (isShowing) {
-        shouldShowMainBottomSheetScaffold.value = false
+        showMainBottomSheetScaffold.value = false
         SideEffect {
             focusRequester.requestFocus()
         }
     } else {
-        shouldShowMainBottomSheetScaffold.value = true
+        showMainBottomSheetScaffold.value = true
         keyboardController?.hide()
         LocalFocusManager.current.clearFocus()
     }
