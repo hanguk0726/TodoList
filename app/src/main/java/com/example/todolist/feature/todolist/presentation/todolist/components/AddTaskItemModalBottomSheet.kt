@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.ScrimColor
 import com.google.accompanist.insets.imePadding
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -60,7 +61,7 @@ fun AddTaskItemModalBottomSheet(
     )
 
     ModalBottomSheetLayout(
-        modifier = Modifier.imePadding(),
+        modifier = Modifier.navigationBarsWithImePadding(),
         sheetState = state,
         sheetElevation = 0.dp,
         scrimColor = ScrimColor,

@@ -56,7 +56,6 @@ fun TodoListScreen(
     viewModel: TodoListViewModel = hiltViewModel()
 ) {
 
-    // TaskList 초기화 순서
     rememberSystemUiController().run {
         setNavigationBarColor(
             color = Color.DarkGray
@@ -91,15 +90,16 @@ fun TodoListScreen(
     LaunchedEffect(key1 = true) {
         menuModalBottomSheetState.hide()
         viewModel.eventFlow.collectLatest { event ->
+            println("mylogger event called")
             when (event) {
                 is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
-                        println("mylogger event index called")
-                        println("mylogger event index ${event.index}")
-                        _pagerState.scrollToPage(event.index)
+                    _pagerState.scrollToPage(event.index)
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
+                    println("mylogger SaveTaskItem1 ${addTaskItemModalBottomSheetState.currentValue}")
                     addTaskItemModalBottomSheetState.hide()
+                    println("mylogger SaveTaskItem2 ${addTaskItemModalBottomSheetState.currentValue}")
                 }
             }
         }

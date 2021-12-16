@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -67,7 +68,6 @@ class TodoListViewModel @Inject constructor(
 
 
     fun getTaskItems(targetTaskListId: Long):List<TaskItem>  {
-        println("mylogger  contain key :: ${taskItemManagerPool.containsKey(targetTaskListId)} // for id ${targetTaskListId}")
         return if(taskItemManagerPool.containsKey(targetTaskListId)){
             taskItemManagerPool[targetTaskListId]!!.taskItemsState.value.taskItems
         } else {
@@ -109,15 +109,20 @@ class TodoListViewModel @Inject constructor(
                                 taskListId = selectedTaskListId!!
                             )
                         )
-                        _taskItemContent.value = taskItemContent.value.copy(text = "")
                         _eventFlow.emit(UiEvent.SaveTaskItem)
                     } catch (e: InvalidTaskItemException) {
-                        _eventFlow.emit(
-                            UiEvent.ShowSnackbar(
-                                message = e.message ?: "Couldn't save taskItem"
-                            )
-                        )
+                        Log.e("TodoListViewModel","${e.message ?: "Couldn't save taskItem"}")
+                        //need to change to Banner(Material Design)
+//                        _eventFlow.emit(
+//                            UiEvent.ShowSnackbar(
+//                                message = e.message ?: "Couldn't save taskItem"
+//                            )
+//                        )
                     }
+                    _taskItemContent.value = taskItemContent.value.copy(
+                        text = "",
+                        isHintVisible = true
+                    )
                 }
             }
             is TodoListEvent.SelectTaskList -> {
@@ -137,10 +142,10 @@ class TodoListViewModel @Inject constructor(
                             .find{ el -> el.id!!.toInt() == lastSelectedTaskListId}
                         selectedTaskListId = lastSelectedTaskList!!.id
                         val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
-                        println("mylogger lastSelectedTaskListId ${lastSelectedTaskListId}// index ${index}")
                         _eventFlow.emit(UiEvent.ScrollToLastSelectedTaskListPosition(index))
                     }
                 }
+
             }
             is TodoListEvent.LastTaskListPositionHasSelected -> {
                 _lastSelectedTaskListPositionLoaded.value = true
@@ -149,20 +154,19 @@ class TodoListViewModel @Inject constructor(
     }
 // 안쓰이는 elements 정리 로직 필요
     private fun getTaskItemsByTaskListId(targetTaskListId: Long) {
-        var T = if(taskItemManagerPool.containsKey(targetTaskListId)){
+        var taskItemManager = if(taskItemManagerPool.containsKey(targetTaskListId)){
             taskItemManagerPool[targetTaskListId]!!
         } else {
             TaskItemManager()
         }
-        T.getTaskItemsJob?.cancel()
-        T.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
+        taskItemManager.getTaskItemsJob?.cancel()
+        taskItemManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
             targetTaskListId
         ).onEach { taskItems ->
-            T._taskItemsState.value = T.taskItemsState.value.copy(
+            taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
                 taskItems = taskItems
             )
-            taskItemManagerPool[targetTaskListId] = T
-            println("mylogger size ${taskItems.size} // id $targetTaskListId")
+            taskItemManagerPool[targetTaskListId] = taskItemManager
         }.launchIn(viewModelScope)
     }
 
