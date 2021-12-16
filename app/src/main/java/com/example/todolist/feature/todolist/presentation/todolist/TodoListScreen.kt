@@ -92,11 +92,11 @@ fun TodoListScreen(
         menuModalBottomSheetState.hide()
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is TodoListViewModel.UiEvent.LoadLastSelectedTaskListPosition -> {
-                    if (taskListsState.taskLists.isNotEmpty()) {
+                is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
+                        println("mylogger event index called")
+                        println("mylogger event index ${event.index}")
                         _pagerState.scrollToPage(event.index)
-                        viewModel.onEvent(TodoListEvent.InitLastSelectedTaskListPosition)
-                    }
+                    viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
                     addTaskItemModalBottomSheetState.hide()
@@ -214,6 +214,9 @@ fun TodoListScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("새 목록", fontSize = 14.sp)
                     }
+                    if(!viewModel.lastSelectedTaskListPositionLoaded.value){
+                        viewModel.onEvent(TodoListEvent.LoadLastSelectedTaskListPosition)
+                    }
                 }
                 SemiTransparentDivider()
 
@@ -225,6 +228,7 @@ fun TodoListScreen(
                         baseFlingBehavior = PagerDefaults.flingBehavior(_pagerState)
                     ),
                 ) { pageIndex ->
+
                     LazyColumn(Modifier.fillMaxSize()) {
                         val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
                         val selectedTaskListId = taskListsState.taskLists[currentPageState()].id!!

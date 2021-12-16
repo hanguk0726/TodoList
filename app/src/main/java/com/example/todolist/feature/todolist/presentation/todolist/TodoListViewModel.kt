@@ -1,13 +1,12 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
-import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
@@ -16,7 +15,6 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,18 +27,13 @@ import javax.inject.Inject
 class TodoListViewModel @Inject constructor(
     private val taskItemUseCases: TaskItemUseCases,
     private val taskListUseCases: TaskListUseCases,
-    @SuppressLint("StaticFieldLeak")
-    @ApplicationContext
-    private val appContext: Context,
+    private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
 
     companion object {
         const val TASK_LIST_POSITION_KEY = "task_list_position_key"
     }
 
-    private val Context.dataStore by preferencesDataStore("settings")
-
-    private var lastSelectedTaskListPositionInitialized = false
 
     private var selectedTaskListId: Long? = null
 
@@ -52,6 +45,10 @@ class TodoListViewModel @Inject constructor(
     )
     val taskItemContent: State<TodoListTextFieldState> = _taskItemContent
 
+
+
+    private val _lastSelectedTaskListPositionLoaded = mutableStateOf(false)
+    val lastSelectedTaskListPositionLoaded = _lastSelectedTaskListPositionLoaded
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -85,7 +82,6 @@ class TodoListViewModel @Inject constructor(
                     text = event.value,
                     isHintVisible = taskItemContent.value.text.isBlank()
                 )
-
             }
 
             is TodoListEvent.CompleteTaskItem -> {
@@ -133,8 +129,21 @@ class TodoListViewModel @Inject constructor(
             is TodoListEvent.GetTaskItemsByTaskListId -> {
                 getTaskItemsByTaskListId(event.taskListId)
             }
-            is TodoListEvent.InitLastSelectedTaskListPosition -> {
-                lastSelectedTaskListPositionInitialized = true
+            is TodoListEvent.LoadLastSelectedTaskListPosition -> {
+                viewModelScope.launch {
+                    val lastSelectedTaskListId = readLastSelectedTaskListId()
+                    if(lastSelectedTaskListId != -1){
+                        val lastSelectedTaskList =  taskListsState.value.taskLists
+                            .find{ el -> el.id!!.toInt() == lastSelectedTaskListId}
+                        selectedTaskListId = lastSelectedTaskList!!.id
+                        val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
+                        println("mylogger lastSelectedTaskListId ${lastSelectedTaskListId}// index ${index}")
+                        _eventFlow.emit(UiEvent.ScrollToLastSelectedTaskListPosition(index))
+                    }
+                }
+            }
+            is TodoListEvent.LastTaskListPositionHasSelected -> {
+                _lastSelectedTaskListPositionLoaded.value = true
             }
         }
     }
@@ -176,13 +185,6 @@ class TodoListViewModel @Inject constructor(
                         taskLists = taskLists
                     )
                 }
-                if (!lastSelectedTaskListPositionInitialized) {
-                    val lastSelectedTaskList = taskLists
-                        .find{ el -> el.id!!.toInt() == readLastSelectedTaskListId()}
-                    selectedTaskListId = lastSelectedTaskList!!.id
-                    val index = taskLists.indexOf(lastSelectedTaskList)
-                    _eventFlow.emit(UiEvent.LoadLastSelectedTaskListPosition(index))
-                }
             }
             .launchIn(viewModelScope)
     }
@@ -203,15 +205,15 @@ class TodoListViewModel @Inject constructor(
 
     private suspend fun saveLastSelectedTaskListId(id: Int) {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)
-        appContext.dataStore.edit { settings ->
+        dataStore.edit { settings ->
             settings[dataStoreKey] = id
         }
     }
 
     private suspend fun readLastSelectedTaskListId(): Int {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)
-        return appContext.dataStore.data.map { preferences ->
-            preferences[dataStoreKey] ?: 0
+        return dataStore.data.map { preferences ->
+            preferences[dataStoreKey] ?: -1
         }.first()
     }
 
@@ -223,7 +225,7 @@ class TodoListViewModel @Inject constructor(
 
     sealed class UiEvent {
         data class ShowSnackbar(val message: String) : UiEvent()
-        data class LoadLastSelectedTaskListPosition(val index: Int) : UiEvent()
+        data class ScrollToLastSelectedTaskListPosition(val index: Int) : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()
