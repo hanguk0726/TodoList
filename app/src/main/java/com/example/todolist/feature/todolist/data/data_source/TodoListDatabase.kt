@@ -10,6 +10,7 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
     version = 1,
     exportSchema = false
 )
+// 스키마 버전 변경시 handling 필요
 abstract class TodoListDatabase: RoomDatabase() {
 
     abstract val taskListDao: TaskListDao
