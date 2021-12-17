@@ -16,9 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.ScrimColor
-import com.google.accompanist.insets.imePadding
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -31,34 +31,30 @@ fun AddTaskItemModalBottomSheet(
     scope: CoroutineScope,
     state: ModalBottomSheetState,
     focusRequester: FocusRequester,
-    showMainBottomSheetScaffold: MutableState<Boolean>,
     textField: @Composable () -> Unit,
     addButton: @Composable () -> Unit
 ) {
     val isShowing = state.targetValue != ModalBottomSheetValue.Hidden
-
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (isShowing) {
-        showMainBottomSheetScaffold.value = false
-        SideEffect {
-            focusRequester.requestFocus()
-        }
+//        SideEffect {
+//            focusRequester.requestFocus()
+//        }
     } else {
-        showMainBottomSheetScaffold.value = true
-        keyboardController?.hide()
-        LocalFocusManager.current.clearFocus()
-    }
 
-    BackHandler(
-        enabled = isShowing,
-        onBack = {
-            scope.launch {
-                keyboardController?.hide()
-                state.hide()
-            }
-        }
-    )
+        keyboardController?.hide()
+    }
+//
+//    BackHandler(
+//        enabled = isShowing,
+//        onBack = {
+//            scope.launch {
+//                keyboardController?.hide()
+//                state.hide()
+//            }
+//        }
+//    )
 
     ModalBottomSheetLayout(
         modifier = Modifier.navigationBarsWithImePadding(),

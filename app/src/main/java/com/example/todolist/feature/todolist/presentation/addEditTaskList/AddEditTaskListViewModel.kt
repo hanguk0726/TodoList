@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.presentation.addEditTaskList
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -52,11 +53,7 @@ class AddEditTaskListViewModel @Inject constructor(
                         )
                         _eventFlow.emit(UiEvent.SaveTaskList)
                     } catch(e: InvalidTaskListException) {
-                        _eventFlow.emit(
-                            UiEvent.ShowSnackbar(
-                                message = e.message ?: "Couldn't save task list"
-                            )
-                        )
+                        Log.e("TodoListViewModel","${e.message ?: "Couldn't create the taskList"}")
                     }
                 }
             }
@@ -64,7 +61,6 @@ class AddEditTaskListViewModel @Inject constructor(
     }
 
     sealed class UiEvent {
-        data class ShowSnackbar(val message: String): UiEvent()
         object SaveTaskList: UiEvent()
     }
 }

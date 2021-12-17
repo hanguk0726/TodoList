@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListEvent
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
@@ -39,11 +40,6 @@ fun AddTaskListScreen(
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is AddEditTaskListViewModel.UiEvent.ShowSnackbar -> {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        message = event.message
-                    )
-                }
                 is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {
                     navController.navigateUp()
                 }
@@ -101,7 +97,7 @@ fun AddTaskListScreen(
                 isHintVisible = taskListNameState.isHintVisible,
                 onValueChange = {
                     viewModel.onEvent(AddEditTaskListEvent.EnterTaskListName(it))
-                }
+                },
             )
 
             SemiTransparentDivider()

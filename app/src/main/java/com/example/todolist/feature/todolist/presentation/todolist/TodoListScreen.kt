@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,8 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,11 +62,13 @@ fun TodoListScreen(
             color = Color.Transparent
         )
     }
+
     val taskItemContentState = viewModel.taskItemContent.value
 
     val taskListsState = viewModel.taskListsState.value
 
     val mainScaffoldState = rememberScaffoldState()
+
     val showMainBottomSheetScaffold = remember { mutableStateOf(value = true) }
 
     val scope = rememberCoroutineScope()
@@ -86,20 +86,31 @@ fun TodoListScreen(
 
     val currentPageState = { getTargetPage(_pagerState) }
 
-    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(key1 = addTaskItemModalBottomSheetState.targetValue,
+        key2 = menuModalBottomSheetState.targetValue) {
+        showMainBottomSheetScaffold.value =
+            addTaskItemModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden &&
+                menuModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
+    }
     LaunchedEffect(key1 = true) {
         menuModalBottomSheetState.hide()
         viewModel.eventFlow.collectLatest { event ->
             println("mylogger event called")
             when (event) {
                 is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
+                    println("mylogger event called1")
                     _pagerState.scrollToPage(event.index)
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
                     println("mylogger SaveTaskItem1 ${addTaskItemModalBottomSheetState.currentValue}")
                     addTaskItemModalBottomSheetState.hide()
+//                    addTaskItemFocusRequester.freeFocus()
+//                    addTaskItemFocusRequester.captureFocus()
                     println("mylogger SaveTaskItem2 ${addTaskItemModalBottomSheetState.currentValue}")
+                }
+                else -> {
+                    println("mylogger event called3")
                 }
             }
         }
@@ -251,7 +262,6 @@ fun TodoListScreen(
         scope = scope,
         state = addTaskItemModalBottomSheetState,
         focusRequester = addTaskItemFocusRequester,
-        showMainBottomSheetScaffold = showMainBottomSheetScaffold,
         textField = {
             TransparentHintTextField(
                 text = taskItemContentState.text,
@@ -264,9 +274,6 @@ fun TodoListScreen(
                 modifier = Modifier
                     .fillMaxHeight()
                     .focusRequester(addTaskItemFocusRequester),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide() })
             )
         },
         addButton = {

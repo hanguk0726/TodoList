@@ -30,7 +30,7 @@ fun TransparentHintTextField(
     textStyle: TextStyle = TextStyle(),
     singleLine: Boolean = false,
     keyboardOptions: KeyboardOptions? = null,
-    keyboardActions: KeyboardActions? = null
+    keyboardActions: KeyboardActions? = null,
 ){
     Box(
         modifier = modifier

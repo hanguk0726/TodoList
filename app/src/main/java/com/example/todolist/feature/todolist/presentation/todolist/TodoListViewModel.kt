@@ -44,9 +44,8 @@ class TodoListViewModel @Inject constructor(
             hint = "새 할 일"
         )
     )
+
     val taskItemContent: State<TodoListTextFieldState> = _taskItemContent
-
-
 
     private val _lastSelectedTaskListPositionLoaded = mutableStateOf(false)
     val lastSelectedTaskListPositionLoaded = _lastSelectedTaskListPositionLoaded
@@ -80,10 +79,12 @@ class TodoListViewModel @Inject constructor(
             is TodoListEvent.EnterTaskItemContent -> {
                 _taskItemContent.value = taskItemContent.value.copy(
                     text = event.value,
-                    isHintVisible = taskItemContent.value.text.isBlank()
+                )
+                // 한번에 init 하면 같은 시점에 대해서 isBlank 판정이 안된다.
+                _taskItemContent.value = taskItemContent.value.copy(
+                    isHintVisible = taskItemContent.value.text.isBlank(),
                 )
             }
-
             is TodoListEvent.CompleteTaskItem -> {
 
             }
@@ -112,12 +113,6 @@ class TodoListViewModel @Inject constructor(
                         _eventFlow.emit(UiEvent.SaveTaskItem)
                     } catch (e: InvalidTaskItemException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't save taskItem"}")
-                        //need to change to Banner(Material Design)
-//                        _eventFlow.emit(
-//                            UiEvent.ShowSnackbar(
-//                                message = e.message ?: "Couldn't save taskItem"
-//                            )
-//                        )
                     }
                     _taskItemContent.value = taskItemContent.value.copy(
                         text = "",
@@ -198,11 +193,7 @@ class TodoListViewModel @Inject constructor(
             return@withContext try {
                 taskListUseCases.addTaskList(taskList)
             } catch (e: Exception) {
-                _eventFlow.emit(
-                    UiEvent.ShowSnackbar(
-                        message = e.message ?: "Couldn't create a task list"
-                    )
-                )
+                Log.e("TodoListViewModel","${e.message ?: "Couldn't create the taskList"}")
                 -1
             }
         }
@@ -228,7 +219,6 @@ class TodoListViewModel @Inject constructor(
     )
 
     sealed class UiEvent {
-        data class ShowSnackbar(val message: String) : UiEvent()
         data class ScrollToLastSelectedTaskListPosition(val index: Int) : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
