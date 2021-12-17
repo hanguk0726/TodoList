@@ -9,19 +9,16 @@ import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.ScrimColor
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
@@ -34,27 +31,29 @@ fun AddTaskItemModalBottomSheet(
     textField: @Composable () -> Unit,
     addButton: @Composable () -> Unit
 ) {
-    val isShowing = state.targetValue != ModalBottomSheetValue.Hidden
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    if (isShowing) {
-//        SideEffect {
-//            focusRequester.requestFocus()
-//        }
-    } else {
+    val isShowing = state.targetValue == ModalBottomSheetValue.Expanded
 
-        keyboardController?.hide()
+    LaunchedEffect(key1 = isShowing) {
+        if (isShowing) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        } else {
+            keyboardController?.hide()
+        }
     }
-//
-//    BackHandler(
-//        enabled = isShowing,
-//        onBack = {
-//            scope.launch {
-//                keyboardController?.hide()
-//                state.hide()
-//            }
-//        }
-//    )
+
+    BackHandler(
+        enabled = isShowing,
+        onBack = {
+            scope.async {
+                keyboardController?.hide()
+                state.hide()
+            }
+        }
+    )
 
     ModalBottomSheetLayout(
         modifier = Modifier.navigationBarsWithImePadding(),

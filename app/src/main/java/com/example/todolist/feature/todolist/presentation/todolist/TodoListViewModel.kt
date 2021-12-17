@@ -16,10 +16,8 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 //savedStateHandle
@@ -114,10 +112,7 @@ class TodoListViewModel @Inject constructor(
                     } catch (e: InvalidTaskItemException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't save taskItem"}")
                     }
-                    _taskItemContent.value = taskItemContent.value.copy(
-                        text = "",
-                        isHintVisible = true
-                    )
+
                 }
             }
             is TodoListEvent.SelectTaskList -> {
@@ -164,6 +159,7 @@ class TodoListViewModel @Inject constructor(
             taskItemManagerPool[targetTaskListId] = taskItemManager
         }.launchIn(viewModelScope)
     }
+
 
     private fun getTaskLists() {
         getTaskListsJob?.cancel()
@@ -212,6 +208,12 @@ class TodoListViewModel @Inject constructor(
         }.first()
     }
 
+    fun clearTaskItemContentTextField() {
+        _taskItemContent.value = taskItemContent.value.copy(
+            text = "",
+            isHintVisible = true
+        )
+    }
     data class TaskItemManager(
         val _taskItemsState: MutableState<TaskItemsState> = mutableStateOf(TaskItemsState()),
         val taskItemsState: State<TaskItemsState> = _taskItemsState,
