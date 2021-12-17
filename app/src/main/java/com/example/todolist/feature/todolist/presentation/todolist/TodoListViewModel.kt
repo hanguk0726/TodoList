@@ -33,9 +33,7 @@ class TodoListViewModel @Inject constructor(
         const val TASK_LIST_POSITION_KEY = "task_list_position_key"
     }
 
-
     private var selectedTaskListId: Long? = null
-
 
     private val _taskItemContent = mutableStateOf(
         TodoListTextFieldState(

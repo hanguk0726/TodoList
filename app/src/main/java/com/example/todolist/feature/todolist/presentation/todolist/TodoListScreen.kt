@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +31,6 @@ import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.ui.theme.LightBlack
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.pager.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -82,11 +80,11 @@ fun TodoListScreen(
     val menuModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-    val _pagerState = rememberPagerState(
+    val pagerState = rememberPagerState(
         initialPage = 0,
     )
 
-    val currentPageState = { getTargetPage(_pagerState) }
+    val currentPageState = { getTargetPage(pagerState) }
 
     LaunchedEffect(
         key1 = addTaskItemModalBottomSheetState.targetValue,
@@ -102,7 +100,7 @@ fun TodoListScreen(
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
-                    _pagerState.scrollToPage(event.index)
+                    pagerState.scrollToPage(event.index)
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
@@ -200,7 +198,7 @@ fun TodoListScreen(
                     indicator = @Composable { tabPositions ->
                         TabRowDefaults.Indicator(
                             Modifier
-                                .pagerTabIndicatorOffset(_pagerState, tabPositions)
+                                .pagerTabIndicatorOffset(pagerState, tabPositions)
                                 .clip(
                                     RoundedCornerShape(
                                         topStart = 8.dp,
@@ -214,7 +212,7 @@ fun TodoListScreen(
                         val isSelected = currentPageState() == index
                         Tab(selected = isSelected, onClick = {
                             scope.launch {
-                                _pagerState.animateScrollToPage(index)
+                                pagerState.animateScrollToPage(index)
                             }
                         }, text = {
                             Text(
@@ -242,10 +240,10 @@ fun TodoListScreen(
 
                 HorizontalPager(
                     taskListsState.taskLists.size,
-                    state = _pagerState,
+                    state = pagerState,
                     flingBehavior = rememberFlingBehaviorMultiplier(
                         multiplier = 0.5f,
-                        baseFlingBehavior = PagerDefaults.flingBehavior(_pagerState)
+                        baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
                     ),
                 ) { pageIndex ->
 
@@ -297,11 +295,12 @@ fun TodoListScreen(
         }
     )
 
-
     MenuModalBottomSheet(
         scope = scope,
         state = menuModalBottomSheetState,
-        items = listOf {
+        taskListsState = viewModel.taskListsState,
+        pagerState = pagerState,
+        addTaskListItemButton =  {
             ListItem(
                 modifier = Modifier.clickable {
                     navController.navigate(Screen.AddEditTaskListScreen.route)
