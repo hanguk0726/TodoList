@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
+import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
@@ -90,7 +91,19 @@ class TodoListViewModel @Inject constructor(
             }
 
             is TodoListEvent.DeleteTaskList -> {
-
+                GlobalScope.launch {
+                    _eventFlow.emit(UiEvent.ScrollTaskListPosition(0))
+                }
+                viewModelScope.launch {
+                    try {
+                        val selectedTaskList =
+                            taskListsState.value.taskLists
+                                .find{ el -> el.id!! == selectedTaskListId}
+                        taskListUseCases.deleteTaskList(selectedTaskList!!)
+                    } catch(e: InvalidTaskListException) {
+                        Log.e("TodoListViewModel","${e.message ?: "Couldn't delete taskList"}")
+                    }
+                }
             }
 
             is TodoListEvent.RestoreTaskItemFromCompletion -> {
@@ -126,11 +139,13 @@ class TodoListViewModel @Inject constructor(
                 viewModelScope.launch {
                     val lastSelectedTaskListId = readLastSelectedTaskListId()
                     if(lastSelectedTaskListId != -1){
-                        val lastSelectedTaskList =  taskListsState.value.taskLists
+                        val lastSelectedTaskList = taskListsState.value.taskLists
                             .find{ el -> el.id!!.toInt() == lastSelectedTaskListId}
-                        selectedTaskListId = lastSelectedTaskList!!.id
-                        val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
-                        _eventFlow.emit(UiEvent.ScrollToLastSelectedTaskListPosition(index))
+                        lastSelectedTaskList?.let{
+                            selectedTaskListId = lastSelectedTaskList.id
+                            val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
+                            _eventFlow.emit(UiEvent.ScrollTaskListPosition(index))
+                        }
                     }
                 }
 
@@ -212,6 +227,7 @@ class TodoListViewModel @Inject constructor(
             isHintVisible = true
         )
     }
+
     data class TaskItemManager(
         val _taskItemsState: MutableState<TaskItemsState> = mutableStateOf(TaskItemsState()),
         val taskItemsState: State<TaskItemsState> = _taskItemsState,
@@ -219,7 +235,7 @@ class TodoListViewModel @Inject constructor(
     )
 
     sealed class UiEvent {
-        data class ScrollToLastSelectedTaskListPosition(val index: Int) : UiEvent()
+        data class ScrollTaskListPosition(val index: Int) : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()

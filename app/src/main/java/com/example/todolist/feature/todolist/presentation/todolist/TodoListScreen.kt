@@ -11,7 +11,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.More
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -93,16 +92,16 @@ fun TodoListScreen(
 
     val selectedTaskListId = {
         if(taskListsState.taskLists.isNotEmpty())
-            taskListsState.taskLists[currentPageState()].id!!
-        else null
+            if(taskListsState.taskLists.size > currentPageState()) {
+                taskListsState.taskLists[currentPageState()].id!!
+            } else -1L
+        else -1L
     }
 
     LaunchedEffect(
-        key1 = addTaskItemModalBottomSheetState.targetValue,
-        key2 = menuLeftModalBottomSheetState.targetValue
+        key1 = addTaskItemModalBottomSheetState.targetValue
     ) {
         showMainBottomSheetScaffold.value =
-            addTaskItemModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden &&
                     menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
     }
 
@@ -113,7 +112,7 @@ fun TodoListScreen(
         }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
+                is TodoListViewModel.UiEvent.ScrollTaskListPosition -> {
                     pagerState.scrollToPage(event.index)
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
@@ -322,7 +321,7 @@ fun TodoListScreen(
                 modifier = Modifier
                     .noRippleClickable {
                         navController.navigate(Screen.AddEditTaskListScreen.route +
-                                "?isForAdd=${true}&taskListId=${selectedTaskListId()}")
+                                "?taskListId=${-1L}")
                     },
                 icon = { Icon(Icons.Filled.Add, "add new task list") },
                 text = { Text("새 목록 만들기") })
@@ -332,23 +331,38 @@ fun TodoListScreen(
     MenuRightModalBottomSheet(
         scope = scope,
         state = menuRightModalBottomSheetState,
-        tasKListId = selectedTaskListId(),
+        taskListId = selectedTaskListId(),
         changeTaskListName = {
             ListItem(
                 modifier = Modifier
                     .noRippleClickable {
                         navController.navigate(Screen.AddEditTaskListScreen.route +
-                                "?isForAdd=${false}&taskListId=${selectedTaskListId()}")
+                                "?taskListId=${selectedTaskListId()}")
                     },
-                icon = { Icon(Icons.Filled.Add, "change name of task list") },
                 text = { Text("목록 이름 변경") }
             )
         },
         deleteTaskList = {
-            // 총 개수가 1이면 disabled
+            // 할 일이 존재하면 Alert
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable(
+                        enabled = taskListsState.taskLists.size > 1
+                    ) {
+                       viewModel.onEvent(TodoListEvent.DeleteTaskList)
+                    },
+                text = { Text("목록 삭제") }
+            )
         },
-        deleteCompletedItems = {
 
+        //Alert needed
+        deleteCompletedItems = {
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable {
+                    },
+                text = { Text("완료된 할 일 모두 삭제") }
+            )
         }
 
 

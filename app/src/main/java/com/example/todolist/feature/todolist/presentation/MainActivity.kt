@@ -51,25 +51,20 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(
                                 route = Screen.AddEditTaskListScreen.route +
-                                        "?isForAdd={isForAdd}&taskListId={taskListId}",
+                                        "?taskListId={taskListId}",
                                 arguments = listOf(
-                                    navArgument(
-                                        name = "isForAdd"
-                                    ){
-                                        type = NavType.BoolType
-                                    },
                                     navArgument(
                                         name = "taskListId"
                                     ) {
                                         type = NavType.LongType
-                                        nullable = true
+                                        defaultValue = -1L
                                     }
                                 )
                             ) {
-                                val isForAdd = it.arguments?.getBoolean("isForAdd") ?: true
+                                val taskListId = it.arguments?.getLong("taskListId") ?: -1L
                                 AddTaskListScreen(
                                     navController = navController,
-                                    isForAdd = isForAdd
+                                    taskListId = taskListId
                                 )
                             }
                         }

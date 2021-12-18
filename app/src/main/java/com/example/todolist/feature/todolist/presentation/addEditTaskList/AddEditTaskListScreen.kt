@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun AddTaskListScreen(
     navController: NavController,
-    isForAdd: Boolean,
+    taskListId: Long,
     viewModel: AddEditTaskListViewModel = hiltViewModel()
 ) {
     rememberSystemUiController().setSystemBarsColor(
@@ -36,6 +36,11 @@ fun AddTaskListScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = true) {
+        if(taskListId == -1L){
+            viewModel.clearTaskListNameTextField()
+        } else {
+            viewModel.loadTaskListNameToModify()
+        }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {
@@ -75,7 +80,7 @@ fun AddTaskListScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (isForAdd) "새 목록 만들기" else "목록 이름 변경하기", fontSize = 20.sp)
+                Text(if (taskListId == -1L) "새 목록 만들기" else "목록 이름 변경하기", fontSize = 20.sp)
                 Spacer(modifier = Modifier.weight(1.0f))
                 PureTextButton(
                     text = "완료",

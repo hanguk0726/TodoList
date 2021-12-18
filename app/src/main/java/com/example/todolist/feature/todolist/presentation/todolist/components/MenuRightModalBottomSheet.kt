@@ -32,7 +32,7 @@ import kotlinx.coroutines.async
 fun MenuRightModalBottomSheet(
     scope: CoroutineScope,
     state: ModalBottomSheetState,
-    tasKListId: Long? = null,
+    taskListId: Long = -1L,
     changeTaskListName: @Composable () -> Unit,
     deleteTaskList: @Composable () -> Unit,
     deleteCompletedItems: @Composable () -> Unit,

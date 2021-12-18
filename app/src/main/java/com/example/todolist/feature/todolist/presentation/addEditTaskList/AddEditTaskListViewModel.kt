@@ -36,14 +36,16 @@ class AddEditTaskListViewModel @Inject constructor(
     private var currentTaskListId: Long? = null
 
     init {
-        savedStateHandle.get<Long>("currentTaskListId")?.let { _taskListId ->
-            viewModelScope.launch {
-                taskListUseCases.getTaskListById(_taskListId)?.also { _taskList ->
-                    currentTaskListId = _taskListId
-                    _taskListName.value = taskListName.value.copy(
-                        text = _taskList.name,
-                        isHintVisible = false
-                    )
+        savedStateHandle.get<Long>("taskListId")?.let { _taskListId ->
+            if (_taskListId != -1L) {
+                viewModelScope.launch {
+                    taskListUseCases.getTaskListById(_taskListId)?.also { _taskList ->
+                        currentTaskListId = _taskListId
+                        _taskListName.value = taskListName.value.copy(
+                            text = _taskList.name,
+                            isHintVisible = false
+                        )
+                    }
                 }
             }
         }
@@ -76,7 +78,22 @@ class AddEditTaskListViewModel @Inject constructor(
             }
         }
     }
+    fun clearTaskListNameTextField() {
+        _taskListName.value = _taskListName.value.copy(
+            text = "",
+            isHintVisible = true
+        )
+    }
 
+    fun loadTaskListNameToModify() {
+        viewModelScope.launch {
+            val targetTaskList = taskListUseCases.getTaskListById(currentTaskListId!!)
+            _taskListName.value = _taskListName.value.copy(
+                text = targetTaskList!!.name,
+                isHintVisible = false
+            )
+        }
+    }
     sealed class UiEvent {
         object SaveTaskList : UiEvent()
     }
