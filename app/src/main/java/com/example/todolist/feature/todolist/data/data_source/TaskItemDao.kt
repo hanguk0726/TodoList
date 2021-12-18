@@ -2,6 +2,7 @@ package com.example.todolist.feature.todolist.data.data_source
 
 import androidx.room.*
 import com.example.todolist.feature.todolist.domain.model.TaskItem
+import com.example.todolist.feature.todolist.domain.model.TaskList
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -18,5 +19,8 @@ interface TaskItemDao {
 
     @Delete
     suspend fun deleteTaskItem(taskItem: TaskItem)
+
+    @Update
+    suspend fun updateTaskItem(taskItem: TaskItem)
 
 }

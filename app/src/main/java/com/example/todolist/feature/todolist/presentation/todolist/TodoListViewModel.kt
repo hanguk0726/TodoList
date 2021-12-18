@@ -83,7 +83,18 @@ class TodoListViewModel @Inject constructor(
                 )
             }
             is TodoListEvent.CompleteTaskItem -> {
-
+//UiEvent에 별개로 excute하고  UI에 리스트 동기화도 별개로해야할 수 있다.
+               viewModelScope.launch {
+                   try {
+                       val original = event.taskItem
+                       val modified =  original.copy(
+                           isCompleted = !original.isCompleted
+                       )
+                       taskItemUseCases.updateTaskItem(modified)
+                   } catch(e: InvalidTaskItemException) {
+                       Log.e("TodoListViewModel","${e.message ?: "Couldn't update taskItem"}")
+                   }
+               }
             }
 
             is TodoListEvent.DeleteTaskItem -> {
@@ -155,7 +166,8 @@ class TodoListViewModel @Inject constructor(
             }
         }
     }
-// 안쓰이는 elements 정리 로직 필요
+// 안쓰이는 elements 정리 로직 필요 -> 주기적으로 && DeleteItemEvent 시에
+
     private fun getTaskItemsByTaskListId(targetTaskListId: Long) {
         var taskItemManager = if(taskItemManagerPool.containsKey(targetTaskListId)){
             taskItemManagerPool[targetTaskListId]!!

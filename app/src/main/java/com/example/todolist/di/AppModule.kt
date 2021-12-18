@@ -77,7 +77,8 @@ object AppModule {
             addTaskItem = AddTaskItem(repository),
             deleteTaskItem = DeleteTaskItem(repository),
             getTaskItemById = GetTaskItemById(repository),
-            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository)
+            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository),
+            updateTaskItem = UpdateTaskItem(repository)
         )
     }
 

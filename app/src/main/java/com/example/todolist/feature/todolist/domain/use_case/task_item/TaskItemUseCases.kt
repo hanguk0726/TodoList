@@ -4,5 +4,6 @@ data class TaskItemUseCases(
     val addTaskItem: AddTaskItem,
     val deleteTaskItem: DeleteTaskItem,
     val getTaskItemById: GetTaskItemById,
-    val getTaskItemsByTaskListId: GetTaskItemsByTaskListId
+    val getTaskItemsByTaskListId: GetTaskItemsByTaskListId,
+    val updateTaskItem: UpdateTaskItem
 )

@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.domain.repository
 
+import androidx.room.Update
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import kotlinx.coroutines.flow.Flow
@@ -13,4 +14,6 @@ interface TaskItemRepository {
     suspend fun insertTaskItem(taskItem: TaskItem)
 
     suspend fun deleteTaskItem(taskItem: TaskItem)
+
+    suspend fun updateTaskItem(taskItem: TaskItem)
 }

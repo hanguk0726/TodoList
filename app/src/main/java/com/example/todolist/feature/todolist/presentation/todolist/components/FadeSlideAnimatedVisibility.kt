@@ -4,11 +4,12 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.ui.unit.IntOffset
 
 @Composable
 fun FadeSlideAnimatedVisibility(
-    visible: MutableState<Boolean>,
+    visible: State<Boolean>,
     content: @Composable () -> Unit
 ) {
     AnimatedVisibility(

@@ -274,7 +274,15 @@ fun TodoListScreen(
                         val itemList = viewModel.getTaskItems(eachTaskListId)
                         items(itemList) { taskItem ->
                             ListItem(
-                                text = { Text(taskItem.content) }
+                                text = { Text(taskItem.content) },
+                                icon = {
+                                    TaskItemCompletionButton(
+                                        taskItem.isCompleted,
+                                        onClick = {
+                                            viewModel.onEvent(TodoListEvent.CompleteTaskItem(taskItem))
+                                        }
+                                    )
+                                }
                             )
                         }
                     }

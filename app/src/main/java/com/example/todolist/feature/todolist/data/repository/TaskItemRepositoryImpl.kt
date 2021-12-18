@@ -27,4 +27,8 @@ class TaskItemRepositoryImpl(
         return dao.deleteTaskItem(taskItem)
     }
 
+    override suspend fun updateTaskItem(taskItem: TaskItem) {
+        return dao.updateTaskItem(taskItem)
+    }
+
 }
