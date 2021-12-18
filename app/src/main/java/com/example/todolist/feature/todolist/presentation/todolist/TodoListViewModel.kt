@@ -82,7 +82,7 @@ class TodoListViewModel @Inject constructor(
                     isHintVisible = taskItemContent.value.text.isBlank(),
                 )
             }
-            is TodoListEvent.CompleteTaskItem -> {
+            is TodoListEvent.ToggleTaskItemCompletionState -> {
 //UiEvent에 별개로 excute하고  UI에 리스트 동기화도 별개로해야할 수 있다.
                viewModelScope.launch {
                    try {
@@ -117,9 +117,6 @@ class TodoListViewModel @Inject constructor(
                 }
             }
 
-            is TodoListEvent.RestoreTaskItemFromCompletion -> {
-
-            }
 
             is TodoListEvent.SaveTaskItem -> {
                 viewModelScope.launch {
@@ -166,6 +163,7 @@ class TodoListViewModel @Inject constructor(
             }
         }
     }
+
 // 안쓰이는 elements 정리 로직 필요 -> 주기적으로 && DeleteItemEvent 시에
 
     private fun getTaskItemsByTaskListId(targetTaskListId: Long) {

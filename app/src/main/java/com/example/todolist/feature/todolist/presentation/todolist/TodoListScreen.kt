@@ -1,8 +1,9 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
 import android.util.Log
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,6 +38,7 @@ import com.google.accompanist.pager.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -88,6 +90,8 @@ fun TodoListScreen(
         initialPage = 0,
     )
 
+    val showCompletedTaskItems = remember { mutableStateOf(value = false) }
+
     val currentPageState = { getTargetPage(pagerState) }
 
     val selectedTaskListId = {
@@ -97,6 +101,7 @@ fun TodoListScreen(
             } else -1L
         else -1L
     }
+
 
     LaunchedEffect(
         key1 = addTaskItemModalBottomSheetState.targetValue
@@ -273,17 +278,72 @@ fun TodoListScreen(
                         viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
                         val itemList = viewModel.getTaskItems(eachTaskListId)
                         items(itemList) { taskItem ->
-                            ListItem(
-                                text = { Text(taskItem.content) },
-                                icon = {
-                                    TaskItemCompletionButton(
-                                        taskItem.isCompleted,
-                                        onClick = {
-                                            viewModel.onEvent(TodoListEvent.CompleteTaskItem(taskItem))
-                                        }
-                                    )
+                            if(!taskItem.isCompleted){
+                                var visible by remember { mutableStateOf(true) }
+                                AnimatedVisibility(
+                                    visible = visible,
+                                    enter = fadeIn(),
+                                    exit = fadeOut()
+                                ) {
+                                        ListItem(
+                                            text = { Text(taskItem.content) },
+                                            icon = {
+                                                TaskItemCompletionButton(
+                                                    taskItem.isCompleted,
+                                                    onClick = {
+                                                        scope.async {
+                                                            delay(500L)
+                                                            visible = false
+                                                            viewModel.onEvent(TodoListEvent.ToggleTaskItemCompletionState(taskItem))
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        )
                                 }
-                            )
+                            }
+                        }
+
+                        if(itemList.any { el -> el.isCompleted }){
+                            item{
+                                val count = itemList.count { el -> el.isCompleted }
+                                ListItem(
+                                    Modifier.clickable{
+                                        showCompletedTaskItems.value = !showCompletedTaskItems.value
+                                    },
+                                    text = { Text("완료됨(${count}개)") },
+                                    //TODO animation icon
+                                    trailing = {}
+                                )
+                            }
+                            if(showCompletedTaskItems.value){
+                                items(itemList) { taskItem ->
+                                    if(taskItem.isCompleted){
+                                        var visible by remember { mutableStateOf(true) }
+                                        AnimatedVisibility(
+                                            visible = visible,
+                                            enter = fadeIn(),
+                                            exit = fadeOut()
+                                        ) {
+                                                ListItem(
+                                                    text = { Text(taskItem.content) },
+                                                    icon = {
+                                                        TaskItemCompletionButton(
+                                                            taskItem.isCompleted,
+                                                            onClick = {
+                                                                scope.async {
+                                                                    delay(500L)
+                                                                    visible = false
+                                                                    viewModel.onEvent(TodoListEvent.ToggleTaskItemCompletionState(taskItem))
+                                                                }
+                                                            }
+                                                        )
+                                                    }
+                                                )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
