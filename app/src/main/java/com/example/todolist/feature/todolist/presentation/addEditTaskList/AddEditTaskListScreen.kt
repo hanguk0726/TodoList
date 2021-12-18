@@ -9,13 +9,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
-import com.example.todolist.feature.todolist.presentation.todolist.TodoListEvent
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
@@ -26,9 +24,9 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun AddTaskListScreen(
     navController: NavController,
+    isForAdd: Boolean,
     viewModel: AddEditTaskListViewModel = hiltViewModel()
 ) {
-// 저장 이후 수정도
     rememberSystemUiController().setSystemBarsColor(
         color = MaterialTheme.colors.background
     )
@@ -77,7 +75,7 @@ fun AddTaskListScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("새 목록 만들기", fontSize = 20.sp)
+                Text(if (isForAdd) "새 목록 만들기" else "목록 이름 변경하기", fontSize = 20.sp)
                 Spacer(modifier = Modifier.weight(1.0f))
                 PureTextButton(
                     text = "완료",

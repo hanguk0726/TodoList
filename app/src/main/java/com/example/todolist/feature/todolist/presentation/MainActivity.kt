@@ -10,9 +10,11 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddTaskListScreen
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListScreen
 import com.example.todolist.feature.todolist.presentation.util.Screen
@@ -47,9 +49,27 @@ class MainActivity : ComponentActivity() {
                                     navController = navController
                                 )
                             }
-                            composable(route = Screen.AddEditTaskListScreen.route) {
+                            composable(
+                                route = Screen.AddEditTaskListScreen.route +
+                                        "?isForAdd={isForAdd}&taskListId={taskListId}",
+                                arguments = listOf(
+                                    navArgument(
+                                        name = "isForAdd"
+                                    ){
+                                        type = NavType.BoolType
+                                    },
+                                    navArgument(
+                                        name = "taskListId"
+                                    ) {
+                                        type = NavType.LongType
+                                        nullable = true
+                                    }
+                                )
+                            ) {
+                                val isForAdd = it.arguments?.getBoolean("isForAdd") ?: true
                                 AddTaskListScreen(
-                                    navController = navController
+                                    navController = navController,
+                                    isForAdd = isForAdd
                                 )
                             }
                         }

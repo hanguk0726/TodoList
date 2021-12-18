@@ -3,7 +3,6 @@ package com.example.todolist.feature.todolist.presentation.todolist
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +11,8 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.More
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import com.example.todolist.feature.todolist.presentation.components.SemiTranspa
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
+import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.example.todolist.ui.theme.LightBlack
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
@@ -77,7 +79,10 @@ fun TodoListScreen(
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val addTaskItemFocusRequester = remember { FocusRequester() }
 
-    val menuModalBottomSheetState =
+    val menuLeftModalBottomSheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+
+    val menuRightModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
     val pagerState = rememberPagerState(
@@ -86,17 +91,26 @@ fun TodoListScreen(
 
     val currentPageState = { getTargetPage(pagerState) }
 
+    val selectedTaskListId = {
+        if(taskListsState.taskLists.isNotEmpty())
+            taskListsState.taskLists[currentPageState()].id!!
+        else null
+    }
+
     LaunchedEffect(
         key1 = addTaskItemModalBottomSheetState.targetValue,
-        key2 = menuModalBottomSheetState.targetValue
+        key2 = menuLeftModalBottomSheetState.targetValue
     ) {
         showMainBottomSheetScaffold.value =
             addTaskItemModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden &&
-                    menuModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
+                    menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
     }
 
     LaunchedEffect(key1 = true) {
-        menuModalBottomSheetState.hide()
+        async {
+            menuLeftModalBottomSheetState.hide()
+            menuRightModalBottomSheetState.hide()
+        }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is TodoListViewModel.UiEvent.ScrollToLastSelectedTaskListPosition -> {
@@ -104,15 +118,8 @@ fun TodoListScreen(
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
-                    try {
-                        async {
-                            addTaskItemModalBottomSheetState.hide()
-                        }
-                    } catch (e: Exception) {
-                        Log.e(
-                            "TodoLisScreen",
-                            "${e.message ?: "Couldn't dismiss addTaskItemModalBottomSheet"}"
-                        )
+                    async {
+                        addTaskItemModalBottomSheetState.hide()
                     }
                 }
                 else -> {
@@ -153,6 +160,7 @@ fun TodoListScreen(
                 }
             }
         },
+
         isFloatingActionButtonDocked = true,
         floatingActionButtonPosition = FabPosition.Center,
 
@@ -164,11 +172,19 @@ fun TodoListScreen(
                     elevation = 0.dp,
                     content = {
                         IconButton(onClick = {
-                            scope.launch {
-                                menuModalBottomSheetState.show()
+                            scope.async {
+                                menuLeftModalBottomSheetState.show()
                             }
                         }) {
-                            Icon(Icons.Default.Menu, "show menu")
+                            Icon(Icons.Default.Menu, "show menu on left")
+                        }
+                        Spacer(modifier = Modifier.weight(1.0f))
+                        IconButton(onClick = {
+                            scope.async {
+                                menuRightModalBottomSheetState.show()
+                            }
+                        }) {
+                            Icon(Icons.Default.MoreVert, "show menu on right")
                         }
                     },
                 )
@@ -247,9 +263,11 @@ fun TodoListScreen(
                     ),
                 ) { pageIndex ->
 
-                    LazyColumn(Modifier
-                        .fillMaxSize()
-                        .padding(bottom = bottomAppBarPadding.calculateBottomPadding())) {
+                    LazyColumn(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
+                    ) {
                         val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
                         val selectedTaskListId = taskListsState.taskLists[currentPageState()].id!!
                         viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId))
@@ -265,7 +283,6 @@ fun TodoListScreen(
             }
         }
     }
-
 
     AddTaskItemModalBottomSheet(
         scope = scope,
@@ -295,19 +312,45 @@ fun TodoListScreen(
         }
     )
 
-    MenuModalBottomSheet(
+    MenuLeftModalBottomSheet(
         scope = scope,
-        state = menuModalBottomSheetState,
+        state = menuLeftModalBottomSheetState,
         taskListsState = viewModel.taskListsState,
         pagerState = pagerState,
-        addTaskListItemButton =  {
+        addTaskListItemButton = {
             ListItem(
-                modifier = Modifier.clickable {
-                    navController.navigate(Screen.AddEditTaskListScreen.route)
-                },
+                modifier = Modifier
+                    .noRippleClickable {
+                        navController.navigate(Screen.AddEditTaskListScreen.route +
+                                "?isForAdd=${true}&taskListId=${selectedTaskListId()}")
+                    },
                 icon = { Icon(Icons.Filled.Add, "add new task list") },
                 text = { Text("새 목록 만들기") })
         }
     )
 
+    MenuRightModalBottomSheet(
+        scope = scope,
+        state = menuRightModalBottomSheetState,
+        tasKListId = selectedTaskListId(),
+        changeTaskListName = {
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable {
+                        navController.navigate(Screen.AddEditTaskListScreen.route +
+                                "?isForAdd=${false}&taskListId=${selectedTaskListId()}")
+                    },
+                icon = { Icon(Icons.Filled.Add, "change name of task list") },
+                text = { Text("목록 이름 변경") }
+            )
+        },
+        deleteTaskList = {
+            // 총 개수가 1이면 disabled
+        },
+        deleteCompletedItems = {
+
+        }
+
+
+    )
 }
