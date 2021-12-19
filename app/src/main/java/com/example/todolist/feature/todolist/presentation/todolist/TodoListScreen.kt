@@ -2,6 +2,9 @@ package com.example.todolist.feature.todolist.presentation.todolist
 
 import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,12 +14,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -101,7 +106,20 @@ fun TodoListScreen(
             } else -1L
         else -1L
     }
+    val isShowCompletedTaskItemsButtonEnabled = remember { mutableStateOf(true) }
+    val isShowCompletedTaskItemsButtonRotated = remember { mutableStateOf(false) }
+    val showCompletedTaskItemsButtonAngle: Float by animateFloatAsState(
+        targetValue = if (isShowCompletedTaskItemsButtonRotated.value) 180F else 0F,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = FastOutSlowInEasing
+        ),
+        finishedListener = {
+            isShowCompletedTaskItemsButtonEnabled.value = true
+        }
+    )
 
+    var showDeleteTaskListDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(
         key1 = addTaskItemModalBottomSheetState.targetValue
@@ -125,6 +143,9 @@ fun TodoListScreen(
                     async {
                         addTaskItemModalBottomSheetState.hide()
                     }
+                }
+                is TodoListViewModel.UiEvent.ConfirmDeleteTaskList -> {
+                    showDeleteTaskListDialog = true
                 }
                 else -> {
                     Log.i("TodoLisScreen", "Wrong event called :: ${event.javaClass.name}")
@@ -308,12 +329,19 @@ fun TodoListScreen(
                             item{
                                 val count = itemList.count { el -> el.isCompleted }
                                 ListItem(
-                                    Modifier.clickable{
+                                    Modifier.clickable(
+                                        enabled = isShowCompletedTaskItemsButtonEnabled.value
+                                    ){
                                         showCompletedTaskItems.value = !showCompletedTaskItems.value
+                                        isShowCompletedTaskItemsButtonRotated.value = !isShowCompletedTaskItemsButtonRotated.value
+                                        isShowCompletedTaskItemsButtonEnabled.value = false
                                     },
                                     text = { Text("완료됨(${count}개)") },
-                                    //TODO animation icon
-                                    trailing = {}
+                                    trailing = {
+                                        Icon(Icons.Default.ExpandMore,
+                                            "show completed takeItem",
+                                            Modifier.rotate(showCompletedTaskItemsButtonAngle))
+                                    }
                                 )
                             }
                             if(showCompletedTaskItems.value){
@@ -412,14 +440,16 @@ fun TodoListScreen(
         },
         deleteTaskList = {
             // 할 일이 존재하면 Alert
+            val isEnabled = taskListsState.taskLists.size > 1
             ListItem(
                 modifier = Modifier
                     .noRippleClickable(
-                        enabled = taskListsState.taskLists.size > 1
+                        enabled = isEnabled
                     ) {
-                       viewModel.onEvent(TodoListEvent.DeleteTaskList)
+                       viewModel.onEvent(TodoListEvent.ConfirmDeleteTaskList(selectedTaskListId()))
                     },
-                text = { Text("목록 삭제") }
+                text = { Text("목록 삭제",
+                color = if(isEnabled) Color.Unspecified else Color.Gray) }
             )
         },
 
@@ -432,7 +462,29 @@ fun TodoListScreen(
                 text = { Text("완료된 할 일 모두 삭제") }
             )
         }
-
-
     )
+
+    if(showDeleteTaskListDialog){
+        AlertDialog(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .padding(8.dp),
+            onDismissRequest = { showDeleteTaskListDialog = false },
+            title = { Text("목록을 삭제하시겠습니까?") },
+            text = { Text("목록에 작성된 모든 할 일이 삭제됩니다. 삭제하시겠습니까?") },
+            confirmButton = {
+                PureTextButton(text = "삭제", textColor = LightBlue,
+                paddingValues = PaddingValues(8.dp,8.dp,16.dp,16.dp)) {
+                    showDeleteTaskListDialog = false
+                    viewModel.onEvent(TodoListEvent.DeleteTaskList)
+                }
+            },
+            dismissButton = {
+                PureTextButton(text = "취소", textColor = LightBlue,
+                    paddingValues = PaddingValues(8.dp,8.dp,16.dp,16.dp)) {
+                    showDeleteTaskListDialog = false
+                }
+            },
+        )
+    }
 }

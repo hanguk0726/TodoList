@@ -83,7 +83,7 @@ class TodoListViewModel @Inject constructor(
                 )
             }
             is TodoListEvent.ToggleTaskItemCompletionState -> {
-//UiEvent에 별개로 excute하고  UI에 리스트 동기화도 별개로해야할 수 있다.
+            //UiEvent에 별개로 excute하고  UI에 리스트 동기화도 별개로해야할 수 있다.
                viewModelScope.launch {
                    try {
                        val original = event.taskItem
@@ -117,7 +117,13 @@ class TodoListViewModel @Inject constructor(
                 }
             }
 
-
+            is TodoListEvent.ConfirmDeleteTaskList -> {
+                if(getTaskItems(event.selectedTaskListId).isNotEmpty()){
+                    viewModelScope.launch {
+                        _eventFlow.emit(UiEvent.ConfirmDeleteTaskList)
+                    }
+                }
+            }
             is TodoListEvent.SaveTaskItem -> {
                 viewModelScope.launch {
                     try {
@@ -141,7 +147,7 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             is TodoListEvent.GetTaskItemsByTaskListId -> {
-                getTaskItemsByTaskListId(event.taskListId)
+                loadTaskItemsOnPoolByTaskListId(event.taskListId)
             }
             is TodoListEvent.LoadLastSelectedTaskListPosition -> {
                 viewModelScope.launch {
@@ -166,7 +172,7 @@ class TodoListViewModel @Inject constructor(
 
 // 안쓰이는 elements 정리 로직 필요 -> 주기적으로 && DeleteItemEvent 시에
 
-    private fun getTaskItemsByTaskListId(targetTaskListId: Long) {
+    private fun loadTaskItemsOnPoolByTaskListId(targetTaskListId: Long) {
         var taskItemManager = if(taskItemManagerPool.containsKey(targetTaskListId)){
             taskItemManagerPool[targetTaskListId]!!
         } else {
@@ -246,6 +252,7 @@ class TodoListViewModel @Inject constructor(
 
     sealed class UiEvent {
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
+        object ConfirmDeleteTaskList : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()
