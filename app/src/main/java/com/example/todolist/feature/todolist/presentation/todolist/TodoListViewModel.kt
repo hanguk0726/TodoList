@@ -291,6 +291,11 @@ class TodoListViewModel @Inject constructor(
     }
 
     sealed class UiEvent {
+        data class ShowSnackbar(
+            val message: String,
+            val actionLabel: String? = null,
+            val action: () -> Unit
+        ): UiEvent()
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
         object ShowConfirmDialog : UiEvent()
         object SaveTaskList : UiEvent()

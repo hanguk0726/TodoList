@@ -140,6 +140,16 @@ fun TodoListScreen(
         }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
+                is TodoListViewModel.UiEvent.ShowSnackbar -> {
+                    val snackbarResult = mainScaffoldState.snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.actionLabel,
+                    )
+                    when (snackbarResult) {
+                        SnackbarResult.Dismissed -> {}
+                        SnackbarResult.ActionPerformed -> event.action
+                    }
+                }
                 is TodoListViewModel.UiEvent.ScrollTaskListPosition -> {
                     pagerState.scrollToPage(event.index)
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
@@ -504,7 +514,7 @@ fun TodoListScreen(
     if (showDeleteTaskListDialog) {
         val titleText: String
         val contentText: String
-        val confirmButtonText: String = "삭제"
+        val confirmButtonText = "삭제"
         val eventWhenConfirm: TodoListEvent
 
         when (dialogTypeState) {
@@ -515,7 +525,7 @@ fun TodoListScreen(
             }
             is TodoListViewModel.DialogType.DeleteCompletedTaskItem -> {
                 titleText = "완료된 할 일을 모두 삭제하시겠습니까?"
-                contentText = "삭제하시겠습니까?"
+                contentText = ""
                 eventWhenConfirm = TodoListEvent.DeleteCompletedTaskItems
             }
         }
