@@ -9,7 +9,7 @@ class DeleteTaskList(
 ) {
 
     @Throws(InvalidTaskListException::class)
-    suspend operator fun invoke(taskList: TaskList) {
-        repository.deleteTaskList(taskList)
+    suspend operator fun invoke(vararg taskList: TaskList) {
+        repository.deleteTaskList(*taskList)
     }
 }

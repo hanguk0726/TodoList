@@ -19,16 +19,16 @@ class TaskItemRepositoryImpl(
         return dao.getTaskItemById(id)
     }
 
-    override suspend fun insertTaskItem(taskItem: TaskItem) {
-        return dao.insertTaskItem(taskItem)
+    override suspend fun insertTaskItem(vararg taskItem: TaskItem) {
+        return dao.insertTaskItem(*taskItem)
     }
 
-    override suspend fun deleteTaskItem(taskItem: TaskItem) {
-        return dao.deleteTaskItem(taskItem)
+    override suspend fun deleteTaskItem(vararg taskItem: TaskItem) {
+        return dao.deleteTaskItem(*taskItem)
     }
 
-    override suspend fun updateTaskItem(taskItem: TaskItem) {
-        return dao.updateTaskItem(taskItem)
+    override suspend fun updateTaskItem(vararg taskItem: TaskItem) {
+        return dao.updateTaskItem(*taskItem)
     }
 
 }

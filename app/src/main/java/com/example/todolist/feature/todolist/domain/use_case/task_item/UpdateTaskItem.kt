@@ -9,7 +9,7 @@ class UpdateTaskItem(
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(taskItem: TaskItem) {
-        repository.updateTaskItem(taskItem)
+    suspend operator fun invoke(vararg taskItem: TaskItem) {
+        repository.updateTaskItem(*taskItem)
     }
 }

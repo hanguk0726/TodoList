@@ -10,10 +10,10 @@ class AddTaskItem(
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(taskItem: TaskItem) {
-        if(taskItem.content.isBlank()){
+    suspend operator fun invoke(vararg taskItem: TaskItem) {
+        if(taskItem.any { el -> el.content.isBlank() }){
             throw InvalidTaskItemException("the name of the task can't be empty")
         }
-        repository.insertTaskItem(taskItem)
+        repository.insertTaskItem(*taskItem)
     }
 }

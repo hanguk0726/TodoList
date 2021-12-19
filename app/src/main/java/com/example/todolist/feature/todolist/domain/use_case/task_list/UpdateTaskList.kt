@@ -9,7 +9,7 @@ class UpdateTaskList(
 ) {
 
     @Throws(InvalidTaskListException::class)
-    suspend operator fun invoke(taskList: TaskList) {
-        repository.updateTaskList(taskList)
+    suspend operator fun invoke(vararg taskList: TaskList) {
+        repository.updateTaskList(*taskList)
     }
 }

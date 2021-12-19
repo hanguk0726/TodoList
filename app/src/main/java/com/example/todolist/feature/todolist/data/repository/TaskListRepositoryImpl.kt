@@ -16,16 +16,16 @@ class TaskListRepositoryImpl(
         return dao.getTaskListById(id)
     }
 
-    override suspend fun insertTaskList(taskList: TaskList) : Long {
-        return dao.insertTaskList(taskList)
+    override suspend fun insertTaskList(vararg taskList: TaskList) : List<Long> {
+        return dao.insertTaskList(*taskList)
     }
 
-    override suspend fun deleteTaskList(taskList: TaskList) {
-        return dao.deleteTaskList(taskList)
+    override suspend fun deleteTaskList(vararg taskList: TaskList) {
+        return dao.deleteTaskList(*taskList)
     }
 
-    override suspend fun updateTaskList(taskList: TaskList) {
-        return dao.updateTaskList(taskList)
+    override suspend fun updateTaskList(vararg taskList: TaskList) {
+        return dao.updateTaskList(*taskList)
     }
 
 }

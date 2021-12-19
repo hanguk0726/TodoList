@@ -15,12 +15,12 @@ interface TaskItemDao {
     suspend fun getTaskItemById(id: Long): TaskItem?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTaskItem(taskItem: TaskItem)
+    suspend fun insertTaskItem(vararg taskItem: TaskItem)
 
     @Delete
-    suspend fun deleteTaskItem(taskItem: TaskItem)
+    suspend fun deleteTaskItem(vararg taskItem: TaskItem)
 
     @Update
-    suspend fun updateTaskItem(taskItem: TaskItem)
+    suspend fun updateTaskItem(vararg taskItem: TaskItem)
 
 }

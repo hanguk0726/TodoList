@@ -9,7 +9,7 @@ class DeleteTaskItem (
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(taskItem: TaskItem) {
-        repository.deleteTaskItem(taskItem)
+    suspend operator fun invoke(vararg taskItem: TaskItem) {
+        repository.deleteTaskItem(*taskItem)
     }
 }
