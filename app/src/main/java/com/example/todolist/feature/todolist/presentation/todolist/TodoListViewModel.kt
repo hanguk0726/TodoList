@@ -85,7 +85,6 @@ class TodoListViewModel @Inject constructor(
                 )
             }
             is TodoListEvent.ToggleTaskItemCompletionState -> {
-            //UiEvent에 별개로 excute하고  UI에 리스트 동기화도 별개로해야할 수 있다.
                viewModelScope.launch {
                    try {
                        val original = event.taskItem
@@ -93,6 +92,29 @@ class TodoListViewModel @Inject constructor(
                            isCompleted = !original.isCompleted
                        )
                        taskItemUseCases.updateTaskItem(modified)
+                       if(modified.isCompleted){
+                           _eventFlow.emit(UiEvent.ShowSnackbar(
+                               message = "할 일 1개가 완료됨",
+                               actionLabel = "실행취소",
+                               action = {
+                                   viewModelScope.launch {
+                                       taskItemUseCases.updateTaskItem(original)
+                                       _eventFlow.emit(UiEvent.CancelToggleTaskItemCompletionState)
+                                   }
+                               }
+                           ))
+                       }else{
+                           _eventFlow.emit(UiEvent.ShowSnackbar(
+                               message = "할 일 1개가 미완료로 표시됨",
+                               actionLabel = "실행취소",
+                               action = {
+                                   viewModelScope.launch {
+                                       taskItemUseCases.updateTaskItem(original)
+                                       _eventFlow.emit(UiEvent.CancelToggleTaskItemCompletionState)
+                                   }
+                               }
+                           ))
+                       }
                    } catch(e: InvalidTaskItemException) {
                        Log.e("TodoListViewModel","${e.message ?: "Couldn't update taskItem"}")
                    }
@@ -298,6 +320,7 @@ class TodoListViewModel @Inject constructor(
         ): UiEvent()
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
         object ShowConfirmDialog : UiEvent()
+        object CancelToggleTaskItemCompletionState : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()

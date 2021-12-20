@@ -38,6 +38,8 @@ import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
+import com.example.todolist.ui.theme.Blue
+import com.example.todolist.ui.theme.DarkWhite
 import com.example.todolist.ui.theme.LightBlack
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
@@ -101,6 +103,7 @@ fun TodoListScreen(
     )
 
     val showCompletedTaskItems = remember { mutableStateOf(value = false) }
+    val showCompletedTaskItemsButton = remember { mutableStateOf(value = true) }
 
     val currentPageState = { getTargetPage(pagerState) }
 
@@ -145,10 +148,12 @@ fun TodoListScreen(
                         message = event.message,
                         actionLabel = event.actionLabel,
                     )
-                    when (snackbarResult) {
-                        SnackbarResult.Dismissed -> {}
-                        SnackbarResult.ActionPerformed -> event.action
+                    if (snackbarResult == SnackbarResult.ActionPerformed) {
+                        event.action()
                     }
+                }
+                is TodoListViewModel.UiEvent.CancelToggleTaskItemCompletionState -> {
+                    showCompletedTaskItemsButton.value = true
                 }
                 is TodoListViewModel.UiEvent.ScrollTaskListPosition -> {
                     pagerState.scrollToPage(event.index)
@@ -172,6 +177,32 @@ fun TodoListScreen(
     Scaffold(
         backgroundColor = LightBlack,
         scaffoldState = mainScaffoldState,
+        snackbarHost = {
+            SnackbarHost(it) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    backgroundColor = DarkWhite,
+                    content = {
+                        Text(
+                            text = data.message,
+                            color = Color.Black,
+                            style = MaterialTheme.typography.body1
+                        )
+                    },
+                    action = {
+                        data.actionLabel?.let { actionLabel ->
+                            TextButton(onClick = { data.performAction() }) {
+                                Text(
+                                    text = actionLabel,
+                                    color = Blue,
+                                    style = MaterialTheme.typography.body1
+                                )
+                            }
+                        }
+                    })
+            }
+        },
         topBar = {
             Spacer(
                 modifier = Modifier
@@ -312,10 +343,13 @@ fun TodoListScreen(
                         viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId()))
                         viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
                         val itemList = viewModel.getTaskItems(eachTaskListId)
-                        items(itemList) { taskItem ->
-                            if (!taskItem.isCompleted) {
+                        val completedList = itemList.filter { el -> el.isCompleted }
+                        val uncompletedList = itemList.filter { el -> !el.isCompleted }
+
+                        items(uncompletedList, key = { it.id!! }) { taskItem ->
                                 var visible by remember { mutableStateOf(true) }
                                 AnimatedVisibility(
+                                    modifier = Modifier.animateItemPlacement(),
                                     visible = visible,
                                     enter = fadeIn(),
                                     exit = fadeOut()
@@ -329,6 +363,7 @@ fun TodoListScreen(
                                                     scope.async {
                                                         delay(200L)
                                                         visible = false
+                                                        showCompletedTaskItemsButton.value = true
                                                         delay(300L)
                                                         viewModel.onEvent(
                                                             TodoListEvent.ToggleTaskItemCompletionState(
@@ -341,12 +376,15 @@ fun TodoListScreen(
                                         }
                                     )
                                 }
-                            }
                         }
 
-                        if (itemList.any { el -> el.isCompleted }) {
-                            item {
-                                val count = itemList.count { el -> el.isCompleted }
+                        item {
+                            val count = itemList.count { el -> el.isCompleted }
+                            AnimatedVisibility(
+                                visible = itemList.any { el -> el.isCompleted } && showCompletedTaskItemsButton.value,
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
                                 ListItem(
                                     Modifier.clickable(
                                         enabled = isShowCompletedTaskItemsButtonEnabled.value
@@ -366,40 +404,45 @@ fun TodoListScreen(
                                     }
                                 )
                             }
-                            if (showCompletedTaskItems.value) {
-                                items(itemList) { taskItem ->
-                                    if (taskItem.isCompleted) {
-                                        var visible by remember { mutableStateOf(true) }
-                                        AnimatedVisibility(
-                                            visible = visible,
-                                            enter = fadeIn(),
-                                            exit = fadeOut()
-                                        ) {
-                                            ListItem(
-                                                text = { Text(taskItem.content) },
-                                                icon = {
-                                                    TaskItemCompletionButton(
-                                                        taskItem.isCompleted,
-                                                        onClick = {
-                                                            scope.async {
-                                                                delay(200L)
-                                                                visible = false
-                                                                delay(300L)
-                                                                viewModel.onEvent(
-                                                                    TodoListEvent.ToggleTaskItemCompletionState(
-                                                                        taskItem
-                                                                    )
-                                                                )
+                        }
+                        if (showCompletedTaskItems.value) {
+                            items(
+                                completedList,
+                                key = { it.id!! }) { taskItem ->
+                                    var visible by remember { mutableStateOf(true) }
+                                    AnimatedVisibility(
+                                        modifier = Modifier.animateItemPlacement(),
+                                        visible = visible,
+                                        enter = fadeIn(),
+                                        exit = fadeOut()
+                                    ) {
+                                        ListItem(
+                                            text = { Text(taskItem.content) },
+                                            icon = {
+                                                TaskItemCompletionButton(
+                                                    taskItem.isCompleted,
+                                                    onClick = {
+                                                        scope.async {
+                                                            delay(200L)
+                                                            visible = false
+                                                            if(completedList.size == 1){
+                                                                showCompletedTaskItemsButton.value = false
                                                             }
+                                                            delay(300L)
+                                                            viewModel.onEvent(
+                                                                TodoListEvent.ToggleTaskItemCompletionState(
+                                                                    taskItem
+                                                                )
+                                                            )
                                                         }
-                                                    )
-                                                }
-                                            )
-                                        }
+                                                    }
+                                                )
+                                            }
+                                        )
                                     }
-                                }
                             }
                         }
+//                        }
                     }
                 }
             }
