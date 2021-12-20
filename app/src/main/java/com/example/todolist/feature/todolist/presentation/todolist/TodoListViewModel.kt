@@ -319,8 +319,8 @@ class TodoListViewModel @Inject constructor(
             val action: () -> Unit
         ): UiEvent()
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
-        object ShowConfirmDialog : UiEvent()
         object CancelToggleTaskItemCompletionState : UiEvent()
+        object ShowConfirmDialog : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()

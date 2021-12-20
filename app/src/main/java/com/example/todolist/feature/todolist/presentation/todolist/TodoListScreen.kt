@@ -385,6 +385,7 @@ fun TodoListScreen(
                                 enter = fadeIn(),
                                 exit = fadeOut()
                             ) {
+                                SemiTransparentDivider()
                                 ListItem(
                                     Modifier.clickable(
                                         enabled = isShowCompletedTaskItemsButtonEnabled.value
@@ -412,7 +413,7 @@ fun TodoListScreen(
                                     var visible by remember { mutableStateOf(true) }
                                     AnimatedVisibility(
                                         modifier = Modifier.animateItemPlacement(),
-                                        visible = visible,
+                                        visible = visible && showCompletedTaskItemsButton.value,
                                         enter = fadeIn(),
                                         exit = fadeOut()
                                     ) {
@@ -442,7 +443,8 @@ fun TodoListScreen(
                                     }
                             }
                         }
-//                        }
+
+
                     }
                 }
             }
