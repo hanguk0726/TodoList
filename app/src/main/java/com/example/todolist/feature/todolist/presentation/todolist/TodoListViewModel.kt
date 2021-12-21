@@ -36,13 +36,13 @@ class TodoListViewModel @Inject constructor(
 
     private var selectedTaskListId: Long? = null
 
-    private val _taskItemContent = mutableStateOf(
+    private val _taskItemTitle = mutableStateOf(
         TodoListTextFieldState(
             hint = "새 할 일"
         )
     )
 
-    val taskItemContent: State<TodoListTextFieldState> = _taskItemContent
+    val taskItemTitle: State<TodoListTextFieldState> = _taskItemTitle
 
     private val _lastSelectedTaskListPositionLoaded = mutableStateOf(false)
     val lastSelectedTaskListPositionLoaded = _lastSelectedTaskListPositionLoaded
@@ -75,13 +75,13 @@ class TodoListViewModel @Inject constructor(
 
     fun onEvent(event: TodoListEvent) {
         when (event) {
-            is TodoListEvent.EnterTaskItemContent -> {
-                _taskItemContent.value = taskItemContent.value.copy(
+            is TodoListEvent.EnterTaskItemTitle -> {
+                _taskItemTitle.value = taskItemTitle.value.copy(
                     text = event.value,
                 )
                 // 한번에 init 하면 같은 시점에 대해서 isBlank 판정이 안된다.
-                _taskItemContent.value = taskItemContent.value.copy(
-                    isHintVisible = taskItemContent.value.text.isBlank(),
+                _taskItemTitle.value = taskItemTitle.value.copy(
+                    isHintVisible = taskItemTitle.value.text.isBlank(),
                 )
             }
             is TodoListEvent.ToggleTaskItemCompletionState -> {
@@ -186,7 +186,7 @@ class TodoListViewModel @Inject constructor(
                     try {
                         taskItemUseCases.addTaskItem(
                             TaskItem(
-                                content = taskItemContent.value.text,
+                                title = taskItemTitle.value.text,
                                 taskListId = selectedTaskListId!!
                             )
                         )
@@ -294,8 +294,8 @@ class TodoListViewModel @Inject constructor(
         }.first()
     }
 
-    fun clearTaskItemContentTextField() {
-        _taskItemContent.value = taskItemContent.value.copy(
+    fun clearTaskItemTitleTextField() {
+        _taskItemTitle.value = taskItemTitle.value.copy(
             text = "",
             isHintVisible = true
         )

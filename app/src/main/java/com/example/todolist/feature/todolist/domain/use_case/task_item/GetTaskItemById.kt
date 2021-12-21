@@ -1,6 +1,7 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_item
 
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
+import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 
 class GetTaskItemById(
@@ -8,7 +9,7 @@ class GetTaskItemById(
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(id: Long) {
-        repository.getTaskItemById(id)
+    suspend operator fun invoke(id: Long) : TaskItem? {
+       return repository.getTaskItemById(id)
     }
 }

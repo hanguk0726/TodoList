@@ -5,11 +5,12 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class TaskItem(
-    val content: String,
+    val title: String,
+    val detail: String = "",
     val isCompleted: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
     val taskListId: Long,
-    @PrimaryKey val id: Int? = null
+    @PrimaryKey val id: Long? = null
 )
 
 class InvalidTaskItemException(message: String): Exception(message)

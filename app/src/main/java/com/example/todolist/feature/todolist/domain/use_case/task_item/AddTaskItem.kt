@@ -1,7 +1,6 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_item
 
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
-import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 
@@ -11,7 +10,7 @@ class AddTaskItem(
 
     @Throws(InvalidTaskItemException::class)
     suspend operator fun invoke(vararg taskItem: TaskItem) {
-        if(taskItem.any { el -> el.content.isBlank() }){
+        if(taskItem.any { el -> el.title.isBlank() }){
             throw InvalidTaskItemException("the name of the task can't be empty")
         }
         repository.insertTaskItem(*taskItem)

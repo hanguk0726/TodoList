@@ -5,7 +5,7 @@ import com.example.todolist.feature.todolist.domain.model.TaskItem
 
 
 sealed class TodoListEvent{
-    data class EnterTaskItemContent(val value: String): TodoListEvent()
+    data class EnterTaskItemTitle(val value: String): TodoListEvent()
     data class SelectTaskList(val selectedTaskListId: Long): TodoListEvent()
     data class ConfirmDeleteTaskList(val selectedTaskListId: Long): TodoListEvent()
     data class ConfirmDeleteCompletedTaskItems(val selectedTaskListId: Long): TodoListEvent()
