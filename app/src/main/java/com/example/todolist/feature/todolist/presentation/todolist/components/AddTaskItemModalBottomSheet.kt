@@ -17,12 +17,16 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.ScrimColor
 import com.google.accompanist.insets.navigationBarsWithImePadding
+import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 
-@ExperimentalFoundationApi
-@ExperimentalComposeUiApi
-@ExperimentalMaterialApi
+@OptIn(
+    ExperimentalPagerApi::class,
+    ExperimentalMaterialApi::class,
+    ExperimentalComposeUiApi::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun AddTaskItemModalBottomSheet(
     scope: CoroutineScope,

@@ -91,7 +91,7 @@ class EditTaskItemViewModel @Inject constructor(
             is EditTaskItemEvent.SaveTaskItem -> {
                 viewModelScope.launch {
                     try {
-                        taskItemUseCases.addTaskItem(
+                        taskItemUseCases.updateTaskItem(
                             TaskItem(
                                 title = taskItemTitle.value.text,
                                 detail = taskItemDetail.value.text,
@@ -109,18 +109,18 @@ class EditTaskItemViewModel @Inject constructor(
                     }
                 }
             }
-        }
-    }
+            is EditTaskItemEvent.DeleteTaskItem -> {
+                viewModelScope.launch {
+                    taskItemUseCases.getTaskItemById(currentTaskItemId!!)?.also { _taskItem ->
+                        taskItemUseCases.deleteTaskItem(_taskItem)
+                        _eventFlow.emit(UiEvent.DeleteTaskItem)
+                    }
+                }
+            }
+            is EditTaskItemEvent.EditTaskItemCompletionState -> {
 
-    fun clearTaskItemTextFields() {
-        _taskItemTitle.value = taskItemTitle.value.copy(
-            text = "",
-            isHintVisible = true
-        )
-        _taskItemDetail.value = taskItemDetail.value.copy(
-            text = "",
-            isHintVisible = true
-        )
+            }
+        }
     }
 
     fun loadTaskItemValues() {
@@ -140,5 +140,6 @@ class EditTaskItemViewModel @Inject constructor(
 
     sealed class UiEvent {
         object SaveTaskItem : UiEvent()
+        object DeleteTaskItem : UiEvent()
     }
 }

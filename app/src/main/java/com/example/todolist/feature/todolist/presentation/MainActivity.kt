@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddTaskListScreen
+import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemScreen
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListScreen
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.ui.theme.TodoListTheme
@@ -65,6 +66,24 @@ class MainActivity : ComponentActivity() {
                                 AddTaskListScreen(
                                     navController = navController,
                                     taskListId = taskListId
+                                )
+                            }
+                            composable(
+                                route = Screen.EditTaskItemScreen.route +
+                                        "?taskItemId={taskItemId}",
+                                arguments = listOf(
+                                    navArgument(
+                                        name = "taskItemId"
+                                    ) {
+                                        type = NavType.LongType
+                                        defaultValue = -1L
+                                    }
+                                )
+                            ) {
+                                val taskItemId = it.arguments?.getLong("taskItemId") ?: -1L
+                                EditTaskItemScreen(
+                                    navController = navController,
+                                    taskItemId = taskItemId
                                 )
                             }
                         }
