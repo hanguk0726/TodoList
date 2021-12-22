@@ -10,6 +10,7 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -48,6 +49,7 @@ class EditTaskItemViewModel @Inject constructor(
         get() = _currentTaskItemCompletionState
 
     private var currentTaskItemTaskListId: Long? = null
+    private var currentTaskItemTimeStamp: Long? = null
 
     init {
         savedStateHandle.get<Long>("taskItemId")?.let { _taskItemId ->
@@ -57,13 +59,21 @@ class EditTaskItemViewModel @Inject constructor(
                         currentTaskItemId = _taskItemId
                         _taskItemTitle.value = taskItemTitle.value.copy(
                             text = _taskItem.title,
-                            isHintVisible = false
+                        )
+                        _taskItemTitle.value = taskItemTitle.value.copy(
+                            isHintVisible = taskItemTitle.value.text.isBlank()
                         )
                         _taskItemDetail.value = taskItemDetail.value.copy(
                             text = _taskItem.detail,
-                            isHintVisible = false
+                        )
+                        _taskItemDetail.value = taskItemDetail.value.copy(
+                            isHintVisible = taskItemDetail.value.text.isBlank()
                         )
                         _currentTaskItemCompletionState = _taskItem.isCompleted
+
+                        currentTaskItemTaskListId = _taskItem.taskListId
+
+                        currentTaskItemTimeStamp = _taskItem.timestamp
                     }
                 }
             }
@@ -97,6 +107,7 @@ class EditTaskItemViewModel @Inject constructor(
                                 detail = taskItemDetail.value.text,
                                 isCompleted = _currentTaskItemCompletionState!!,
                                 taskListId = currentTaskItemTaskListId!!,
+                                timestamp = currentTaskItemTimeStamp!!,
                                 id = currentTaskItemId
                             )
                         )
@@ -111,34 +122,83 @@ class EditTaskItemViewModel @Inject constructor(
             }
             is EditTaskItemEvent.DeleteTaskItem -> {
                 viewModelScope.launch {
-                    taskItemUseCases.getTaskItemById(currentTaskItemId!!)?.also { _taskItem ->
-                        taskItemUseCases.deleteTaskItem(_taskItem)
-                        _eventFlow.emit(UiEvent.DeleteTaskItem)
+                    try {
+                        taskItemUseCases.getTaskItemById(currentTaskItemId!!)?.also { _taskItem ->
+                            taskItemUseCases.deleteTaskItem(_taskItem)
+                            _eventFlow.emit(UiEvent.DeleteTaskItem)
+
+                            _eventFlow.emit(
+                                UiEvent.ShowSnackbar(
+                                message = "할 일 1개가 삭제됨",
+                                actionLabel = "실행취소",
+                                action = {
+                                    viewModelScope.launch {
+                                        taskItemUseCases.addTaskItem(_taskItem)
+                                    }
+                                }
+                            ))
+                        }
+                    } catch (e: InvalidTaskItemException) {
+                        Log.e(
+                            "EditTaskItemViewModel",
+                            "${e.message ?: "Couldn't save the taskItem"}"
+                        )
                     }
                 }
             }
-            is EditTaskItemEvent.EditTaskItemCompletionState -> {
-
+            is EditTaskItemEvent.ToggleAndSaveTaskItemCompletionState -> {
+                viewModelScope.launch {
+                    try {
+                        taskItemUseCases.updateTaskItem(
+                            TaskItem(
+                                title = taskItemTitle.value.text,
+                                detail = taskItemDetail.value.text,
+                                isCompleted = !_currentTaskItemCompletionState!!,
+                                taskListId = currentTaskItemTaskListId!!,
+                                timestamp = currentTaskItemTimeStamp!!,
+                                id = currentTaskItemId
+                            )
+                        )
+                        _eventFlow.emit(UiEvent.SaveTaskItem)
+                    } catch (e: InvalidTaskItemException) {
+                        Log.e(
+                            "EditTaskItemViewModel",
+                            "${e.message ?: "Couldn't save the taskItem"}"
+                        )
+                    }
+                }
             }
         }
     }
 
     fun loadTaskItemValues() {
-        viewModelScope.launch {
-            val targetTaskItem = taskItemUseCases.getTaskItemById(currentTaskItemId!!)
-            _taskItemTitle.value = taskItemTitle.value.copy(
-                text = targetTaskItem!!.title,
-                isHintVisible = false
-            )
-            _taskItemDetail.value = taskItemDetail.value.copy(
-                text = targetTaskItem.detail,
-                isHintVisible = false
-            )
-            _currentTaskItemCompletionState = targetTaskItem.isCompleted
+        currentTaskItemId?.let{
+            viewModelScope.launch {
+                val targetTaskItem = taskItemUseCases.getTaskItemById(currentTaskItemId!!)
+                _taskItemTitle.value = taskItemTitle.value.copy(
+                    text = targetTaskItem!!.title,
+                )
+                _taskItemTitle.value = taskItemTitle.value.copy(
+                    isHintVisible = taskItemTitle.value.text.isBlank()
+                )
+                _taskItemDetail.value = taskItemDetail.value.copy(
+                    text = targetTaskItem.detail,
+                )
+                _taskItemDetail.value = taskItemDetail.value.copy(
+                    isHintVisible = taskItemDetail.value.text.isBlank()
+                )
+                _currentTaskItemCompletionState = targetTaskItem.isCompleted
+            }
         }
+
     }
 
     sealed class UiEvent {
+        data class ShowSnackbar(
+            val message: String,
+            val actionLabel: String? = null,
+            val action: () -> Unit
+        ): UiEvent()
         object SaveTaskItem : UiEvent()
         object DeleteTaskItem : UiEvent()
     }

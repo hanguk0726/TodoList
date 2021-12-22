@@ -43,7 +43,9 @@ class AddEditTaskListViewModel @Inject constructor(
                         currentTaskListId = _taskListId
                         _taskListName.value = taskListName.value.copy(
                             text = _taskList.name,
-                            isHintVisible = false
+                        )
+                        _taskListName.value = taskListName.value.copy(
+                            isHintVisible = taskListName.value.text.isBlank()
                         )
                     }
                 }

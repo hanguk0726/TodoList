@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
@@ -50,7 +51,6 @@ import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 
 @OptIn(
@@ -179,30 +179,7 @@ fun TodoListScreen(
         backgroundColor = LightBlack,
         scaffoldState = mainScaffoldState,
         snackbarHost = {
-            SnackbarHost(it) { data ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    backgroundColor = DarkWhite,
-                    content = {
-                        Text(
-                            text = data.message,
-                            color = Color.Black,
-                            style = MaterialTheme.typography.body1
-                        )
-                    },
-                    action = {
-                        data.actionLabel?.let { actionLabel ->
-                            TextButton(onClick = { data.performAction() }) {
-                                Text(
-                                    text = actionLabel,
-                                    color = Blue,
-                                    style = MaterialTheme.typography.body1
-                                )
-                            }
-                        }
-                    })
-            }
+            CustomSnackbarHost(it)
         },
         topBar = {
             Spacer(
@@ -215,7 +192,7 @@ fun TodoListScreen(
             FadeSlideAnimatedVisibility(showMainBottomSheetScaffold) {
                 FloatingActionButton(
                     onClick = {
-                        scope.launch {
+                        scope.async {
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {
@@ -299,7 +276,7 @@ fun TodoListScreen(
                     taskListsState.taskLists.forEachIndexed { index, taskList ->
                         val isSelected = currentPageState() == index
                         Tab(selected = isSelected, onClick = {
-                            scope.launch {
+                            scope.async {
                                 pagerState.animateScrollToPage(index)
                             }
                         }, text = {
@@ -356,7 +333,15 @@ fun TodoListScreen(
                                 exit = fadeOut()
                             ) {
                                 ListItem(
-                                    text = { Text(taskItem.title) },
+                                    Modifier.clickable {
+                                        navController.navigate(
+                                            Screen.EditTaskItemScreen.route +
+                                                    "?taskItemId=${taskItem.id}"
+                                        )
+                                    }.fillMaxSize(),
+                                    text = {
+                                        Text(taskItem.title)
+                                    },
                                     icon = {
                                         TaskItemCompletionButton(
                                             taskItem.isCompleted,
@@ -419,7 +404,15 @@ fun TodoListScreen(
                                     exit = fadeOut()
                                 ) {
                                     ListItem(
-                                        text = { Text(taskItem.title) },
+                                        Modifier.clickable {
+                                            navController.navigate(
+                                                Screen.EditTaskItemScreen.route +
+                                                        "?taskItemId=${taskItem.id}"
+                                            )
+                                        }.fillMaxSize(),
+                                        text = {
+                                            Text(taskItem.title)
+                                        },
                                         icon = {
                                             TaskItemCompletionButton(
                                                 taskItem.isCompleted,

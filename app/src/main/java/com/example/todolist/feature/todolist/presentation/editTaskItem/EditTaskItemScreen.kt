@@ -2,12 +2,10 @@ package com.example.todolist.feature.todolist.presentation.editTaskItem
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,20 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddEditTaskListEvent
-import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddEditTaskListViewModel
-import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
+import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
+import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 
 @ExperimentalMaterialApi
@@ -41,8 +37,11 @@ fun EditTaskItemScreen(
     viewModel: EditTaskItemViewModel = hiltViewModel()
 ) {
 
-    rememberSystemUiController().setSystemBarsColor(
+    rememberSystemUiController().setStatusBarColor(
         color = MaterialTheme.colors.background
+    )
+    rememberSystemUiController().setNavigationBarColor(
+        color = Color.DarkGray
     )
     val scaffoldState = rememberScaffoldState()
     val taskItemTitleState = viewModel.taskItemTitle.value
@@ -56,6 +55,15 @@ fun EditTaskItemScreen(
         viewModel.loadTaskItemValues()
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
+                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
+                    val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.actionLabel,
+                    )
+                    if (snackbarResult == SnackbarResult.ActionPerformed) {
+                        event.action()
+                    }
+                }
                 is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
                     navController.navigateUp()
                 }
@@ -69,6 +77,9 @@ fun EditTaskItemScreen(
     Scaffold(
         Modifier.fillMaxSize(),
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            CustomSnackbarHost(it)
+        },
         topBar = {
             Spacer(modifier = Modifier.statusBarsPadding())
         },
@@ -78,8 +89,14 @@ fun EditTaskItemScreen(
                 elevation = 0.dp,
                 content = {
                     Spacer(modifier = Modifier.weight(1.0f))
-                    PureTextButton(text = "완료로 표시", textColor = LightBlue) {
-
+                    if (viewModel.currentTaskItemCompletionState != null) {
+                        PureTextButton(
+                            text = if (viewModel.currentTaskItemCompletionState!!) "미완료로 표시" else "완료로 표시",
+                            textColor = LightBlue,
+                            noRipple = true
+                        ) {
+                            viewModel.onEvent(EditTaskItemEvent.ToggleAndSaveTaskItemCompletionState)
+                        }
                     }
                 },
             )
@@ -93,7 +110,6 @@ fun EditTaskItemScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
             ) {
                 IconButton(onClick = {
                     viewModel.onEvent(EditTaskItemEvent.SaveTaskItem)
@@ -112,7 +128,7 @@ fun EditTaskItemScreen(
                     navController.navigateUp()
                 }) {
                     Icon(
-                        Icons.Default.Close,
+                        Icons.Default.DeleteOutline,
                         "delete taskItem",
                         tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
                     )
@@ -130,26 +146,32 @@ fun EditTaskItemScreen(
                     viewModel.onEvent(EditTaskItemEvent.EnterTaskItemTitle(it))
                 },
             )
-
-            ListItem(
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
                 modifier = Modifier.clickable {
                     taskItemDetailFocusRequester.requestFocus()
                 },
-                icon = { Icon(Icons.Default.Notes, "taskItem detail",
-                    tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)) }
             ) {
-                TransparentHintTextField(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .focusRequester(taskItemDetailFocusRequester),
-                    text = taskItemDetailState.text,
-                    hint = taskItemDetailState.hint,
-                    textStyle = MaterialTheme.typography.body1,
-                    isHintVisible = taskItemDetailState.isHintVisible,
-                    onValueChange = {
-                        viewModel.onEvent(EditTaskItemEvent.EnterTaskItemDetail(it))
-                    },
-                )
+                Row {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(
+                        Icons.Default.Notes, "taskItem detail",
+                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    TransparentHintTextField(
+                        modifier = Modifier
+                            .focusRequester(taskItemDetailFocusRequester),
+                        text = taskItemDetailState.text,
+                        hint = taskItemDetailState.hint,
+                        textStyle = MaterialTheme.typography.body1,
+                        isHintVisible = taskItemDetailState.isHintVisible,
+                        onValueChange = {
+                            viewModel.onEvent(EditTaskItemEvent.EnterTaskItemDetail(it))
+                        },
+                    )
+                }
+
             }
         }
     }

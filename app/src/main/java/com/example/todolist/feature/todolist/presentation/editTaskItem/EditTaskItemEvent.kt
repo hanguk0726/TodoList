@@ -6,6 +6,6 @@ sealed class EditTaskItemEvent{
     data class EnterTaskItemDetail(val value: String): EditTaskItemEvent()
     object SaveTaskItem: EditTaskItemEvent()
     object DeleteTaskItem: EditTaskItemEvent()
-    object EditTaskItemCompletionState : EditTaskItemEvent()
+    object ToggleAndSaveTaskItemCompletionState : EditTaskItemEvent()
 
 }
