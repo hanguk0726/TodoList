@@ -36,6 +36,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
+import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemEvent
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
@@ -50,12 +51,10 @@ import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.pager.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 
 @OptIn(
@@ -70,7 +69,7 @@ import kotlinx.coroutines.launch
 fun TodoListScreen(
     navController: NavController,
     viewModel: TodoListViewModel = hiltViewModel(),
-    editTaskItemViewModel: EditTaskItemViewModel = hiltViewModel()
+    editTaskItemViewModel: EditTaskItemViewModel,
 ) {
 
     rememberSystemUiController().run {
@@ -143,22 +142,20 @@ fun TodoListScreen(
             menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
     }
 
-    LaunchedEffect(key1 = true){
-            println("mylogger called0")
+    LaunchedEffect(key1 = true) {
         editTaskItemViewModel.eventFlow.collectLatest { event ->
-            println("mylogger called2")
-          when(event) {
-              is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
-                  println("mylogger called3")
-                  val snackbarResult = mainScaffoldState.snackbarHostState.showSnackbar(
-                      message = event.message,
-                      actionLabel = event.actionLabel,
-                  )
-                  if (snackbarResult == SnackbarResult.ActionPerformed) {
-                      event.action()
-                  }
-              }
-          }
+            when (event) {
+                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
+                    val snackbarResult =
+                        mainScaffoldState.snackbarHostState.showSnackbar(
+                            message = event.message,
+                            actionLabel = event.actionLabel,
+                        )
+                    if (snackbarResult == SnackbarResult.ActionPerformed) {
+                        event.action()
+                    }
+                }
+            }
         }
     }
 

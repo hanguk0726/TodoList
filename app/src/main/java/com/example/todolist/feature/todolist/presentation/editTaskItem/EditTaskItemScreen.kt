@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun EditTaskItemScreen(
     navController: NavController,
     taskItemId: Long,
-    viewModel: EditTaskItemViewModel = hiltViewModel()
+    viewModel: EditTaskItemViewModel
 ) {
 
     rememberSystemUiController().setStatusBarColor(
@@ -52,12 +52,11 @@ fun EditTaskItemScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = true) {
-        viewModel.loadTaskItemValues()
+        viewModel.loadTaskItemValues(taskItemId)
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
                     navController.navigateUp()
-
                 }
                 is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
                     navController.navigateUp()
