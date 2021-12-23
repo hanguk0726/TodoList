@@ -32,9 +32,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
+import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
@@ -50,7 +52,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 
 @OptIn(
@@ -64,7 +69,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun TodoListScreen(
     navController: NavController,
-    viewModel: TodoListViewModel = hiltViewModel()
+    viewModel: TodoListViewModel = hiltViewModel(),
+    editTaskItemViewModel: EditTaskItemViewModel = hiltViewModel()
 ) {
 
     rememberSystemUiController().run {
@@ -137,11 +143,31 @@ fun TodoListScreen(
             menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
     }
 
+    LaunchedEffect(key1 = true){
+            println("mylogger called0")
+        editTaskItemViewModel.eventFlow.collectLatest { event ->
+            println("mylogger called2")
+          when(event) {
+              is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
+                  println("mylogger called3")
+                  val snackbarResult = mainScaffoldState.snackbarHostState.showSnackbar(
+                      message = event.message,
+                      actionLabel = event.actionLabel,
+                  )
+                  if (snackbarResult == SnackbarResult.ActionPerformed) {
+                      event.action()
+                  }
+              }
+          }
+        }
+    }
+
     LaunchedEffect(key1 = true) {
         async {
             menuLeftModalBottomSheetState.hide()
             menuRightModalBottomSheetState.hide()
         }
+
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is TodoListViewModel.UiEvent.ShowSnackbar -> {
@@ -167,6 +193,11 @@ fun TodoListScreen(
                 }
                 is TodoListViewModel.UiEvent.ShowConfirmDialog -> {
                     showDeleteTaskListDialog = true
+                }
+                is TodoListViewModel.UiEvent.CloseMenuRightModalBottomSheet -> {
+                    async {
+                        menuRightModalBottomSheetState.hide()
+                    }
                 }
                 else -> {
                     Log.i("TodoLisScreen", "Wrong event called :: ${event.javaClass.name}")
@@ -333,12 +364,14 @@ fun TodoListScreen(
                                 exit = fadeOut()
                             ) {
                                 ListItem(
-                                    Modifier.clickable {
-                                        navController.navigate(
-                                            Screen.EditTaskItemScreen.route +
-                                                    "?taskItemId=${taskItem.id}"
-                                        )
-                                    }.fillMaxSize(),
+                                    Modifier
+                                        .clickable {
+                                            navController.navigate(
+                                                Screen.EditTaskItemScreen.route +
+                                                        "?taskItemId=${taskItem.id}"
+                                            )
+                                        }
+                                        .fillMaxSize(),
                                     text = {
                                         Text(taskItem.title)
                                     },
@@ -404,12 +437,14 @@ fun TodoListScreen(
                                     exit = fadeOut()
                                 ) {
                                     ListItem(
-                                        Modifier.clickable {
-                                            navController.navigate(
-                                                Screen.EditTaskItemScreen.route +
-                                                        "?taskItemId=${taskItem.id}"
-                                            )
-                                        }.fillMaxSize(),
+                                        Modifier
+                                            .clickable {
+                                                navController.navigate(
+                                                    Screen.EditTaskItemScreen.route +
+                                                            "?taskItemId=${taskItem.id}"
+                                                )
+                                            }
+                                            .fillMaxSize(),
                                         text = {
                                             Text(taskItem.title)
                                         },
@@ -528,7 +563,7 @@ fun TodoListScreen(
 
         deleteCompletedItems = {
             val itemList = viewModel.getTaskItems(selectedTaskListId())
-            val isEnabled = itemList.isNotEmpty()
+            val isEnabled = itemList.any { el -> el.isCompleted }
             ListItem(
                 modifier = Modifier
                     .noRippleClickable(

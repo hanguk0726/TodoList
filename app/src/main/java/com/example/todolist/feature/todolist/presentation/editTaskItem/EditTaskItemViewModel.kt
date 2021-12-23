@@ -12,9 +12,9 @@ import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemU
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -124,19 +124,25 @@ class EditTaskItemViewModel @Inject constructor(
                 viewModelScope.launch {
                     try {
                         taskItemUseCases.getTaskItemById(currentTaskItemId!!)?.also { _taskItem ->
-                            taskItemUseCases.deleteTaskItem(_taskItem)
-                            _eventFlow.emit(UiEvent.DeleteTaskItem)
+//                            taskItemUseCases.deleteTaskItem(_taskItem)
+                           CoroutineScope(Dispatchers.Default).async {
+                               delay(2000L)
+                               val rs = _eventFlow.tryEmit(
+                                   UiEvent.ShowSnackbar(
+                                       message = "할 일 1개가 삭제됨",
+                                       actionLabel = "실행취소",
+                                       action = {
+                                           viewModelScope.launch {
+                                               taskItemUseCases.addTaskItem(_taskItem)
+                                           }
+                                       }
+                                   ))
+                               println("mylogger called7 ${rs}")
+                           }
+//                            _eventFlow.emit(UiEvent.DeleteTaskItem)
+                            println("mylogger called1")
 
-                            _eventFlow.emit(
-                                UiEvent.ShowSnackbar(
-                                message = "할 일 1개가 삭제됨",
-                                actionLabel = "실행취소",
-                                action = {
-                                    viewModelScope.launch {
-                                        taskItemUseCases.addTaskItem(_taskItem)
-                                    }
-                                }
-                            ))
+
                         }
                     } catch (e: InvalidTaskItemException) {
                         Log.e(

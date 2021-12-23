@@ -147,6 +147,11 @@ class TodoListViewModel @Inject constructor(
                         _dialogType.value = DialogType.DeleteTaskList
                         _eventFlow.emit(UiEvent.ShowConfirmDialog)
                     }
+                } else {
+                    viewModelScope.launch {
+                        onEvent(TodoListEvent.DeleteTaskList)
+                        _eventFlow.emit(UiEvent.CloseMenuRightModalBottomSheet)
+                    }
                 }
             }
             is TodoListEvent.ConfirmDeleteCompletedTaskItems -> {
@@ -327,5 +332,6 @@ class TodoListViewModel @Inject constructor(
         object RestoreTaskItemFromCompletion : UiEvent()
         object DeleteTaskItem : UiEvent()
         object DeleteTaskList : UiEvent()
+        object CloseMenuRightModalBottomSheet: UiEvent()
     }
 }

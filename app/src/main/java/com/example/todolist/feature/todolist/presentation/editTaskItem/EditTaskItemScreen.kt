@@ -55,25 +55,17 @@ fun EditTaskItemScreen(
         viewModel.loadTaskItemValues()
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
-                    val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
-                        message = event.message,
-                        actionLabel = event.actionLabel,
-                    )
-                    if (snackbarResult == SnackbarResult.ActionPerformed) {
-                        event.action()
-                    }
+                is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
+                    navController.navigateUp()
+
                 }
                 is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
                     navController.navigateUp()
                 }
-                is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
-                    navController.navigateUp()
-                }
+
             }
         }
     }
-
     Scaffold(
         Modifier.fillMaxSize(),
         scaffoldState = scaffoldState,
@@ -113,7 +105,6 @@ fun EditTaskItemScreen(
             ) {
                 IconButton(onClick = {
                     viewModel.onEvent(EditTaskItemEvent.SaveTaskItem)
-                    navController.navigateUp()
                 }) {
                     Icon(
                         Icons.Default.Close,
@@ -125,7 +116,6 @@ fun EditTaskItemScreen(
                 Spacer(modifier = Modifier.weight(1.0f))
                 IconButton(onClick = {
                     viewModel.onEvent(EditTaskItemEvent.DeleteTaskItem)
-                    navController.navigateUp()
                 }) {
                     Icon(
                         Icons.Default.DeleteOutline,
