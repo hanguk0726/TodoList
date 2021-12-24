@@ -209,8 +209,10 @@ class TodoListViewModel @Inject constructor(
                     saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
                 }
             }
+            // 호출 빈도 수 조절
             is TodoListEvent.GetTaskItemsByTaskListId -> {
                 loadTaskItemsOnPoolByTaskListId(event.taskListId)
+                clearDeletedTaskItemManager()
             }
             is TodoListEvent.LoadLastSelectedTaskListPosition -> {
                 viewModelScope.launch {
@@ -233,7 +235,6 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-// 안쓰이는 elements 정리 로직 필요 -> 주기적으로 && DeleteItemEvent 시에
 
     private fun loadTaskItemsOnPoolByTaskListId(targetTaskListId: Long) {
         var taskItemManager = if(taskItemManagerPool.containsKey(targetTaskListId)){
@@ -252,6 +253,15 @@ class TodoListViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    private fun clearDeletedTaskItemManager() {
+        val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
+        val allIds = taskItemManagerPool.keys
+        for (i in allIds){
+            if(validIds.contains(i)){
+                taskItemManagerPool.remove(i)
+            }
+        }
+    }
 
     private fun getTaskLists() {
         getTaskListsJob?.cancel()

@@ -11,7 +11,6 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
-import com.example.todolist.feature.todolist.presentation.util.TaskItemState
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
@@ -45,33 +44,24 @@ class EditTaskItemViewModel @Inject constructor(
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
 
+    private val _taskItemState = mutableStateOf<TaskItem?>(null)
+    val taskItemState: State<TaskItem?> = _taskItemState
+
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
-
-    private var currentTaskItemId: Long? = null
-
-    private var _currentTaskItemCompletionState: Boolean? = null
-
-    val currentTaskItemCompletionState: Boolean?
-        get() = _currentTaskItemCompletionState
-
-    private var currentTaskItemTaskListId: Long? = null
-    private var currentTaskItemTimeStamp: Long? = null
 
     private var lastDeletedTaskItem: TaskItem? = null
     private var getTaskListsJob: Job? = null
 
     val currentTaskItemTaskList: TaskList?
         get() {
-            return currentTaskItemTaskListId?.let {
+            val taskItem = _taskItemState.value
+            return taskItem?.let {
                 _taskListsState.value.taskLists.filter { el ->
-                    el.id == currentTaskItemTaskListId!!
+                    el.id == taskItem.taskListId
                 }
             }?.first()
         }
-
-    private val _taskItemState = mutableStateOf(TaskItemState())
-    val taskItemState: State<TaskItemState> = _taskItemState
 
     init {
         getTaskLists()
@@ -98,14 +88,15 @@ class EditTaskItemViewModel @Inject constructor(
             is EditTaskItemEvent.SaveTaskItem -> {
                 viewModelScope.launch {
                     try {
+                        val taskItem = _taskItemState.value
                         taskItemUseCases.updateTaskItem(
                             TaskItem(
                                 title = taskItemTitle.value.text,
                                 detail = taskItemDetail.value.text,
-                                isCompleted = _currentTaskItemCompletionState!!,
-                                taskListId = currentTaskItemTaskListId!!,
-                                timestamp = currentTaskItemTimeStamp!!,
-                                id = currentTaskItemId
+                                isCompleted = taskItem!!.isCompleted,
+                                taskListId = taskItem.taskListId,
+                                timestamp = taskItem.timestamp!!,
+                                id = taskItem.id
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveTaskItem)
@@ -123,11 +114,12 @@ class EditTaskItemViewModel @Inject constructor(
                 }
                 viewModelScope.launch {
                     try {
-                        taskItemUseCases.getTaskItemById(currentTaskItemId!!)?.also { _taskItem ->
-                            taskItemUseCases.deleteTaskItem(_taskItem)
-                            lastDeletedTaskItem = _taskItem
+                        taskItemUseCases.getTaskItemById(_taskItemState.value!!.id!!)
+                            ?.also { _taskItem ->
+                                taskItemUseCases.deleteTaskItem(_taskItem)
+                                lastDeletedTaskItem = _taskItem
 
-                        }
+                            }
                     } catch (e: InvalidTaskItemException) {
                         Log.e(
                             "EditTaskItemViewModel",
@@ -159,14 +151,17 @@ class EditTaskItemViewModel @Inject constructor(
             is EditTaskItemEvent.ToggleAndSaveTaskItemCompletionState -> {
                 viewModelScope.launch {
                     try {
+                        _taskItemState.value = taskItemState.value!!.copy(
+                            isCompleted = !_taskItemState.value!!.isCompleted
+                        )
                         taskItemUseCases.updateTaskItem(
                             TaskItem(
                                 title = taskItemTitle.value.text,
                                 detail = taskItemDetail.value.text,
-                                isCompleted = !_currentTaskItemCompletionState!!,
-                                taskListId = currentTaskItemTaskListId!!,
-                                timestamp = currentTaskItemTimeStamp!!,
-                                id = currentTaskItemId
+                                isCompleted = _taskItemState.value!!.isCompleted,
+                                taskListId = _taskItemState.value!!.taskListId,
+                                timestamp = _taskItemState.value!!.timestamp,
+                                id = _taskItemState.value!!.id
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveTaskItem)
@@ -180,7 +175,19 @@ class EditTaskItemViewModel @Inject constructor(
             }
 
             is EditTaskItemEvent.ChangeTaskListOfTaskItem -> {
-
+                viewModelScope.launch {
+                    try {
+                        _taskItemState.value = taskItemState.value!!.copy(
+                            taskListId = event.targetTaskListId
+                        )
+                        taskItemUseCases.updateTaskItem(taskItemState.value!!)
+                    } catch (e: InvalidTaskItemException) {
+                        Log.e(
+                            "EditTaskItemViewModel",
+                            "${e.message ?: "Couldn't update the taskItem"}"
+                        )
+                    }
+                }
             }
         }
     }
@@ -188,11 +195,8 @@ class EditTaskItemViewModel @Inject constructor(
     suspend fun loadTaskItemValues(_taskItemId: Long): TaskItem? =
         withContext(viewModelScope.coroutineContext) {
             return@withContext try {
-                currentTaskItemId = _taskItemId
                 val targetTaskItem = taskItemUseCases.getTaskItemById(_taskItemId)
-                _taskItemState.value = taskItemState.value.copy(
-                    taskItem = targetTaskItem
-                )
+                _taskItemState.value = targetTaskItem
                 _taskItemTitle.value = taskItemTitle.value.copy(
                     text = targetTaskItem!!.title,
                 )
@@ -205,11 +209,6 @@ class EditTaskItemViewModel @Inject constructor(
                 _taskItemDetail.value = taskItemDetail.value.copy(
                     isHintVisible = taskItemDetail.value.text.isBlank()
                 )
-                _currentTaskItemCompletionState = targetTaskItem.isCompleted
-
-                currentTaskItemTaskListId = targetTaskItem.taskListId
-
-                currentTaskItemTimeStamp = targetTaskItem.timestamp
                 targetTaskItem
             } catch (e: InvalidTaskItemException) {
                 Log.e("EditTaskItemViewModel", "${e.message ?: "Couldn't get the taskItem"}")

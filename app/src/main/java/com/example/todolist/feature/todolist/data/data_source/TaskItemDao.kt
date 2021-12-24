@@ -20,7 +20,7 @@ interface TaskItemDao {
     @Delete
     suspend fun deleteTaskItem(vararg taskItem: TaskItem)
 
-    @Update
+    @Update(entity = TaskItem::class)
     suspend fun updateTaskItem(vararg taskItem: TaskItem)
 
 }

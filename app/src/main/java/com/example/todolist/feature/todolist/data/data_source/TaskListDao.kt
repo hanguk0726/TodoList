@@ -19,6 +19,6 @@ interface TaskListDao {
     @Delete
     suspend fun deleteTaskList(vararg taskList: TaskList)
 
-    @Update
+    @Update(entity = TaskList::class)
     suspend fun updateTaskList(vararg taskList: TaskList)
 }

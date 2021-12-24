@@ -18,6 +18,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.editTaskItem.components.EditTaskItemTaskListIdModalBottomSheet
@@ -57,7 +58,7 @@ fun EditTaskItemScreen(
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
     val taskListsState = viewModel.taskListsState.value
-    val taskItemState = viewModel.taskItemState.value
+    val taskItem = viewModel.taskItemState.value
 
     LaunchedEffect(key1 = true) {
         viewModel.loadTaskItemValues(taskItemId)
@@ -88,9 +89,9 @@ fun EditTaskItemScreen(
                 elevation = 0.dp,
                 content = {
                     Spacer(modifier = Modifier.weight(1.0f))
-                    if (viewModel.currentTaskItemCompletionState != null) {
+                    if (taskItem != null) {
                         PureTextButton(
-                            text = if (viewModel.currentTaskItemCompletionState!!) "미완료로 표시" else "완료로 표시",
+                            text = if (taskItem.isCompleted) "미완료로 표시" else "완료로 표시",
                             textColor = LightBlue,
                             noRipple = true
                         ) {
@@ -137,10 +138,10 @@ fun EditTaskItemScreen(
                     scope.async {
                         modalBottomSheetState.show()
                     }
-                }
+                }.padding(16.dp, 8.dp)
             ) {
                 if (viewModel.currentTaskItemTaskList != null) {
-                    Text(text = viewModel.currentTaskItemTaskList!!.name, color = LightBlue)
+                    Text(text = viewModel.currentTaskItemTaskList!!.name, color = LightBlue, fontSize = 14.sp)
                     Icon(Icons.Default.ArrowDropDown, "show editTaskListModal", tint = LightBlue)
                 }
             }
@@ -185,13 +186,12 @@ fun EditTaskItemScreen(
         }
     }
 
-
-    if (taskItemState.taskItem != null) {
+    if (taskItem != null) {
         EditTaskItemTaskListIdModalBottomSheet(
             scope = scope,
             state = modalBottomSheetState,
             taskListsState = taskListsState,
-            taskItemState = taskItemState,
+            taskItem = taskItem,
             onClickTaskList = { _taskItemId: Long, _taskItemTaskListId ->
                 viewModel.onEvent(
                     EditTaskItemEvent.ChangeTaskListOfTaskItem(
