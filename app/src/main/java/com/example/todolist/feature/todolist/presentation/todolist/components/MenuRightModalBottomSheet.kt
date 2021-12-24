@@ -1,28 +1,16 @@
 package com.example.todolist.feature.todolist.presentation.todolist.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
-import com.example.todolist.feature.todolist.presentation.todolist.TaskListsState
-import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
-import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.example.todolist.ui.theme.ScrimColor
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 
 @OptIn(
     ExperimentalPagerApi::class,

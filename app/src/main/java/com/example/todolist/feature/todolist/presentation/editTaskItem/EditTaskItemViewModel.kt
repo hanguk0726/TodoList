@@ -3,22 +3,28 @@ package com.example.todolist.feature.todolist.presentation.editTaskItem
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
+import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
+import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
+import com.example.todolist.feature.todolist.presentation.util.TaskItemState
+import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @HiltViewModel
 class EditTaskItemViewModel @Inject constructor(
     private val taskItemUseCases: TaskItemUseCases,
+    private val taskListUseCases: TaskListUseCases,
 ) : ViewModel() {
 
     private val _taskItemTitle = mutableStateOf(
@@ -36,6 +42,9 @@ class EditTaskItemViewModel @Inject constructor(
 
     val taskItemDetail: State<TodoListTextFieldState> = _taskItemDetail
 
+    private val _taskListsState = mutableStateOf(TaskListsState())
+    val taskListsState: State<TaskListsState> = _taskListsState
+
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
@@ -50,7 +59,23 @@ class EditTaskItemViewModel @Inject constructor(
     private var currentTaskItemTimeStamp: Long? = null
 
     private var lastDeletedTaskItem: TaskItem? = null
+    private var getTaskListsJob: Job? = null
 
+    val currentTaskItemTaskList: TaskList?
+        get() {
+            return currentTaskItemTaskListId?.let {
+                _taskListsState.value.taskLists.filter { el ->
+                    el.id == currentTaskItemTaskListId!!
+                }
+            }?.first()
+        }
+
+    private val _taskItemState = mutableStateOf(TaskItemState())
+    val taskItemState: State<TaskItemState> = _taskItemState
+
+    init {
+        getTaskLists()
+    }
 
     fun onEvent(event: EditTaskItemEvent) {
         when (event) {
@@ -119,7 +144,7 @@ class EditTaskItemViewModel @Inject constructor(
                                 actionLabel = "실행취소",
                                 action = {
                                     CoroutineScope(Dispatchers.Default).launch {
-                                       taskItemUseCases.addTaskItem(lastDeletedTaskItem!!)
+                                        taskItemUseCases.addTaskItem(lastDeletedTaskItem!!)
                                     }
                                 }
                             ))
@@ -153,13 +178,21 @@ class EditTaskItemViewModel @Inject constructor(
                     }
                 }
             }
+
+            is EditTaskItemEvent.ChangeTaskListOfTaskItem -> {
+
+            }
         }
     }
 
-    fun loadTaskItemValues(_taskItemId: Long) {
-            viewModelScope.launch {
+    suspend fun loadTaskItemValues(_taskItemId: Long): TaskItem? =
+        withContext(viewModelScope.coroutineContext) {
+            return@withContext try {
                 currentTaskItemId = _taskItemId
                 val targetTaskItem = taskItemUseCases.getTaskItemById(_taskItemId)
+                _taskItemState.value = taskItemState.value.copy(
+                    taskItem = targetTaskItem
+                )
                 _taskItemTitle.value = taskItemTitle.value.copy(
                     text = targetTaskItem!!.title,
                 )
@@ -177,8 +210,22 @@ class EditTaskItemViewModel @Inject constructor(
                 currentTaskItemTaskListId = targetTaskItem.taskListId
 
                 currentTaskItemTimeStamp = targetTaskItem.timestamp
+                targetTaskItem
+            } catch (e: InvalidTaskItemException) {
+                Log.e("EditTaskItemViewModel", "${e.message ?: "Couldn't get the taskItem"}")
+                null
+            }
         }
 
+    private fun getTaskLists() {
+        getTaskListsJob?.cancel()
+        getTaskListsJob = taskListUseCases.getTaskLists()
+            .onEach { taskLists ->
+                _taskListsState.value = taskListsState.value.copy(
+                    taskLists = taskLists
+                )
+            }
+            .launchIn(viewModelScope)
     }
 
     sealed class UiEvent {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Notes
@@ -17,16 +18,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
+import com.example.todolist.feature.todolist.presentation.editTaskItem.components.EditTaskItemTaskListIdModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
-import com.example.todolist.feature.todolist.presentation.util.Screen
+import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 
 @ExperimentalMaterialApi
@@ -50,6 +52,12 @@ fun EditTaskItemScreen(
     val taskItemDetailFocusRequester = remember { FocusRequester() }
 
     val scope = rememberCoroutineScope()
+
+    val modalBottomSheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+
+    val taskListsState = viewModel.taskListsState.value
+    val taskItemState = viewModel.taskItemState.value
 
     LaunchedEffect(key1 = true) {
         viewModel.loadTaskItemValues(taskItemId)
@@ -124,6 +132,18 @@ fun EditTaskItemScreen(
                 }
             }
 
+            Row(
+                Modifier.noRippleClickable {
+                    scope.async {
+                        modalBottomSheetState.show()
+                    }
+                }
+            ) {
+                if (viewModel.currentTaskItemTaskList != null) {
+                    Text(text = viewModel.currentTaskItemTaskList!!.name, color = LightBlue)
+                    Icon(Icons.Default.ArrowDropDown, "show editTaskListModal", tint = LightBlue)
+                }
+            }
 
             TransparentHintTextField(
                 modifier = Modifier.padding(16.dp),
@@ -163,5 +183,22 @@ fun EditTaskItemScreen(
 
             }
         }
+    }
+
+
+    if (taskItemState.taskItem != null) {
+        EditTaskItemTaskListIdModalBottomSheet(
+            scope = scope,
+            state = modalBottomSheetState,
+            taskListsState = taskListsState,
+            taskItemState = taskItemState,
+            onClickTaskList = { _taskItemId: Long, _taskItemTaskListId ->
+                viewModel.onEvent(
+                    EditTaskItemEvent.ChangeTaskListOfTaskItem(
+                        _taskItemId, _taskItemTaskListId
+                    )
+                )
+            }
+        )
     }
 }

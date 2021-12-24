@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
-import com.example.todolist.feature.todolist.presentation.todolist.TaskListsState
+import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.example.todolist.ui.theme.ScrimColor
