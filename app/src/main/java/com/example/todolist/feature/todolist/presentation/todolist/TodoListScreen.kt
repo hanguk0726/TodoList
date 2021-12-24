@@ -342,7 +342,7 @@ fun TodoListScreen(
                     ),
                 ) { pageIndex ->
                     val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                    LaunchedEffect(key1 = pageIndex) {
+                    LaunchedEffect(key1 = true) {
                         viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
                     }
                     LazyColumn(

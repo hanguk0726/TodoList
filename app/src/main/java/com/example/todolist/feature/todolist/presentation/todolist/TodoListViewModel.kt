@@ -133,7 +133,10 @@ class TodoListViewModel @Inject constructor(
                             taskListsState.value.taskLists
                                 .find{ el -> el.id!! == selectedTaskListId}
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
-
+                        val taskItemsToDelete = taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!)
+                        taskItemsToDelete.map { list ->
+                            taskItemUseCases.deleteTaskItem(*list.toTypedArray())
+                        }.launchIn(viewModelScope)
                     } catch(e: InvalidTaskListException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't delete taskList"}")
                     }

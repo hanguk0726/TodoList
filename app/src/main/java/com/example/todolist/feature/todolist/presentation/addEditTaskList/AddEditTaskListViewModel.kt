@@ -50,7 +50,7 @@ class AddEditTaskListViewModel @Inject constructor(
                         taskListUseCases.addTaskList(
                             TaskList(
                                 name = taskListName.value.text,
-                                id = event.taskListId
+                                id = if(event.taskListId == -1L) null else event.taskListId
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveTaskList)
