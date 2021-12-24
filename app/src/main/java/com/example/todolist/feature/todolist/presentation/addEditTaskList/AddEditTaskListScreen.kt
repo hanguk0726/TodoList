@@ -39,7 +39,7 @@ fun AddTaskListScreen(
         if(taskListId == -1L){
             viewModel.clearTaskListNameTextField()
         } else {
-            viewModel.loadTaskListNameToModify()
+            viewModel.loadTaskListNameToModify(taskListId)
         }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -86,7 +86,7 @@ fun AddTaskListScreen(
                     text = "완료",
                     textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
                 ) {
-                    viewModel.onEvent(AddEditTaskListEvent.SaveTaskList)
+                    viewModel.onEvent(AddEditTaskListEvent.SaveTaskList(taskListId))
                 }
             }
 

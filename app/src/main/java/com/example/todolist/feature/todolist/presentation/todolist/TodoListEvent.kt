@@ -15,7 +15,6 @@ sealed class TodoListEvent{
     object LastTaskListPositionHasSelected: TodoListEvent()
     object DeleteTaskList: TodoListEvent()
     object SaveTaskItem: TodoListEvent()
-    object DeleteTaskItem: TodoListEvent()
     object DeleteCompletedTaskItems: TodoListEvent()
 
 

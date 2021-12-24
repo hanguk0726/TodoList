@@ -32,18 +32,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
-import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemEvent
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.Blue
-import com.example.todolist.ui.theme.DarkWhite
 import com.example.todolist.ui.theme.LightBlack
 import com.example.todolist.ui.theme.LightBlue
 import com.google.accompanist.insets.navigationBarsPadding
@@ -51,10 +47,9 @@ import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.pager.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onEach
 
 
 @OptIn(
@@ -134,6 +129,13 @@ fun TodoListScreen(
     )
 
     var showDeleteTaskListDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = pagerState.isScrollInProgress) {
+        if (taskListsState.taskLists.isNotEmpty()) {
+            viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId()))
+
+        }
+    }
 
     LaunchedEffect(
         key1 = addTaskItemModalBottomSheetState.targetValue
@@ -339,15 +341,15 @@ fun TodoListScreen(
                         baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
                     ),
                 ) { pageIndex ->
-
+                    val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
+                    LaunchedEffect(key1 = pageIndex) {
+                        viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
+                    }
                     LazyColumn(
                         Modifier
                             .fillMaxSize()
                             .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
                     ) {
-                        val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                        viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId()))
-                        viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
                         val itemList = viewModel.getTaskItems(eachTaskListId)
                         val completedList = itemList.filter { el -> el.isCompleted }
                         val uncompletedList = itemList.filter { el -> !el.isCompleted }
@@ -613,6 +615,9 @@ fun TodoListScreen(
                     paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
                 ) {
                     showDeleteTaskListDialog = false
+                    scope.async {
+                        menuRightModalBottomSheetState.hide()
+                    }
                     viewModel.onEvent(eventWhenConfirm)
                 }
             },

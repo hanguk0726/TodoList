@@ -18,8 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddEditTaskListViewModel @Inject constructor(
-    private val taskListUseCases: TaskListUseCases,
-    savedStateHandle: SavedStateHandle
+    private val taskListUseCases: TaskListUseCases
 ) : ViewModel() {
 
     private val _taskListName = mutableStateOf(
@@ -33,25 +32,7 @@ class AddEditTaskListViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    private var currentTaskListId: Long? = null
 
-    init {
-        savedStateHandle.get<Long>("taskListId")?.let { _taskListId ->
-            if (_taskListId != -1L) {
-                viewModelScope.launch {
-                    taskListUseCases.getTaskListById(_taskListId)?.also { _taskList ->
-                        currentTaskListId = _taskListId
-                        _taskListName.value = taskListName.value.copy(
-                            text = _taskList.name,
-                        )
-                        _taskListName.value = taskListName.value.copy(
-                            isHintVisible = taskListName.value.text.isBlank()
-                        )
-                    }
-                }
-            }
-        }
-    }
 
     fun onEvent(event: AddEditTaskListEvent) {
         when (event) {
@@ -69,7 +50,7 @@ class AddEditTaskListViewModel @Inject constructor(
                         taskListUseCases.addTaskList(
                             TaskList(
                                 name = taskListName.value.text,
-                                id = currentTaskListId
+                                id = event.taskListId
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveTaskList)
@@ -87,9 +68,9 @@ class AddEditTaskListViewModel @Inject constructor(
         )
     }
 
-    fun loadTaskListNameToModify() {
+    fun loadTaskListNameToModify(taskListId: Long) {
         viewModelScope.launch {
-            val targetTaskList = taskListUseCases.getTaskListById(currentTaskListId!!)
+            val targetTaskList = taskListUseCases.getTaskListById(taskListId)
             _taskListName.value = _taskListName.value.copy(
                 text = targetTaskList!!.name,
                 isHintVisible = false

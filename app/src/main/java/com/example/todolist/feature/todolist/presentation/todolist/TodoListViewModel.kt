@@ -56,13 +56,14 @@ class TodoListViewModel @Inject constructor(
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
 
-    private val taskItemManagerPool = HashMap<Long, TaskItemManager>()
+    private var taskItemManagerPool = HashMap<Long, TaskItemManager>()
 
     private val _dialogType = mutableStateOf<DialogType>(DialogType.DeleteTaskList)
     val dialogType: State<DialogType> = _dialogType
 
     init {
         getTaskLists()
+
     }
 
 
@@ -122,10 +123,6 @@ class TodoListViewModel @Inject constructor(
                }
             }
 
-            is TodoListEvent.DeleteTaskItem -> {
-
-            }
-
             is TodoListEvent.DeleteTaskList -> {
                 GlobalScope.launch {
                     _eventFlow.emit(UiEvent.ScrollTaskListPosition(0))
@@ -136,6 +133,7 @@ class TodoListViewModel @Inject constructor(
                             taskListsState.value.taskLists
                                 .find{ el -> el.id!! == selectedTaskListId}
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
+
                     } catch(e: InvalidTaskListException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't delete taskList"}")
                     }
@@ -209,10 +207,8 @@ class TodoListViewModel @Inject constructor(
                     saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
                 }
             }
-            // 호출 빈도 수 조절
             is TodoListEvent.GetTaskItemsByTaskListId -> {
                 loadTaskItemsOnPoolByTaskListId(event.taskListId)
-                clearDeletedTaskItemManager()
             }
             is TodoListEvent.LoadLastSelectedTaskListPosition -> {
                 viewModelScope.launch {
@@ -250,18 +246,17 @@ class TodoListViewModel @Inject constructor(
                 taskItems = taskItems
             )
             taskItemManagerPool[targetTaskListId] = taskItemManager
+            val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
+            val newMap = HashMap<Long, TaskItemManager>()
+            for (i in validIds){
+                taskItemManagerPool[i]?.let{
+                    newMap[i!!] = it
+                }
+            }
+            taskItemManagerPool = newMap
         }.launchIn(viewModelScope)
     }
 
-    private fun clearDeletedTaskItemManager() {
-        val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
-        val allIds = taskItemManagerPool.keys
-        for (i in allIds){
-            if(validIds.contains(i)){
-                taskItemManagerPool.remove(i)
-            }
-        }
-    }
 
     private fun getTaskLists() {
         getTaskListsJob?.cancel()
@@ -341,8 +336,6 @@ class TodoListViewModel @Inject constructor(
         object SaveTaskItem : UiEvent()
         object CompleteTaskItem : UiEvent()
         object RestoreTaskItemFromCompletion : UiEvent()
-        object DeleteTaskItem : UiEvent()
-        object DeleteTaskList : UiEvent()
         object CloseMenuRightModalBottomSheet: UiEvent()
     }
 }
