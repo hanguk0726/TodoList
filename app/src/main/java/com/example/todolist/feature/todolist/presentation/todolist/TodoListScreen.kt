@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -40,8 +41,7 @@ import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.LightBlack
-import com.example.todolist.ui.theme.LightBlue
+import com.example.todolist.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.pager.*
@@ -68,9 +68,16 @@ fun TodoListScreen(
 ) {
 
     rememberSystemUiController().run {
-        setNavigationBarColor(
-            color = Color.DarkGray
-        )
+        if(isSystemInDarkTheme()){
+            setNavigationBarColor(
+                color = Color.DarkGray
+            )
+        }else {
+            setNavigationBarColor(
+                color = Color.White
+            )
+        }
+
         setStatusBarColor(
             color = Color.Transparent
         )
@@ -206,7 +213,7 @@ fun TodoListScreen(
     }
 
     Scaffold(
-        backgroundColor = LightBlack,
+        backgroundColor = MaterialTheme.colors.background,
         scaffoldState = mainScaffoldState,
         snackbarHost = {
             CustomSnackbarHost(it)
@@ -248,7 +255,7 @@ fun TodoListScreen(
                 BottomAppBar(
                     modifier = Modifier.navigationBarsPadding(),
                     cutoutShape = RoundedCornerShape(50),
-                    elevation = 0.dp,
+                    elevation = if(isSystemInDarkTheme()) 0.dp else AppBarDefaults.BottomAppBarElevation,
                     content = {
                         IconButton(onClick = {
                             scope.async {
@@ -289,7 +296,7 @@ fun TodoListScreen(
                 ScrollableTabRow(
                     selectedTabIndex = currentPageState(),
                     edgePadding = 8.dp,
-                    backgroundColor = LightBlack,
+                    backgroundColor = MaterialTheme.colors.background,
                     indicator = @Composable { tabPositions ->
                         TabRowDefaults.Indicator(
                             Modifier
@@ -300,7 +307,7 @@ fun TodoListScreen(
                                         topEnd = 8.dp,
                                     )
                                 ),
-                            color = LightBlue
+                            color = themedBlue
                         )
                     }) {
                     taskListsState.taskLists.forEachIndexed { index, taskList ->
@@ -312,9 +319,9 @@ fun TodoListScreen(
                         }, text = {
                             Text(
                                 text = taskList.name,
-                                color = if (isSelected) LightBlue else MaterialTheme.colors.onSurface
+                                color = if (isSelected) themedBlue else MaterialTheme.colors.onSurface
                             )
-                        }, selectedContentColor = LightBlue)
+                        }, selectedContentColor = themedBlue)
                     }
                     TextButton(
                         onClick = { navController.navigate(Screen.AddEditTaskListScreen.route) },
@@ -341,15 +348,12 @@ fun TodoListScreen(
                         baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
                     ),
                 ) { pageIndex ->
-                    val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                    LaunchedEffect(key1 = true) {
-                        viewModel.onEvent(TodoListEvent.GetTaskItemsByTaskListId(eachTaskListId))
-                    }
                     LazyColumn(
                         Modifier
                             .fillMaxSize()
                             .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
                     ) {
+                        val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
                         val itemList = viewModel.getTaskItems(eachTaskListId)
                         val completedList = itemList.filter { el -> el.isCompleted }
                         val uncompletedList = itemList.filter { el -> !el.isCompleted }
@@ -611,7 +615,7 @@ fun TodoListScreen(
             text = { Text(contentText) },
             confirmButton = {
                 PureTextButton(
-                    text = confirmButtonText, textColor = LightBlue,
+                    text = confirmButtonText, textColor = themedBlue,
                     paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
                 ) {
                     showDeleteTaskListDialog = false
@@ -623,7 +627,7 @@ fun TodoListScreen(
             },
             dismissButton = {
                 PureTextButton(
-                    text = "취소", textColor = LightBlue,
+                    text = "취소", textColor = themedBlue,
                     paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
                 ) {
                     showDeleteTaskListDialog = false

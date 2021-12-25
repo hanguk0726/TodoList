@@ -1,6 +1,7 @@
 package com.example.todolist.feature.todolist.presentation.editTaskItem
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -25,7 +26,8 @@ import com.example.todolist.feature.todolist.presentation.editTaskItem.component
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.LightBlue
+import com.example.todolist.ui.theme.themedBlue
+import com.example.todolist.ui.theme.themedGray
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -39,13 +41,20 @@ fun EditTaskItemScreen(
     taskItemId: Long,
     viewModel: EditTaskItemViewModel
 ) {
-
-    rememberSystemUiController().setStatusBarColor(
-        color = MaterialTheme.colors.background
-    )
-    rememberSystemUiController().setNavigationBarColor(
-        color = Color.DarkGray
-    )
+    rememberSystemUiController().run {
+        if (isSystemInDarkTheme()) {
+            setNavigationBarColor(
+                color = Color.DarkGray
+            )
+        } else {
+            setNavigationBarColor(
+                color = Color.White
+            )
+        }
+        setStatusBarColor(
+            color = MaterialTheme.colors.background
+        )
+    }
     val scaffoldState = rememberScaffoldState()
     val taskItemTitleState = viewModel.taskItemTitle.value
     val taskItemDetailState = viewModel.taskItemDetail.value
@@ -92,7 +101,7 @@ fun EditTaskItemScreen(
                     if (taskItem != null) {
                         PureTextButton(
                             text = if (taskItem.isCompleted) "미완료로 표시" else "완료로 표시",
-                            textColor = LightBlue,
+                            textColor = themedBlue,
                             noRipple = true
                         ) {
                             viewModel.onEvent(EditTaskItemEvent.ToggleAndSaveTaskItemCompletionState)
@@ -117,7 +126,7 @@ fun EditTaskItemScreen(
                     Icon(
                         Icons.Default.Close,
                         "save and close editTaskItem screen",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                        tint = themedGray
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -128,21 +137,31 @@ fun EditTaskItemScreen(
                     Icon(
                         Icons.Default.DeleteOutline,
                         "delete taskItem",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                        tint = themedGray
                     )
                 }
             }
 
             Row(
-                Modifier.noRippleClickable {
-                    scope.async {
-                        modalBottomSheetState.show()
+                Modifier
+                    .noRippleClickable {
+                        scope.async {
+                            modalBottomSheetState.show()
+                        }
                     }
-                }.padding(16.dp, 8.dp)
+                    .padding(16.dp, 8.dp)
             ) {
                 if (viewModel.currentTaskItemTaskList != null) {
-                    Text(text = viewModel.currentTaskItemTaskList!!.name, color = LightBlue, fontSize = 14.sp)
-                    Icon(Icons.Default.ArrowDropDown, "show editTaskListModal", tint = LightBlue)
+                    Text(
+                        text = viewModel.currentTaskItemTaskList!!.name,
+                        color = themedBlue,
+                        fontSize = 14.sp
+                    )
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        "show editTaskListModal",
+                        tint = themedBlue
+                    )
                 }
             }
 
@@ -166,7 +185,7 @@ fun EditTaskItemScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
                         Icons.Default.Notes, "taskItem detail",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                        tint = themedGray
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     TransparentHintTextField(
@@ -185,7 +204,6 @@ fun EditTaskItemScreen(
             }
         }
     }
-
     if (taskItem != null) {
         EditTaskItemTaskListIdModalBottomSheet(
             scope = scope,

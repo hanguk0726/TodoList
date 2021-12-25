@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.LightBlue
 import com.example.todolist.ui.theme.ScrimColor
+import com.example.todolist.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
@@ -78,14 +78,14 @@ fun EditTaskItemTaskListIdModalBottomSheet(
                     ) {
                         Text(
                             el.name,
-                            color = if (isCurrentlySelected) LightBlue else Color.Unspecified
+                            color = if (isCurrentlySelected) themedBlue else Color.Unspecified
                         )
                         Spacer(modifier = Modifier.weight(1.0f))
                         if (isCurrentlySelected) {
                             Icon(
                                 Icons.Default.Check,
                                 "taskList currently selected for taskItem",
-                                tint = LightBlue
+                                tint = themedBlue
                             )
                         }
                     }

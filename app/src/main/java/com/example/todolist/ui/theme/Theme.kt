@@ -1,5 +1,6 @@
 package com.example.todolist.ui.theme
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -14,13 +15,19 @@ private val DarkColorPalette = darkColors(
     secondary = Teal200,
     surface = Color.DarkGray,
     onSurface = Color.White,
-    onBackground = Color.White
+    onBackground = Color.White,
+    background = LightBlack
 )
 
 private val LightColorPalette = lightColors(
-    primary = Purple500,
-    primaryVariant = Purple700,
-    secondary = Teal200,
+    background = Color.White,
+    onBackground = Color.Black,
+    onSecondary = Color.Black,
+    onPrimary = Color.Black,
+    onSurface = Color.Gray,
+    primary = Color.White
+
+
 
     /* Other default colors to override
     background = Color.White,
@@ -32,8 +39,14 @@ private val LightColorPalette = lightColors(
     */
 )
 
+val themedBlue
+    @Composable
+    get() = if(isSystemInDarkTheme()) LightBlue else Blue
 
-// lightTheme check
+val themedGray
+    @Composable
+    get() = if(isSystemInDarkTheme()) Color.LightGray else Color.Gray
+
 @Composable
 fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val systemUiController = rememberSystemUiController()
@@ -41,20 +54,24 @@ fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composab
     lateinit var colors : Colors
     lateinit var typography: Typography
     if(darkTheme){
-
         colors = DarkColorPalette
         typography = TypographyInDarkTheme
+        systemUiController.setNavigationBarColor(
+            color = Color.DarkGray,
+            navigationBarContrastEnforced = false
+        )
     }else{
         colors = LightColorPalette
         typography = TypographyInLightTheme
+        systemUiController.setNavigationBarColor(
+            color = Color.White,
+            navigationBarContrastEnforced = false
+        )
     }
     systemUiController.setStatusBarColor(
         color = Color.Transparent
     )
-    systemUiController.setNavigationBarColor(
-        color = Color.DarkGray,
-        navigationBarContrastEnforced = false
-    )
+
     MaterialTheme(
         colors = colors,
         typography = typography,

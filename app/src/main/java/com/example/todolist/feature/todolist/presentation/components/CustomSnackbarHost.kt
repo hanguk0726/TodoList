@@ -1,16 +1,16 @@
 package com.example.todolist.feature.todolist.presentation.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.Blue
-import com.example.todolist.ui.theme.DarkWhite
+import com.example.todolist.ui.theme.LightBlue
+import com.example.todolist.ui.theme.themedBlue
 
-// Theme color applying needed
 @Composable
 fun CustomSnackbarHost(
     state: SnackbarHostState
@@ -19,11 +19,13 @@ fun CustomSnackbarHost(
         Snackbar(
             modifier = Modifier.padding(16.dp),
             shape = RoundedCornerShape(8.dp),
-            backgroundColor = DarkWhite,
+            backgroundColor = if(isSystemInDarkTheme()) lightColors().background else
+                darkColors().background,
             content = {
                 Text(
                     text = data.message,
-                    color = Color.Black,
+                    color =   if(isSystemInDarkTheme()) lightColors().onBackground else
+                        darkColors().onBackground,
                     style = MaterialTheme.typography.body1
                 )
             },
@@ -32,7 +34,8 @@ fun CustomSnackbarHost(
                     TextButton(onClick = { data.performAction() }) {
                         Text(
                             text = actionLabel,
-                            color = Blue,
+                            color = if(isSystemInDarkTheme()) Blue else
+                                LightBlue,
                             style = MaterialTheme.typography.body1
                         )
                     }

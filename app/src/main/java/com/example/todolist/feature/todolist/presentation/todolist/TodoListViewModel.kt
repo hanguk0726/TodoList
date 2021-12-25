@@ -17,12 +17,12 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
+import com.example.todolist.util.flattenToList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
-//savedStateHandle
 
 @HiltViewModel
 class TodoListViewModel @Inject constructor(
@@ -62,8 +62,12 @@ class TodoListViewModel @Inject constructor(
     val dialogType: State<DialogType> = _dialogType
 
     init {
-        getTaskLists()
-
+        getTaskListsJob?.cancel()
+        getTaskListsJob = getTaskLists().onEach {
+            _taskListsState.value.taskLists.forEach {
+                loadTaskItemsOnPoolByTaskListId(it.id!!)
+            }
+        }.launchIn(viewModelScope)
     }
 
 
@@ -133,10 +137,9 @@ class TodoListViewModel @Inject constructor(
                             taskListsState.value.taskLists
                                 .find{ el -> el.id!! == selectedTaskListId}
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
-                        val taskItemsToDelete = taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!)
-                        taskItemsToDelete.map { list ->
-                            taskItemUseCases.deleteTaskItem(*list.toTypedArray())
-                        }.launchIn(viewModelScope)
+                        val taskItemsToDelete =
+                            taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!).flattenToList()
+                        taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
                     } catch(e: InvalidTaskListException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't delete taskList"}")
                     }
@@ -210,9 +213,6 @@ class TodoListViewModel @Inject constructor(
                     saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
                 }
             }
-            is TodoListEvent.GetTaskItemsByTaskListId -> {
-                loadTaskItemsOnPoolByTaskListId(event.taskListId)
-            }
             is TodoListEvent.LoadLastSelectedTaskListPosition -> {
                 viewModelScope.launch {
                     val lastSelectedTaskListId = readLastSelectedTaskListId()
@@ -261,9 +261,8 @@ class TodoListViewModel @Inject constructor(
     }
 
 
-    private fun getTaskLists() {
-        getTaskListsJob?.cancel()
-        getTaskListsJob = taskListUseCases.getTaskLists()
+    private fun getTaskLists(): Flow<List<TaskList>> {
+        return taskListUseCases.getTaskLists()
             .onEach { taskLists ->
                 if (taskLists.isEmpty()) {
                     val initialTaskList = TaskList(
@@ -281,7 +280,6 @@ class TodoListViewModel @Inject constructor(
                     )
                 }
             }
-            .launchIn(viewModelScope)
     }
 
     private suspend fun initializeFirstTaskList(taskList: TaskList): Long =
