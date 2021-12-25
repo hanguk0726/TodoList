@@ -105,7 +105,6 @@ class TodoListViewModel @Inject constructor(
                                action = {
                                    viewModelScope.launch {
                                        taskItemUseCases.updateTaskItem(original)
-                                       _eventFlow.emit(UiEvent.CancelToggleTaskItemCompletionState)
                                    }
                                }
                            ))
@@ -116,7 +115,6 @@ class TodoListViewModel @Inject constructor(
                                action = {
                                    viewModelScope.launch {
                                        taskItemUseCases.updateTaskItem(original)
-                                       _eventFlow.emit(UiEvent.CancelToggleTaskItemCompletionState)
                                    }
                                }
                            ))
@@ -331,7 +329,6 @@ class TodoListViewModel @Inject constructor(
             val action: () -> Unit
         ): UiEvent()
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
-        object CancelToggleTaskItemCompletionState : UiEvent()
         object ShowConfirmDialog : UiEvent()
         object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()

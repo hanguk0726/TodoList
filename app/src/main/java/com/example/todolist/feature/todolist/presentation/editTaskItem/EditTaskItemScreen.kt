@@ -26,6 +26,7 @@ import com.example.todolist.feature.todolist.presentation.editTaskItem.component
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
+import com.example.todolist.ui.theme.setSystemUiColorOfScreen
 import com.example.todolist.ui.theme.themedBlue
 import com.example.todolist.ui.theme.themedGray
 import com.google.accompanist.insets.navigationBarsPadding
@@ -41,20 +42,8 @@ fun EditTaskItemScreen(
     taskItemId: Long,
     viewModel: EditTaskItemViewModel
 ) {
-    rememberSystemUiController().run {
-        if (isSystemInDarkTheme()) {
-            setNavigationBarColor(
-                color = Color.DarkGray
-            )
-        } else {
-            setNavigationBarColor(
-                color = Color.White
-            )
-        }
-        setStatusBarColor(
-            color = MaterialTheme.colors.background
-        )
-    }
+    setSystemUiColorOfScreen()
+
     val scaffoldState = rememberScaffoldState()
     val taskItemTitleState = viewModel.taskItemTitle.value
     val taskItemDetailState = viewModel.taskItemDetail.value
@@ -79,7 +68,6 @@ fun EditTaskItemScreen(
                 is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
                     navController.navigateUp()
                 }
-
             }
         }
     }

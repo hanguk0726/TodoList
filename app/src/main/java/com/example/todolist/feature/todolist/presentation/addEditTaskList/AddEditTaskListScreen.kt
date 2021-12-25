@@ -30,6 +30,7 @@ fun AddTaskListScreen(
     rememberSystemUiController().setSystemBarsColor(
         color = MaterialTheme.colors.background
     )
+
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
 
