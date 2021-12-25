@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
@@ -97,11 +98,12 @@ fun TodoListScreen(
     val currentPageState = { getTargetPage(pagerState) }
 
     val selectedTaskListId = {
-        if (taskListsState.taskLists.isNotEmpty())
-            if (taskListsState.taskLists.size > currentPageState()) {
-                taskListsState.taskLists[currentPageState()].id!!
-            } else -1L
-        else -1L
+        try {
+            taskListsState.taskLists[currentPageState()].id!!
+        } catch (e: InvalidTaskListException) {
+            Log.e("TodoListScreen", "${e.message ?: "Couldn't get taskList"}")
+            -1L
+        }
     }
 
     val isShowCompletedTaskItemsButtonEnabled = remember { mutableStateOf(true) }
@@ -516,65 +518,65 @@ fun TodoListScreen(
                 text = { Text("새 목록 만들기") })
         }
     )
-
-    MenuRightModalBottomSheet(
-        scope = scope,
-        state = menuRightModalBottomSheetState,
-        taskListId = selectedTaskListId(),
-        changeTaskListName = {
-            ListItem(
-                modifier = Modifier
-                    .noRippleClickable {
-                        navController.navigate(
-                            Screen.AddEditTaskListScreen.route +
-                                    "?taskListId=${selectedTaskListId()}"
-                        )
-                    },
-                text = { Text("목록 이름 변경") }
-            )
-        },
-        deleteTaskList = {
-            val isEnabled = taskListsState.taskLists.size > 1
-            ListItem(
-                modifier = Modifier
-                    .noRippleClickable(
-                        enabled = isEnabled
-                    ) {
-                        viewModel.onEvent(TodoListEvent.ConfirmDeleteTaskList(selectedTaskListId()))
-                    },
-                text = {
-                    Text(
-                        "목록 삭제",
-                        color = if (isEnabled) Color.Unspecified else Color.Gray
-                    )
-                }
-            )
-        },
-
-        deleteCompletedItems = {
-            val itemList = viewModel.getTaskItems(selectedTaskListId())
-            val isEnabled = itemList.any { el -> el.isCompleted }
-            ListItem(
-                modifier = Modifier
-                    .noRippleClickable(
-                        enabled = isEnabled
-                    ) {
-                        viewModel.onEvent(
-                            TodoListEvent.ConfirmDeleteCompletedTaskItems(
-                                selectedTaskListId()
+    if (taskListsState.taskLists.isNotEmpty()) {
+        MenuRightModalBottomSheet(
+            scope = scope,
+            state = menuRightModalBottomSheetState,
+            taskListId = selectedTaskListId(),
+            changeTaskListName = {
+                ListItem(
+                    modifier = Modifier
+                        .noRippleClickable {
+                            navController.navigate(
+                                Screen.AddEditTaskListScreen.route +
+                                        "?taskListId=${selectedTaskListId()}"
                             )
+                        },
+                    text = { Text("목록 이름 변경") }
+                )
+            },
+            deleteTaskList = {
+                val isEnabled = taskListsState.taskLists.size > 1
+                ListItem(
+                    modifier = Modifier
+                        .noRippleClickable(
+                            enabled = isEnabled
+                        ) {
+                            viewModel.onEvent(TodoListEvent.ConfirmDeleteTaskList(selectedTaskListId()))
+                        },
+                    text = {
+                        Text(
+                            "목록 삭제",
+                            color = if (isEnabled) Color.Unspecified else Color.Gray
                         )
-                    },
-                text = {
-                    Text(
-                        "완료된 할 일 모두 삭제",
-                        color = if (isEnabled) Color.Unspecified else Color.Gray
-                    )
-                }
-            )
-        }
-    )
+                    }
+                )
+            },
 
+            deleteCompletedItems = {
+                val itemList = viewModel.getTaskItems(selectedTaskListId())
+                val isEnabled = itemList.any { el -> el.isCompleted }
+                ListItem(
+                    modifier = Modifier
+                        .noRippleClickable(
+                            enabled = isEnabled
+                        ) {
+                            viewModel.onEvent(
+                                TodoListEvent.ConfirmDeleteCompletedTaskItems(
+                                    selectedTaskListId()
+                                )
+                            )
+                        },
+                    text = {
+                        Text(
+                            "완료된 할 일 모두 삭제",
+                            color = if (isEnabled) Color.Unspecified else Color.Gray
+                        )
+                    }
+                )
+            }
+        )
+    }
     if (showDeleteTaskListDialog) {
         val titleText: String
         val contentText: String
