@@ -40,11 +40,11 @@ import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.setSystemUiColorOfScreen
 import com.example.todolist.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.pager.*
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
@@ -65,7 +65,20 @@ fun TodoListScreen(
     editTaskItemViewModel: EditTaskItemViewModel,
 ) {
 
-    setSystemUiColorOfScreen()
+    rememberSystemUiController().run {
+        if(isSystemInDarkTheme()){
+            setNavigationBarColor(
+                color = Color.DarkGray
+            )
+        }else {
+            setNavigationBarColor(
+                color = Color.White
+            )
+        }
+        setStatusBarColor(
+            color = Color.Transparent
+        )
+    }
 
     val taskItemTitleState = viewModel.taskItemTitle.value
 
@@ -336,7 +349,6 @@ fun TodoListScreen(
                     ) {
                         val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
                         val itemList = viewModel.getTaskItems(eachTaskListId)
-
                         items(itemList, key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
                             AnimatedVisibility(
                                 visible = !taskItem.isCompleted,

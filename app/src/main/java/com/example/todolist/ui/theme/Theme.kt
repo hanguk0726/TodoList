@@ -48,24 +48,6 @@ val themedGray
     get() = if(isSystemInDarkTheme()) Color.LightGray else Color.Gray
 
 @Composable
-fun setSystemUiColorOfScreen() {
-    rememberSystemUiController().run {
-        if(isSystemInDarkTheme()){
-            setNavigationBarColor(
-                color = Color.DarkGray
-            )
-        }else {
-            setNavigationBarColor(
-                color = Color.White
-            )
-        }
-        setStatusBarColor(
-            color = Color.Transparent
-        )
-    }
-}
-
-@Composable
 fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val systemUiController = rememberSystemUiController()
 
