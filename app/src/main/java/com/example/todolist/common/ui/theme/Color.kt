@@ -1,6 +1,5 @@
-package com.example.todolist.ui.theme
+package com.example.todolist.common.ui.theme
 
-import androidx.compose.material.MaterialTheme
 import androidx.compose.ui.graphics.Color
 
 val Purple200 = Color(0xFFBB86FC)

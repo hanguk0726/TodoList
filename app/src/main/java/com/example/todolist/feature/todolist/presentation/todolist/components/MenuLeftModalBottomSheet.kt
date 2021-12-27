@@ -17,7 +17,7 @@ import com.example.todolist.feature.todolist.presentation.components.SemiTranspa
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.ScrimColor
+import com.example.todolist.common.ui.theme.ScrimColor
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState

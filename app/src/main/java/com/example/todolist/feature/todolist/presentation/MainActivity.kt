@@ -8,7 +8,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -23,7 +22,7 @@ import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskI
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListScreen
 import com.example.todolist.feature.todolist.presentation.util.Screen
-import com.example.todolist.ui.theme.TodoListTheme
+import com.example.todolist.common.ui.theme.TodoListTheme
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
 

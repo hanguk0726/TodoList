@@ -2,14 +2,16 @@ package com.example.todolist.di
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.ui.unit.Constraints
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
-import com.example.todolist.TodoListApp
+import com.example.todolist.common.Constants
 import com.example.todolist.feature.todolist.data.data_source.TodoListDatabase
+import com.example.todolist.feature.todolist.data.remote.TaskItemApi
+import com.example.todolist.feature.todolist.data.remote.TaskListApi
 import com.example.todolist.feature.todolist.data.repository.TaskItemRepositoryImpl
 import com.example.todolist.feature.todolist.data.repository.TaskListRepositoryImpl
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
@@ -21,6 +23,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -38,6 +42,26 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideTaskItemApi() : TaskItemApi {
+        return Retrofit.Builder()
+            .baseUrl(Constants.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TaskItemApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTaskListApi() : TaskListApi {
+        return Retrofit.Builder()
+            .baseUrl(Constants.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TaskListApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideTodoListDataBase(app: Application): TodoListDatabase {
         return Room.databaseBuilder(
             app,
@@ -48,14 +72,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskListRepository(db:TodoListDatabase): TaskListRepository {
-        return TaskListRepositoryImpl(db.taskListDao)
+    fun provideTaskListRepository(db : TodoListDatabase, api : TaskListApi): TaskListRepository {
+        return TaskListRepositoryImpl(db.taskListDao, api)
     }
 
     @Provides
     @Singleton
-    fun provideTaskItemRepository(db:TodoListDatabase): TaskItemRepository {
-        return TaskItemRepositoryImpl(db.taskItemDao)
+    fun provideTaskItemRepository(db : TodoListDatabase, api : TaskItemApi): TaskItemRepository {
+        return TaskItemRepositoryImpl(db.taskItemDao, api)
     }
 
     @Provides

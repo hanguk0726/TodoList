@@ -10,8 +10,8 @@ import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.themedBlue
-import com.example.todolist.ui.theme.themedGray
+import com.example.todolist.common.ui.theme.themedBlue
+import com.example.todolist.common.ui.theme.themedGray
 
 
 @Composable

@@ -1,4 +1,4 @@
-package com.example.todolist.util
+package com.example.todolist.common.util
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow

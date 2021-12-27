@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.ScrimColor
-import com.example.todolist.ui.theme.themedBlue
+import com.example.todolist.common.ui.theme.ScrimColor
+import com.example.todolist.common.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope

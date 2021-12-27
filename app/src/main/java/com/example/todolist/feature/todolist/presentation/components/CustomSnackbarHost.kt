@@ -7,9 +7,8 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.todolist.ui.theme.Blue
-import com.example.todolist.ui.theme.LightBlue
-import com.example.todolist.ui.theme.themedBlue
+import com.example.todolist.common.ui.theme.Blue
+import com.example.todolist.common.ui.theme.LightBlue
 
 @Composable
 fun CustomSnackbarHost(

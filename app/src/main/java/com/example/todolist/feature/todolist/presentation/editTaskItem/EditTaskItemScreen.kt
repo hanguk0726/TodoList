@@ -26,8 +26,8 @@ import com.example.todolist.feature.todolist.presentation.editTaskItem.component
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.ui.theme.themedBlue
-import com.example.todolist.ui.theme.themedGray
+import com.example.todolist.common.ui.theme.themedBlue
+import com.example.todolist.common.ui.theme.themedGray
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController

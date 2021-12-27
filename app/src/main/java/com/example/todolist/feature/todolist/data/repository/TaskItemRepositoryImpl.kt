@@ -1,13 +1,18 @@
 package com.example.todolist.feature.todolist.data.repository
 
 import com.example.todolist.feature.todolist.data.data_source.TaskItemDao
+import com.example.todolist.feature.todolist.data.remote.TaskItemApi
+import com.example.todolist.feature.todolist.data.remote.dto.TaskItemDto
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 import kotlinx.coroutines.flow.Flow
+import okhttp3.ResponseBody
+import retrofit2.Call
 
 class TaskItemRepositoryImpl(
-    private val dao: TaskItemDao
+    private val dao: TaskItemDao,
+    private val api: TaskItemApi
 ) : TaskItemRepository {
 
 
@@ -29,6 +34,29 @@ class TaskItemRepositoryImpl(
 
     override suspend fun updateTaskItem(vararg taskItem: TaskItem) {
         return dao.updateTaskItem(*taskItem)
+    }
+
+    override suspend fun getTaskItemsByTaskListIdOnRemote(taskListId: Long, userId: Long): List<TaskItemDto> {
+        return api.getTaskItemsByTaskListId(taskListId, userId)
+    }
+
+    override suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: Long): TaskItemDto {
+        return api.getTaskItemById(taskItemId, userId)
+    }
+
+    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto , userId: Long): Call<ResponseBody> {
+        return api.insertTaskItem(
+            taskItemDto = *taskItemDto, userId)
+    }
+
+    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: Long): Call<ResponseBody> {
+        return api.deleteTaskItem(
+            taskItemDto = *taskItemDto, userId)
+    }
+
+    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: Long): Call<ResponseBody> {
+        return api.updateTaskItem(
+            taskItemDto = *taskItemDto, userId)
     }
 
 }
