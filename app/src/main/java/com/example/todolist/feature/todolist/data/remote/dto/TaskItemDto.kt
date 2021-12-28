@@ -10,7 +10,7 @@ data class TaskItemDto(
     val timestamp: Long = System.currentTimeMillis(),
     val taskListId: Long,
     val id: Long? = null,
-    val userId: Long
+    val userId: String
 )
 
 
@@ -25,7 +25,7 @@ fun TaskItemDto.toTaskItem() : TaskItem {
     )
 }
 
-fun TaskItem.toTaskItemDto(userId: Long) : TaskItemDto {
+fun TaskItem.toTaskItemDto(userId: String) : TaskItemDto {
     return TaskItemDto(
         title = title,
         detail = detail,

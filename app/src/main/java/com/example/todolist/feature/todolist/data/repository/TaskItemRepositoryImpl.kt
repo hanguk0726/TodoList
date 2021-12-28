@@ -16,7 +16,7 @@ class TaskItemRepositoryImpl(
 ) : TaskItemRepository {
 
 
-    override fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>> {
+    override fun getTaskItemsByTaskListId(id: Long): List<TaskItem> {
         return dao.getTaskItemsByTaskListId(id)
     }
 
@@ -36,25 +36,25 @@ class TaskItemRepositoryImpl(
         return dao.updateTaskItem(*taskItem)
     }
 
-    override suspend fun getTaskItemsByTaskListIdOnRemote(taskListId: Long, userId: Long): List<TaskItemDto> {
+    override suspend fun getTaskItemsByTaskListIdOnRemote(taskListId: Long, userId: String): List<TaskItemDto> {
         return api.getTaskItemsByTaskListId(taskListId, userId)
     }
 
-    override suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: Long): TaskItemDto {
+    override suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: String): TaskItemDto {
         return api.getTaskItemById(taskItemId, userId)
     }
 
-    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto , userId: Long): Call<ResponseBody> {
+    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto , userId: String): Call<ResponseBody> {
         return api.insertTaskItem(
             taskItemDto = *taskItemDto, userId)
     }
 
-    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: Long): Call<ResponseBody> {
+    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String): Call<ResponseBody> {
         return api.deleteTaskItem(
             taskItemDto = *taskItemDto, userId)
     }
 
-    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: Long): Call<ResponseBody> {
+    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String): Call<ResponseBody> {
         return api.updateTaskItem(
             taskItemDto = *taskItemDto, userId)
     }

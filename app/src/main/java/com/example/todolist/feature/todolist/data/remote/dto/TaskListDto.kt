@@ -7,7 +7,7 @@ data class TaskListDto(
     val name: String,
     val createdTimestamp: Long = System.currentTimeMillis(),
     val id: Long? = null,
-    val userId: Long
+    val userId: String
 )
 
 fun TaskListDto.toTaskList() : TaskList {
@@ -19,7 +19,7 @@ fun TaskListDto.toTaskList() : TaskList {
 }
 
 
-fun TaskList.toTaskListDto(userId: Long) : TaskListDto {
+fun TaskList.toTaskListDto(userId: String) : TaskListDto {
     return TaskListDto(
         name = name,
         createdTimestamp = createdTimestamp,

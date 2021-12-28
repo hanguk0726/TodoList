@@ -9,18 +9,18 @@ import retrofit2.http.*
 interface TaskListApi {
 
     @GET("/v1/taskLists")
-    suspend fun getTaskLists(@Query("userId") userId: Long): List<TaskListDto>
+    suspend fun getTaskLists(@Query("userId") userId: String): List<TaskListDto>
 
     @GET("/v1/taskLists/{taskListId}")
-    suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: Long) : TaskListDto
+    suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: String) : TaskListDto
 
     @POST("/v1/taskLists")
-    suspend fun insertTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: Long) : Call<ResponseBody>
+    suspend fun insertTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: String) : Call<ResponseBody>
 
     @DELETE("/v1/taskLists")
-    suspend fun deleteTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: Long) : Call<ResponseBody>
+    suspend fun deleteTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: String) : Call<ResponseBody>
 
     @PUT("/v1/taskLists")
-    suspend fun updateTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: Long) : Call<ResponseBody>
+    suspend fun updateTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: String) : Call<ResponseBody>
 
 }

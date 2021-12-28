@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface TaskItemDao {
 
     @Query("SELECT * FROM TaskItem WHERE taskListId = :id")
-    fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>>
+    fun getTaskItemsByTaskListId(id: Long): List<TaskItem>
 
     @Query("SELECT * FROM TaskItem WHERE id = :id")
     suspend fun getTaskItemById(id: Long): TaskItem?
