@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class TaskList(
     val name: String,
     val createdTimestamp: Long = System.currentTimeMillis(),
+    val isSynchronizedWithRemote: Boolean = false,
     @PrimaryKey val id: Long? = null
 )
 

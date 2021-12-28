@@ -10,6 +10,7 @@ data class TaskItem(
     val isCompleted: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
     val taskListId: Long,
+    val isSynchronizedWithRemote: Boolean = false,
     @PrimaryKey val id: Long? = null
 )
 

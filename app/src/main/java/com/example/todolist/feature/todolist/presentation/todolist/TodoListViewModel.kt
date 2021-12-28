@@ -18,7 +18,6 @@ import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
-import com.example.todolist.common.util.flattenToList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -57,24 +56,35 @@ class TodoListViewModel @Inject constructor(
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
 
-    private var taskItemManagerPool = HashMap<Long, TaskItemManager>()
+    private var taskItemStatePool = HashMap<Long, TaskItemStatePool>()
 
     private val _dialogType = mutableStateOf<DialogType>(DialogType.DeleteTaskList)
     val dialogType: State<DialogType> = _dialogType
 
     init {
+        requestLatestData()
+    }
+
+    private fun requestLatestData() {
         getTaskListsJob?.cancel()
-        getTaskListsJob = getTaskLists().onEach {
+        getTaskListsJob = getTaskLists().onEach { result ->
+            if(result is Resource.Error){
+                viewModelScope.async {
+                    Log.e("TodoListViewModel",
+                    "failed to get latest data from remote storage. it will try again in a minute")
+                    delay(1000L * 60 * 1)
+                    requestLatestData()
+                }
+            }
             _taskListsState.value.taskLists.forEach {
                 loadTaskItemsOnPoolByTaskListId(it.id!!)
             }
         }.launchIn(viewModelScope)
     }
 
-
     fun getTaskItems(targetTaskListId: Long):List<TaskItem>  {
-        return if(taskItemManagerPool.containsKey(targetTaskListId)){
-            taskItemManagerPool[targetTaskListId]!!.taskItemsState.value.taskItems
+        return if(taskItemStatePool.containsKey(targetTaskListId)){
+            taskItemStatePool[targetTaskListId]!!.taskItemsState.value.taskItems
         } else {
             emptyList()
         }
@@ -237,10 +247,10 @@ class TodoListViewModel @Inject constructor(
 
 
     private fun loadTaskItemsOnPoolByTaskListId(targetTaskListId: Long) {
-        var taskItemManager = if(taskItemManagerPool.containsKey(targetTaskListId)){
-            taskItemManagerPool[targetTaskListId]!!
+        var taskItemManager = if(taskItemStatePool.containsKey(targetTaskListId)){
+            taskItemStatePool[targetTaskListId]!!
         } else {
-            TaskItemManager()
+            TaskItemStatePool()
         }
         taskItemManager.getTaskItemsJob?.cancel()
         taskItemManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
@@ -267,15 +277,15 @@ class TodoListViewModel @Inject constructor(
             taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
                 taskItems = result.data!!
             )
-            taskItemManagerPool[targetTaskListId] = taskItemManager
+            taskItemStatePool[targetTaskListId] = taskItemManager
             val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
-            val newMap = HashMap<Long, TaskItemManager>()
+            val newMap = HashMap<Long, TaskItemStatePool>()
             for (i in validIds){
-                taskItemManagerPool[i]?.let{
+                taskItemStatePool[i]?.let{
                     newMap[i!!] = it
                 }
             }
-            taskItemManagerPool = newMap
+            taskItemStatePool = newMap
         }.launchIn(viewModelScope)
     }
 
@@ -351,7 +361,7 @@ class TodoListViewModel @Inject constructor(
         )
     }
 
-    data class TaskItemManager(
+    data class TaskItemStatePool(
         val _taskItemsState: MutableState<TaskItemsState> = mutableStateOf(TaskItemsState()),
         val taskItemsState: State<TaskItemsState> = _taskItemsState,
         var getTaskItemsJob: Job? = null
