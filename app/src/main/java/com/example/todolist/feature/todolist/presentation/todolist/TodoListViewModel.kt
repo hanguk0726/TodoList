@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.common.util.Resource
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
@@ -136,7 +137,9 @@ class TodoListViewModel @Inject constructor(
                                 .find{ el -> el.id!! == selectedTaskListId}
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
                         val taskItemsToDelete =
-                            taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!).flattenToList()
+                            taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!).flatMapConcat {
+                                it.data!!.asFlow()
+                            }.toList()
                         taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
                     } catch(e: InvalidTaskListException) {
                         Log.e("TodoListViewModel","${e.message ?: "Couldn't delete taskList"}")
@@ -242,9 +245,27 @@ class TodoListViewModel @Inject constructor(
         taskItemManager.getTaskItemsJob?.cancel()
         taskItemManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
             targetTaskListId
-        ).onEach { taskItems ->
+        ).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
+                        error = "", isLoading = false
+                    )
+                }
+                is Resource.Error -> {
+                    taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
+                        error = result.message ?: "An unexpected error occured",
+                        isLoading = false
+                    )
+                }
+                is Resource.Loading -> {
+                    taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
+                        error = "", isLoading = true
+                    )
+                }
+            }
             taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
-                taskItems = taskItems
+                taskItems = result.data!!
             )
             taskItemManagerPool[targetTaskListId] = taskItemManager
             val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
@@ -259,9 +280,10 @@ class TodoListViewModel @Inject constructor(
     }
 
 
-    private fun getTaskLists(): Flow<List<TaskList>> {
+    private fun getTaskLists(): Flow<Resource<List<TaskList>>> {
         return taskListUseCases.getTaskLists()
-            .onEach { taskLists ->
+            .onEach { result ->
+                val taskLists = result.data!!
                 if (taskLists.isEmpty()) {
                     val initialTaskList = TaskList(
                         name = "할 일 목록",
@@ -273,10 +295,28 @@ class TodoListViewModel @Inject constructor(
                         taskLists = listOf(initialTaskList.copy(id = taskListId))
                     )
                 } else {
-                    _taskListsState.value = taskListsState.value.copy(
-                        taskLists = taskLists
-                    )
+                    when (result) {
+                        is Resource.Success -> {
+                            _taskListsState.value = taskListsState.value.copy(
+                                error = "", isLoading = false
+                            )
+                        }
+                        is Resource.Error -> {
+                            _taskListsState.value = taskListsState.value.copy(
+                                error = result.message ?: "An unexpected error occured",
+                                isLoading = false
+                            )
+                        }
+                        is Resource.Loading -> {
+                            _taskListsState.value = taskListsState.value.copy(
+                                error = "", isLoading = true
+                            )
+                        }
+                    }
                 }
+                _taskListsState.value = taskListsState.value.copy(
+                    taskLists = taskLists!!
+                )
             }
     }
 
