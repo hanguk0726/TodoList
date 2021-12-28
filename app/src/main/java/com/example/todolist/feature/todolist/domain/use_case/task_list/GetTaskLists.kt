@@ -2,19 +2,15 @@ package com.example.todolist.feature.todolist.domain.use_case.task_list
 
 import com.example.todolist.common.Constants
 import com.example.todolist.common.util.Resource
-import com.example.todolist.common.util.flattenToList
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskList
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import com.example.todolist.feature.todolist.domain.util.OrderType
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import okhttp3.internal.concurrent.Task
+import kotlinx.coroutines.flow.*
 import retrofit2.HttpException
 import java.io.IOException
+import java.lang.Exception
 
 class GetTaskLists(
     private val repository: TaskListRepository
@@ -32,27 +28,33 @@ class GetTaskLists(
             }
             emit(Resource.Success(sorted))
         } catch (e: HttpException) {
-            val taskLists =  repository.getTaskLists()
-            val sorted = when(order) {
-                is OrderType.Ascending -> taskLists.sortedBy{ it.createdTimestamp }
-                is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
-            }
-            emit(Resource.Error(
-                message = e.localizedMessage ?: "An unexpected error occured",
-                data = sorted
-            ))
+            emitLocalData(
+                this,
+                order,
+                e
+            )
         } catch (e: IOException) {
-            val taskLists =  repository.getTaskLists()
-            val sorted = when(order) {
-                is OrderType.Ascending -> taskLists.sortedBy{ it.createdTimestamp }
-                is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
-            }
-            emit(Resource.Error(
-                message = e.localizedMessage ?:
-                    "Couldn't reach server. Check your internet connection",
-                data = sorted
-            ))
+            emitLocalData(
+                this,
+                order,
+                e
+            )
         }
     }
 
+    private suspend fun emitLocalData (
+        flowCollector: FlowCollector<Resource<List<TaskList>>>,
+        order: OrderType,
+        e: Exception
+    ) {
+        val taskLists =  repository.getTaskLists()
+        val sorted = when(order) {
+            is OrderType.Ascending -> taskLists.sortedBy{ it.createdTimestamp }
+            is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
+        }
+        flowCollector.emit(Resource.Error(
+            message = e.localizedMessage ?: "An unexpected error occured",
+            data = sorted
+        ))
+    }
 }

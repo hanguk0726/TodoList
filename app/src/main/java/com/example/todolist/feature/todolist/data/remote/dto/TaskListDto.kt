@@ -1,12 +1,15 @@
 package com.example.todolist.feature.todolist.data.remote.dto
 
 import com.example.todolist.feature.todolist.domain.model.TaskList
+import com.google.gson.annotations.SerializedName
 
 
 data class TaskListDto(
     val name: String,
+    @SerializedName("created_timestamp")
     val createdTimestamp: Long = System.currentTimeMillis(),
     val id: Long? = null,
+    @SerializedName("user_id")
     val userId: String
 )
 
