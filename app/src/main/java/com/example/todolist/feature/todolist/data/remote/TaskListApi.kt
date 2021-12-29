@@ -23,4 +23,7 @@ interface TaskListApi {
     @PUT("/v1/taskLists")
     suspend fun updateTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: String) : Call<ResponseBody>
 
+    @POST
+    suspend fun synchronizeTaskList(vararg taskListDto: TaskListDto, @Query("userId") userId: String) : Call<ResponseBody>
+
 }

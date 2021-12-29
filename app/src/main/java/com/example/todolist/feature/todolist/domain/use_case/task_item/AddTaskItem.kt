@@ -11,12 +11,22 @@ class AddTaskItem(
 ) {
 
     @Throws(InvalidTaskItemException::class)
-    suspend operator fun invoke(vararg taskItem: TaskItem) {
+    suspend operator fun invoke(vararg taskItem: TaskItem) : List<Long> {
         if(taskItem.any { el -> el.title.isBlank() }){
             throw InvalidTaskItemException("the name of the task can't be empty")
         }
 
-        val taskItemDto = taskItem.map { it.toTaskItemDto(Constants.ANDROID_ID) }
+        val ids = mutableListOf<Long>()
+
+        val taskItemDto = taskItem.map {
+            val id = repository.insertTaskItem(it).first()
+            val item = it.copy(
+                id = id,
+                isSynchronizedWithRemote = false
+            )
+            ids.add(id)
+            item.toTaskItemDto(Constants.ANDROID_ID)
+        }
 
         val result = repository.insertTaskItemOnRemote(
             taskItemDto = *taskItemDto.toTypedArray(),
@@ -28,10 +38,9 @@ class AddTaskItem(
                 val item = it.copy(isSynchronizedWithRemote = true)
                 item
             }
-            repository.insertTaskItem(*data.toTypedArray())
-        } else {
-            repository.insertTaskItem(*taskItem)
+            repository.updateTaskItem(*data.toTypedArray())
         }
 
+        return ids
     }
 }

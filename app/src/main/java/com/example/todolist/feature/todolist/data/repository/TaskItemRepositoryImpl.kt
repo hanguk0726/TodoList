@@ -24,7 +24,7 @@ class TaskItemRepositoryImpl(
         return dao.getTaskItemById(id)
     }
 
-    override suspend fun insertTaskItem(vararg taskItem: TaskItem) {
+    override suspend fun insertTaskItem(vararg taskItem: TaskItem) : List<Long> {
         return dao.insertTaskItem(*taskItem)
     }
 

@@ -17,12 +17,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import com.example.todolist.common.ui.theme.TodoListTheme
+import com.example.todolist.common.util.synchronization.SynchronizeWorker
 import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddTaskListScreen
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemScreen
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListScreen
 import com.example.todolist.feature.todolist.presentation.util.Screen
-import com.example.todolist.common.ui.theme.TodoListTheme
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -37,6 +40,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        val synchronizeWorkRequest =
+            OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)
+                .build()
+        WorkManager
+            .getInstance(applicationContext)
+            .enqueue(synchronizeWorkRequest)
         setContent {
             TodoListTheme {
                 ProvideWindowInsets(
@@ -53,11 +62,12 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screen.TodoListScreen.route
                         ) {
                             composable(route = Screen.TodoListScreen.route) {
-                                    val editTaskItemViewModel = hiltViewModel<EditTaskItemViewModel>(viewModelStoreOwner = viewModelStoreOwner)
-                                    TodoListScreen(
-                                        navController = navController,
-                                        editTaskItemViewModel = editTaskItemViewModel
-                                    )
+                                val editTaskItemViewModel =
+                                    hiltViewModel<EditTaskItemViewModel>(viewModelStoreOwner = viewModelStoreOwner)
+                                TodoListScreen(
+                                    navController = navController,
+                                    editTaskItemViewModel = editTaskItemViewModel
+                                )
 
                             }
                             composable(
@@ -90,7 +100,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             ) {
-                                val viewModel = hiltViewModel<EditTaskItemViewModel>(viewModelStoreOwner = viewModelStoreOwner)
+                                val viewModel =
+                                    hiltViewModel<EditTaskItemViewModel>(viewModelStoreOwner = viewModelStoreOwner)
                                 val taskItemId = it.arguments?.getLong("taskItemId") ?: -1L
                                 EditTaskItemScreen(
                                     navController = navController,

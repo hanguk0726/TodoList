@@ -1,6 +1,7 @@
 package com.example.todolist.feature.todolist.data.remote
 
 import com.example.todolist.feature.todolist.data.remote.dto.TaskItemDto
+import com.example.todolist.feature.todolist.data.remote.dto.TaskListDto
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
@@ -22,4 +23,6 @@ interface TaskItemApi {
     @PUT("/v1/taskItems")
     suspend fun updateTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
 
+    @POST
+    suspend fun synchronizeTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
 }

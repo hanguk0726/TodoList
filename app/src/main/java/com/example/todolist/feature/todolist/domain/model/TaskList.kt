@@ -8,6 +8,7 @@ data class TaskList(
     val name: String,
     val createdTimestamp: Long = System.currentTimeMillis(),
     val isSynchronizedWithRemote: Boolean = false,
+    val needToBeDeleted: Boolean = false,
     @PrimaryKey val id: Long? = null
 )
 

@@ -15,7 +15,7 @@ interface TaskItemRepository {
 
     suspend fun getTaskItemById(id: Long): TaskItem?
 
-    suspend fun insertTaskItem(vararg taskItem: TaskItem)
+    suspend fun insertTaskItem(vararg taskItem: TaskItem) : List<Long>
 
     suspend fun deleteTaskItem(vararg taskItem: TaskItem)
 
