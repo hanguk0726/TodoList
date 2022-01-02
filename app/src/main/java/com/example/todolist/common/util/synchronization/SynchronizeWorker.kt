@@ -34,7 +34,6 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
     @Inject
     private lateinit var taskItemApi : TaskItemApi
 
-
     @Inject
     private lateinit var taskListApi : TaskListApi
 
@@ -77,8 +76,6 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
             }
         }
 
-
-
         return Result.success()
     }
 
@@ -91,7 +88,7 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
                 if( ! taskItem.isSynchronizedWithRemote ) {
                     val item = taskItem.toTaskItemDto(userId)
                     val result = taskItemApi.synchronizeTaskItem(
-                        taskItemDto = arrayOf(item), userId)
+                        taskItemDto = arrayOf(item))
                     if(result.isExecuted){
                         taskItemUseCases.updateTaskItem(
                             taskItem.copy(
@@ -111,7 +108,7 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
             if( ! taskList.isSynchronizedWithRemote ) {
                 val item = taskList.toTaskListDto(userId)
                 val result = taskListApi.synchronizeTaskList(
-                    taskListDto = arrayOf(item), userId)
+                    taskListDto = arrayOf(item))
                 if(result.isExecuted){
                     taskListUseCases.updateTaskList(
                         taskList.copy(

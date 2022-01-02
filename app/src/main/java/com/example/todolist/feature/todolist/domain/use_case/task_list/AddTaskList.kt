@@ -30,9 +30,7 @@ class AddTaskList(
         }
 
         val result = repository.insertTaskListOnRemote(
-            taskListDto = *taskItemDto.toTypedArray(),
-            Constants.ANDROID_ID
-        )
+            taskListDto = *taskItemDto.toTypedArray())
 
         if(result.isExecuted ) {
             val data = taskList.map {

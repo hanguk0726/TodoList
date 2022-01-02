@@ -17,9 +17,7 @@ class DeleteTaskItem (
         val taskItemDto = taskItem.map { it.toTaskItemDto(Constants.ANDROID_ID) }
 
         val result = repository.deleteTaskItemOnRemote(
-            taskItemDto = *taskItemDto.toTypedArray(),
-            Constants.ANDROID_ID
-        )
+            taskItemDto = *taskItemDto.toTypedArray())
 
         if(result.isExecuted) {
             repository.updateTaskItem(*taskItem)

@@ -15,7 +15,6 @@ class TaskItemRepositoryImpl(
     private val api: TaskItemApi
 ) : TaskItemRepository {
 
-
     override fun getTaskItemsByTaskListId(id: Long): List<TaskItem> {
         return dao.getTaskItemsByTaskListId(id)
     }
@@ -44,19 +43,19 @@ class TaskItemRepositoryImpl(
         return api.getTaskItemById(taskItemId, userId)
     }
 
-    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto , userId: String): Call<ResponseBody> {
+    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto): Call<ResponseBody> {
         return api.insertTaskItem(
-            taskItemDto = *taskItemDto, userId)
+            taskItemDto = *taskItemDto)
     }
 
-    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String): Call<ResponseBody> {
+    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Call<ResponseBody> {
         return api.deleteTaskItem(
-            taskItemDto = *taskItemDto, userId)
+            taskItemDto = *taskItemDto)
     }
 
-    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String): Call<ResponseBody> {
+    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Call<ResponseBody> {
         return api.updateTaskItem(
-            taskItemDto = *taskItemDto, userId)
+            taskItemDto = *taskItemDto)
     }
 
 }

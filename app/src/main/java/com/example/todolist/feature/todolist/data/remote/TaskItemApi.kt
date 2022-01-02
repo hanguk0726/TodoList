@@ -15,14 +15,14 @@ interface TaskItemApi {
     suspend fun getTaskItemById(@Path("taskItemId") taskItemId: Long, @Query("userId") userId: String) : TaskItemDto
 
     @POST("/v1/taskItems")
-    suspend fun insertTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
+    suspend fun insertTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
     @DELETE("/v1/taskItems")
-    suspend fun deleteTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
+    suspend fun deleteTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
     @PUT("/v1/taskItems")
-    suspend fun updateTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
+    suspend fun updateTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
-    @POST
-    suspend fun synchronizeTaskItem(vararg taskItemDto: TaskItemDto, @Query("userId") userId: String) : Call<ResponseBody>
+    @POST("/v1/taskItems/synchronizeTaskItem")
+    suspend fun synchronizeTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 }

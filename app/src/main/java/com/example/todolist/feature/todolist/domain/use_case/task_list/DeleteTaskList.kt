@@ -16,9 +16,7 @@ class DeleteTaskList(
         val taskListDto = taskList.map { it.toTaskListDto(Constants.ANDROID_ID) }
 
         val result = repository.deleteTaskListOnRemote(
-            taskListDto = *taskListDto.toTypedArray(),
-            Constants.ANDROID_ID
-        )
+            taskListDto = *taskListDto.toTypedArray())
 
         if(result.isExecuted) {
             repository.deleteTaskList(*taskList)

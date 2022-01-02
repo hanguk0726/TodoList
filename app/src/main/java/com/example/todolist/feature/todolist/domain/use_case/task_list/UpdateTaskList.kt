@@ -21,9 +21,7 @@ class UpdateTaskList(
         }
 
         val result = repository.updateTaskListOnRemote(
-            taskListDto = *taskItemDto.toTypedArray(),
-            Constants.ANDROID_ID
-        )
+            taskListDto = *taskItemDto.toTypedArray())
 
         if(result.isExecuted) {
             val data = taskList.map {

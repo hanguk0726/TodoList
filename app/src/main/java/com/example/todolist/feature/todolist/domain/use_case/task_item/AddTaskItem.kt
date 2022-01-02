@@ -29,9 +29,7 @@ class AddTaskItem(
         }
 
         val result = repository.insertTaskItemOnRemote(
-            taskItemDto = *taskItemDto.toTypedArray(),
-            Constants.ANDROID_ID
-        )
+            taskItemDto = *taskItemDto.toTypedArray())
 
         if(result.isExecuted) {
             val data = taskItem.map {

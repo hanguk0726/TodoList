@@ -23,9 +23,9 @@ interface TaskListRepository {
 
     suspend fun getTaskListByIdOnRemote(taskListId: Long, userId: String) : TaskListDto
 
-    suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String) : Call<ResponseBody>
+    suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
-    suspend fun deleteTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String) : Call<ResponseBody>
+    suspend fun deleteTaskListOnRemote(vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
-    suspend fun updateTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String) : Call<ResponseBody>
+    suspend fun updateTaskListOnRemote(vararg taskListDto: TaskListDto) : Call<ResponseBody>
 }

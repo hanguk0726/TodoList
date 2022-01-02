@@ -42,19 +42,19 @@ class TaskListRepositoryImpl(
         return api.getTaskListById(taskListId, userId)
     }
 
-    override suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String): Call<ResponseBody> {
+    override suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto): Call<ResponseBody> {
         return api.insertTaskList(
-            taskListDto = *taskListDto, userId)
+            taskListDto = *taskListDto)
     }
 
-    override suspend fun deleteTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String): Call<ResponseBody> {
+    override suspend fun deleteTaskListOnRemote(vararg taskListDto: TaskListDto): Call<ResponseBody> {
         return api.deleteTaskList(
-            taskListDto = *taskListDto, userId)
+            taskListDto = *taskListDto)
     }
 
-    override suspend fun updateTaskListOnRemote(vararg taskListDto: TaskListDto, userId: String): Call<ResponseBody> {
+    override suspend fun updateTaskListOnRemote(vararg taskListDto: TaskListDto): Call<ResponseBody> {
         return api.updateTaskList(
-            taskListDto = *taskListDto, userId)
+            taskListDto = *taskListDto)
     }
 
 }

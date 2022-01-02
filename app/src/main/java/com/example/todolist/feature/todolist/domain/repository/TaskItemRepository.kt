@@ -25,10 +25,10 @@ interface TaskItemRepository {
 
     suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: String) : TaskItemDto
 
-    suspend fun insertTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String) : Call<ResponseBody>
+    suspend fun insertTaskItemOnRemote(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
-    suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String) : Call<ResponseBody>
+    suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
-    suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto, userId: String) : Call<ResponseBody>
+    suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
 }
