@@ -6,10 +6,11 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 import java.math.BigInteger
+import javax.inject.Named
 
 class AddTaskItem(
     private val repository: TaskItemRepository,
-    private val androidId: BigInteger
+    @Named("androidId") private val androidId: String
 ) {
 
     @Throws(InvalidTaskItemException::class)
@@ -27,11 +28,11 @@ class AddTaskItem(
                 isSynchronizedWithRemote = false
             )
             ids.add(id)
-            item.toTaskItemDto(androidId.toString())
+            item.toTaskItemDto(androidId)
         }
 
         val result = repository.insertTaskItemOnRemote(
-            taskItemDto = *taskItemDto.toTypedArray())
+            taskItemDto = taskItemDto.toTypedArray())
 
         if(result.isExecuted) {
             val data = taskItem.map {

@@ -31,6 +31,7 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
 import java.math.BigInteger
 import javax.inject.Inject
+import javax.inject.Named
 
 @OptIn(
     ExperimentalFoundationApi::class,
@@ -43,7 +44,8 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var androidId : BigInteger
+    @Named("androidId")
+    lateinit var androidId : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

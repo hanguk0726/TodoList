@@ -19,12 +19,13 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import java.math.BigInteger
+import javax.inject.Named
 
 @HiltWorker
 class SynchronizeWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    androidId: BigInteger,
+    @Named("androidId") androidId: String,
     val taskListRepository: TaskListRepository,
     val taskItemRepository: TaskItemRepository,
     val taskListUseCases: TaskListUseCases,
@@ -33,7 +34,7 @@ class SynchronizeWorker @AssistedInject constructor(
     val taskListApi: TaskListApi
 ) : CoroutineWorker(context, workerParams), CoroutineScope {
 
-    private val userId = androidId.toString()
+    private val userId = androidId
 
     override suspend fun doWork(): Result {
 

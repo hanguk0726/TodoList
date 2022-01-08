@@ -10,16 +10,17 @@ import com.example.todolist.feature.todolist.domain.repository.TaskListRepositor
 import retrofit2.HttpException
 import java.io.IOException
 import java.math.BigInteger
+import javax.inject.Named
 
 class GetTaskListById(
     private val repository: TaskListRepository,
-    private val androidId: BigInteger
+    @Named("androidId") private val androidId: String
 ) {
 
     @Throws(InvalidTaskListException::class)
     suspend operator fun invoke(id: Long): TaskList? {
         return try {
-            repository.getTaskListByIdOnRemote(id, androidId.toString()).toTaskList()
+            repository.getTaskListByIdOnRemote(id, androidId).toTaskList()
         } catch (e: HttpException) {
             Log.e(
                 "GetTaskItemById",

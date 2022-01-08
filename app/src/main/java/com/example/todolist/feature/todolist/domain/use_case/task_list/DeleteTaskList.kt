@@ -7,15 +7,16 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskListExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import java.math.BigInteger
+import javax.inject.Named
 
 class DeleteTaskList(
     private val repository: TaskListRepository,
-    private val androidId: BigInteger
+    @Named("androidId") private val androidId: String
 ) {
 
     @Throws(InvalidTaskListException::class)
     suspend operator fun invoke(vararg taskList: TaskList) {
-        val taskListDto = taskList.map { it.toTaskListDto(androidId.toString()) }
+        val taskListDto = taskList.map { it.toTaskListDto(androidId) }
 
         val result = repository.deleteTaskListOnRemote(
             taskListDto = *taskListDto.toTypedArray())

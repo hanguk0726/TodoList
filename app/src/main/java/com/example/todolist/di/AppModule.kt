@@ -28,6 +28,7 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.math.BigInteger
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -46,9 +47,9 @@ object AppModule {
     @SuppressLint("HardwareIds")
     @Provides
     @Singleton
-    fun provideAndroidId(@ApplicationContext appContext: Context): BigInteger{
-        return BigInteger(
-            Settings.Secure.getString(appContext.contentResolver, Settings.Secure.ANDROID_ID),16)
+    @Named("androidId")
+    fun provideAndroidId(@ApplicationContext appContext: Context): String {
+        return Settings.Secure.getString(appContext.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
     @Provides
@@ -95,7 +96,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskListUseCases(repository: TaskListRepository, androidId: BigInteger): TaskListUseCases {
+    fun provideTaskListUseCases(repository: TaskListRepository, @Named("androidId") androidId: String): TaskListUseCases {
         return TaskListUseCases(
             addTaskList = AddTaskList(repository, androidId),
             deleteTaskList = DeleteTaskList(repository, androidId),
@@ -107,7 +108,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskItemUseCases(repository: TaskItemRepository, androidId: BigInteger): TaskItemUseCases {
+    fun provideTaskItemUseCases(repository: TaskItemRepository, @Named("androidId")  androidId: String): TaskItemUseCases {
         return TaskItemUseCases(
             addTaskItem = AddTaskItem(repository, androidId),
             deleteTaskItem = DeleteTaskItem(repository, androidId),
