@@ -11,18 +11,18 @@ interface TaskItemApi {
     @GET("/v1/taskItems/{taskListId}")
     suspend fun getTaskItemsByTaskListId(@Path("taskListId") taskListId: Long, @Query("userId") userId: String): List<TaskItemDto>
 
-    @GET("/v1/taskItems/{taskItemId}")
-    suspend fun getTaskItemById(@Path("taskItemId") taskItemId: Long, @Query("userId") userId: String) : TaskItemDto
+    @GET("/v1/taskItems")
+    suspend fun getTaskItemById(@Query("taskItemId") taskItemId: Long, @Query("userId") userId: String) : TaskItemDto
 
     @POST("/v1/taskItems")
-    suspend fun insertTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
+    suspend fun insertTaskItem(@Body vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
     @DELETE("/v1/taskItems")
-    suspend fun deleteTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
+    suspend fun deleteTaskItem(@Body vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
     @PUT("/v1/taskItems")
-    suspend fun updateTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
+    suspend fun updateTaskItem(@Body vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 
     @POST("/v1/taskItems/synchronizeTaskItem")
-    suspend fun synchronizeTaskItem(vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
+    suspend fun synchronizeTaskItem(@Body vararg taskItemDto: TaskItemDto) : Call<ResponseBody>
 }

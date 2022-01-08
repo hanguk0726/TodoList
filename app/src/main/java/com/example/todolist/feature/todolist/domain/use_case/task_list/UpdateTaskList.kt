@@ -6,9 +6,11 @@ import com.example.todolist.feature.todolist.data.remote.dto.toTaskListDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
+import java.math.BigInteger
 
 class UpdateTaskList(
-    private val repository: TaskListRepository
+    private val repository: TaskListRepository,
+    private val androidId: BigInteger
 ) {
 
     @Throws(InvalidTaskListException::class)
@@ -17,7 +19,7 @@ class UpdateTaskList(
             val item = it.copy(
                 isSynchronizedWithRemote = false
             )
-            item.toTaskListDto(Constants.ANDROID_ID)
+            item.toTaskListDto(androidId.toString())
         }
 
         val result = repository.updateTaskListOnRemote(

@@ -1,6 +1,7 @@
 package com.example.todolist.feature.todolist.presentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -28,17 +29,25 @@ import com.example.todolist.feature.todolist.presentation.todolist.TodoListScree
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
+import java.math.BigInteger
+import javax.inject.Inject
 
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalAnimationApi::class,
+    ExperimentalComposeUiApi::class,
+    ExperimentalMaterialApi::class,
+    ExperimentalMaterialApi::class
+)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @OptIn(
-        ExperimentalFoundationApi::class,
-        ExperimentalAnimationApi::class,
-        ExperimentalComposeUiApi::class,
-        ExperimentalMaterialApi::class
-    )
+
+    @Inject
+    lateinit var androidId : BigInteger
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity"," ANDROID_ID :: $androidId")
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val synchronizeWorkRequest =
             OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)

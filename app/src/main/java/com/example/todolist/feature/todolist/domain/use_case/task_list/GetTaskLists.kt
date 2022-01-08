@@ -11,9 +11,11 @@ import kotlinx.coroutines.flow.*
 import retrofit2.HttpException
 import java.io.IOException
 import java.lang.Exception
+import java.math.BigInteger
 
 class GetTaskLists(
-    private val repository: TaskListRepository
+    private val repository: TaskListRepository,
+    private val androidId: BigInteger
 ) {
     @Throws(InvalidTaskListException::class)
     operator fun invoke(
@@ -21,7 +23,7 @@ class GetTaskLists(
     ): Flow<Resource<List<TaskList>>> = flow {
         try {
             emit(Resource.Loading())
-            val taskLists = repository.getTaskListsOnRemote(Constants.ANDROID_ID).map{ it.toTaskList() }
+            val taskLists = repository.getTaskListsOnRemote(androidId.toString()).map{ it.toTaskList() }
             val sorted = when(order) {
                 is OrderType.Ascending -> taskLists.sortedBy{ it.createdTimestamp }
                 is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }

@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 import java.io.IOException
 import java.lang.Exception
+import java.math.BigInteger
 
 class GetTaskItemsByTaskListId (
-    private val repository: TaskItemRepository
+    private val repository: TaskItemRepository,
+    private val androidId: BigInteger
 ) {
 
     @Throws(InvalidTaskItemException::class)
@@ -28,7 +30,7 @@ class GetTaskItemsByTaskListId (
             emit(Resource.Loading())
             val taskLists = repository.getTaskItemsByTaskListIdOnRemote(
                 id,
-                Constants.ANDROID_ID).map{ it.toTaskItem() }
+                androidId.toString()).map{ it.toTaskItem() }
             val sorted = when(order) {
                 is OrderType.Ascending -> taskLists.sortedBy{ it.timestamp }
                 is OrderType.Descending -> taskLists.sortedByDescending { it.timestamp }

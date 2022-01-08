@@ -1,7 +1,9 @@
 package com.example.todolist.di
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import android.provider.Settings
 import androidx.compose.ui.unit.Constraints
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -25,6 +27,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.math.BigInteger
 import javax.inject.Singleton
 
 @Module
@@ -39,6 +42,14 @@ object AppModule {
                 appContext.preferencesDataStoreFile("settings")
             }
         )
+
+    @SuppressLint("HardwareIds")
+    @Provides
+    @Singleton
+    fun provideAndroidId(@ApplicationContext appContext: Context): BigInteger{
+        return BigInteger(
+            Settings.Secure.getString(appContext.contentResolver, Settings.Secure.ANDROID_ID),16)
+    }
 
     @Provides
     @Singleton
@@ -84,25 +95,25 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskListUseCases(repository: TaskListRepository): TaskListUseCases {
+    fun provideTaskListUseCases(repository: TaskListRepository, androidId: BigInteger): TaskListUseCases {
         return TaskListUseCases(
-            addTaskList = AddTaskList(repository),
-            deleteTaskList = DeleteTaskList(repository),
-            getTaskListById = GetTaskListById(repository),
-            getTaskLists = GetTaskLists(repository),
-            updateTaskList = UpdateTaskList(repository)
+            addTaskList = AddTaskList(repository, androidId),
+            deleteTaskList = DeleteTaskList(repository, androidId),
+            getTaskListById = GetTaskListById(repository, androidId),
+            getTaskLists = GetTaskLists(repository, androidId),
+            updateTaskList = UpdateTaskList(repository, androidId)
         )
     }
 
     @Provides
     @Singleton
-    fun provideTaskItemUseCases(repository: TaskItemRepository): TaskItemUseCases {
+    fun provideTaskItemUseCases(repository: TaskItemRepository, androidId: BigInteger): TaskItemUseCases {
         return TaskItemUseCases(
-            addTaskItem = AddTaskItem(repository),
-            deleteTaskItem = DeleteTaskItem(repository),
-            getTaskItemById = GetTaskItemById(repository),
-            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository),
-            updateTaskItem = UpdateTaskItem(repository)
+            addTaskItem = AddTaskItem(repository, androidId),
+            deleteTaskItem = DeleteTaskItem(repository, androidId),
+            getTaskItemById = GetTaskItemById(repository, androidId),
+            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository, androidId),
+            updateTaskItem = UpdateTaskItem(repository, androidId)
         )
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.common.util.Resource
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
@@ -219,9 +220,27 @@ class EditTaskItemViewModel @Inject constructor(
     private fun getTaskLists() {
         getTaskListsJob?.cancel()
         getTaskListsJob = taskListUseCases.getTaskLists()
-            .onEach { taskLists ->
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _taskListsState.value = taskListsState.value.copy(
+                            error = "", isLoading = false
+                        )
+                    }
+                    is Resource.Error -> {
+                        _taskListsState.value = taskListsState.value.copy(
+                            error = result.message ?: "An unexpected error occured",
+                            isLoading = false
+                        )
+                    }
+                    is Resource.Loading -> {
+                        _taskListsState.value = taskListsState.value.copy(
+                            error = "", isLoading = true
+                        )
+                    }
+                }
                 _taskListsState.value = taskListsState.value.copy(
-                    taskLists = taskLists
+                    taskLists = result.data ?: emptyList()
                 )
             }
             .launchIn(viewModelScope)

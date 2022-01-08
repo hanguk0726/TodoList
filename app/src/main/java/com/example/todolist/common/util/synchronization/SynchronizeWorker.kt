@@ -1,9 +1,9 @@
 package com.example.todolist.common.util.synchronization
 
 import android.content.Context
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.todolist.common.Constants
 import com.example.todolist.feature.todolist.data.remote.TaskItemApi
 import com.example.todolist.feature.todolist.data.remote.TaskListApi
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskItem
@@ -15,31 +15,28 @@ import com.example.todolist.feature.todolist.domain.repository.TaskItemRepositor
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemUseCases
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
+import java.math.BigInteger
 
-class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams){
+@HiltWorker
+class SynchronizeWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted workerParams: WorkerParameters,
+    androidId: BigInteger,
+    val taskListRepository: TaskListRepository,
+    val taskItemRepository: TaskItemRepository,
+    val taskListUseCases: TaskListUseCases,
+    val taskItemUseCases: TaskItemUseCases,
+    val taskItemApi: TaskItemApi,
+    val taskListApi: TaskListApi
+) : CoroutineWorker(context, workerParams), CoroutineScope {
 
-    @Inject
-    private lateinit var taskListRepository: TaskListRepository
-
-    @Inject
-    private lateinit var taskItemRepository: TaskItemRepository
-
-    @Inject
-    private lateinit var taskListUseCases : TaskListUseCases
-
-    @Inject
-    private lateinit var taskItemUseCases : TaskItemUseCases
-
-    @Inject
-    private lateinit var taskItemApi : TaskItemApi
-
-    @Inject
-    private lateinit var taskListApi : TaskListApi
-
-    private val userId =  Constants.ANDROID_ID
+    private val userId = androidId.toString()
 
     override suspend fun doWork(): Result {
+
 
         // scroll to refresh action 이거나 처음 시작했을 경우 실행
         // 작업이후에 ViewModel가 인식하는가 Check
@@ -48,30 +45,34 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
         val taskListsFromRemote = taskListRepository.getTaskListsOnRemote(userId)
 
         // Case : local에 있고 remote에 없음
-        taskListsFromLocal.forEach { taskList ->
-            synchronizeTaskItemLocalToRemote(taskList.id!!)
-            synchronizeTaskListLocalToRemote(taskList)
+        if(taskListsFromLocal.isNotEmpty()){
+            taskListsFromLocal.forEach { taskList ->
+                synchronizeTaskItemLocalToRemote(taskList.id!!)
+                synchronizeTaskListLocalToRemote(taskList)
+            }
         }
 
         // Case : remote에 있고 local에 없음
-        taskListsFromRemote.forEach { taskListDto ->
-            val taskList = taskListDto.toTaskList()
+        if(taskListsFromRemote.isNotEmpty()){
+            taskListsFromRemote.forEach { taskListDto ->
+                val taskList = taskListDto.toTaskList()
+                if (!taskListsFromLocal.contains(taskList)) {
+                    taskListRepository.insertTaskList(
+                        taskList.copy(
+                            isSynchronizedWithRemote = true
+                        )
+                    )
+                }
+                val taskItemsFromRemote = taskItemRepository
+                    .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).map {
+                        it.toTaskItem()
+                    }
+                val taskItemsFromLocal = taskItemRepository.getTaskItemsByTaskListId(taskList.id)
 
-            if( ! taskListsFromLocal.contains(taskList)) {
-                taskListRepository.insertTaskList(taskList.copy(
-                    isSynchronizedWithRemote = true
-                ))
-            }
-
-            val taskItemsFromRemote = taskItemRepository
-                .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).map {
-                    it.toTaskItem()
-            }
-            val taskItemsFromLocal = taskItemRepository.getTaskItemsByTaskListId(taskList.id!!)
-
-            taskItemsFromRemote.forEach {
-                if( ! taskItemsFromLocal.contains(it)) {
-                    taskItemRepository.insertTaskItem(it)
+                taskItemsFromRemote.forEach {
+                    if (!taskItemsFromLocal.contains(it)) {
+                        taskItemRepository.insertTaskItem(it)
+                    }
                 }
             }
         }
@@ -79,17 +80,19 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
         return Result.success()
     }
 
-    private suspend fun synchronizeTaskItemLocalToRemote(taskListId : Long) {
+    private suspend fun synchronizeTaskItemLocalToRemote(taskListId: Long) {
         val taskItems = taskItemRepository.getTaskItemsByTaskListId(taskListId)
+        if(taskItems.isEmpty()) return
         taskItems.forEach { taskItem ->
-            if(taskItem.needToBeDeleted){
+            if (taskItem.needToBeDeleted) {
                 taskItemUseCases.deleteTaskItem(taskItem)
             } else {
-                if( ! taskItem.isSynchronizedWithRemote ) {
+                if (!taskItem.isSynchronizedWithRemote) {
                     val item = taskItem.toTaskItemDto(userId)
                     val result = taskItemApi.synchronizeTaskItem(
-                        taskItemDto = arrayOf(item))
-                    if(result.isExecuted){
+                        taskItemDto = arrayOf(item)
+                    )
+                    if (result.isExecuted) {
                         taskItemUseCases.updateTaskItem(
                             taskItem.copy(
                                 isSynchronizedWithRemote = true
@@ -101,15 +104,16 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
         }
     }
 
-    private suspend fun synchronizeTaskListLocalToRemote(taskList : TaskList) {
-        if(taskList.needToBeDeleted) {
+    private suspend fun synchronizeTaskListLocalToRemote(taskList: TaskList) {
+        if (taskList.needToBeDeleted) {
             taskListUseCases.deleteTaskList(taskList)
         } else {
-            if( ! taskList.isSynchronizedWithRemote ) {
+            if (!taskList.isSynchronizedWithRemote) {
                 val item = taskList.toTaskListDto(userId)
                 val result = taskListApi.synchronizeTaskList(
-                    taskListDto = arrayOf(item))
-                if(result.isExecuted){
+                    taskListDto = arrayOf(item)
+                )
+                if (result.isExecuted) {
                     taskListUseCases.updateTaskList(
                         taskList.copy(
                             isSynchronizedWithRemote = true
@@ -119,6 +123,4 @@ class SynchronizeWorker (context: Context, workerParams: WorkerParameters) : Cor
             }
         }
     }
-
-
 }

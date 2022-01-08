@@ -15,15 +15,15 @@ interface TaskListApi {
     suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: String) : TaskListDto
 
     @POST("/v1/taskLists")
-    suspend fun insertTaskList(vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun insertTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
     @DELETE("/v1/taskLists")
-    suspend fun deleteTaskList(vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun deleteTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
     @PUT("/v1/taskLists")
-    suspend fun updateTaskList(vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun updateTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
     @POST("/v1/taskLists/synchronizeTaskList")
-    suspend fun synchronizeTaskList(vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun synchronizeTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
 
 }

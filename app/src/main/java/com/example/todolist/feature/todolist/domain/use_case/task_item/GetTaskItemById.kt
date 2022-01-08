@@ -8,16 +8,18 @@ import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 import retrofit2.HttpException
 import java.io.IOException
+import java.math.BigInteger
 
 class GetTaskItemById(
-    private val repository: TaskItemRepository
+    private val repository: TaskItemRepository,
+    private val androidId: BigInteger
 ) {
 
     @Throws(InvalidTaskItemException::class)
     suspend operator fun invoke(id: Long): TaskItem? {
 
         return try {
-            repository.getTaskItemByIdOnRemote(id, Constants.ANDROID_ID).toTaskItem()
+            repository.getTaskItemByIdOnRemote(id, androidId.toString()).toTaskItem()
         } catch (e: HttpException) {
             Log.e(
                 "GetTaskItemById",

@@ -275,7 +275,7 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
-                taskItems = result.data!!
+                taskItems = result.data ?: emptyList()
             )
             taskItemStatePool[targetTaskListId] = taskItemManager
             val validIds = taskListsState.value.taskLists.map { el -> el.id}.toList()
@@ -293,8 +293,7 @@ class TodoListViewModel @Inject constructor(
     private fun getTaskLists(): Flow<Resource<List<TaskList>>> {
         return taskListUseCases.getTaskLists()
             .onEach { result ->
-                val taskLists = result.data!!
-                if (taskLists.isEmpty()) {
+                if (result.data == null) {
                     val initialTaskList = TaskList(
                         name = "할 일 목록",
                         createdTimestamp = System.currentTimeMillis(),
@@ -325,7 +324,7 @@ class TodoListViewModel @Inject constructor(
                     }
                 }
                 _taskListsState.value = taskListsState.value.copy(
-                    taskLists = taskLists!!
+                    taskLists = result.data ?: emptyList()
                 )
             }
     }
