@@ -95,7 +95,7 @@ class EditTaskItemViewModel @Inject constructor(
                                 detail = taskItemDetail.value.text,
                                 isCompleted = taskItem!!.isCompleted,
                                 taskListId = taskItem.taskListId,
-                                timestamp = taskItem.timestamp!!,
+                                createdTimestamp = taskItem.createdTimestamp!!,
                                 id = taskItem.id
                             )
                         )
@@ -160,7 +160,7 @@ class EditTaskItemViewModel @Inject constructor(
                                 detail = taskItemDetail.value.text,
                                 isCompleted = _taskItemState.value!!.isCompleted,
                                 taskListId = _taskItemState.value!!.taskListId,
-                                timestamp = _taskItemState.value!!.timestamp,
+                                createdTimestamp = _taskItemState.value!!.createdTimestamp,
                                 id = _taskItemState.value!!.id
                             )
                         )

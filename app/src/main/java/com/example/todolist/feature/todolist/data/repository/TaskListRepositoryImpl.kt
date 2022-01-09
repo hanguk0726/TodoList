@@ -15,7 +15,7 @@ class TaskListRepositoryImpl(
     private val api: TaskListApi
 ) : TaskListRepository {
 
-    override fun getTaskLists(): List<TaskList> {
+    override fun getTaskLists(): Flow<List<TaskList>> {
         return dao.getTaskLists()
     }
 

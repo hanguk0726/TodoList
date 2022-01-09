@@ -9,7 +9,8 @@ data class TaskItemDto(
     val detail: String = "",
     @SerializedName("is_completed")
     val isCompleted: Boolean = false,
-    val timestamp: Long = System.currentTimeMillis(),
+    @SerializedName("created_timestamp")
+    val createdTimestamp: Long = System.currentTimeMillis(),
     @SerializedName("task_list_id")
     val taskListId: Long,
     val id: Long? = null,
@@ -23,7 +24,7 @@ fun TaskItemDto.toTaskItem() : TaskItem {
         title = title,
         detail = detail,
         isCompleted = isCompleted,
-        timestamp = timestamp,
+        createdTimestamp = createdTimestamp,
         taskListId = taskListId,
         id = id
     )
@@ -34,7 +35,7 @@ fun TaskItem.toTaskItemDto(userId: String) : TaskItemDto {
         title = title,
         detail = detail,
         isCompleted = isCompleted,
-        timestamp = timestamp,
+        createdTimestamp = createdTimestamp,
         taskListId = taskListId,
         id = id,
         userId = userId

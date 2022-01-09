@@ -10,7 +10,7 @@ import retrofit2.http.*
 
 interface TaskListRepository {
 
-    fun getTaskLists(): List<TaskList>
+    fun getTaskLists(): Flow<List<TaskList>>
 
     suspend fun getTaskListById(id: Long): TaskList?
 

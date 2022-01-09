@@ -8,7 +8,7 @@ data class TaskItem(
     val title: String,
     val detail: String = "",
     val isCompleted: Boolean = false,
-    val timestamp: Long = System.currentTimeMillis(),
+    val createdTimestamp: Long = System.currentTimeMillis(),
     val taskListId: Long,
     val isSynchronizedWithRemote: Boolean = false,
     val needToBeDeleted: Boolean = false,

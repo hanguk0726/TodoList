@@ -16,7 +16,7 @@ class TaskItemRepositoryImpl(
     private val api: TaskItemApi
 ) : TaskItemRepository {
 
-    override fun getTaskItemsByTaskListId(id: Long): List<TaskItem> {
+    override fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>> {
         return dao.getTaskItemsByTaskListId(id)
     }
 

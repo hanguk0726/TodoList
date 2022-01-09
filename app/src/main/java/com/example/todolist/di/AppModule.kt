@@ -102,7 +102,7 @@ object AppModule {
         return TaskListUseCases(
             addTaskList = AddTaskList(repository, androidId, appContext),
             deleteTaskList = DeleteTaskList(repository, androidId, appContext),
-            getTaskListById = GetTaskListById(repository, androidId),
+            getTaskListById = GetTaskListById(repository),
             getTaskLists = GetTaskLists(repository, androidId),
             updateTaskList = UpdateTaskList(repository, androidId, appContext)
         )
@@ -118,7 +118,7 @@ object AppModule {
         return TaskItemUseCases(
             addTaskItem = AddTaskItem(repository, androidId, appContext),
             deleteTaskItem = DeleteTaskItem(repository, androidId, appContext),
-            getTaskItemById = GetTaskItemById(repository, androidId),
+            getTaskItemById = GetTaskItemById(repository),
             getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository, androidId),
             updateTaskItem = UpdateTaskItem(repository, androidId, appContext)
         )

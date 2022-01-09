@@ -12,7 +12,7 @@ import retrofit2.http.*
 
 interface TaskItemRepository {
 
-    fun getTaskItemsByTaskListId(id: Long): List<TaskItem>
+    fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>>
 
     suspend fun getTaskItemById(id: Long): TaskItem?
 

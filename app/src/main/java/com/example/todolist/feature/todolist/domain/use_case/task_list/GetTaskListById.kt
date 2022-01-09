@@ -10,30 +10,11 @@ import java.io.IOException
 import javax.inject.Named
 
 class GetTaskListById(
-    private val repository: TaskListRepository,
-    @Named("androidId") private val androidId: String
+    private val repository: TaskListRepository
 ) {
 
     @Throws(InvalidTaskListException::class)
     suspend operator fun invoke(id: Long): TaskList? {
         return repository.getTaskListById(id)
-    }
-
-    suspend fun fromRemote(id: Long): TaskList? {
-        return try {
-            repository.getTaskListByIdOnRemote(id, androidId).toTaskList()
-        } catch (e: HttpException) {
-            Log.e(
-                "GetTaskItemById",
-                e.localizedMessage ?: "Couldn't reach server. Check your internet connection",
-            )
-            repository.getTaskListById(id)
-        } catch (e: IOException) {
-            Log.e(
-                "GetTaskItemById",
-                e.localizedMessage ?: "Couldn't reach server. Check your internet connection",
-            )
-            repository.getTaskListById(id)
-        }
     }
 }
