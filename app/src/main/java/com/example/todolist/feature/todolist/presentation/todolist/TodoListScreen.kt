@@ -508,7 +508,7 @@ fun TodoListScreen(
                 text = "저장",
                 textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 onClick = {
-                    viewModel.onEvent(TodoListEvent.SaveTaskItem)
+                    viewModel.onEvent(TodoListEvent.SaveTaskItem(selectedTaskListId()))
                 })
         }
     )
@@ -600,12 +600,12 @@ fun TodoListScreen(
             is TodoListViewModel.DialogType.DeleteTaskList -> {
                 titleText = "목록을 삭제하시겠습니까?"
                 contentText = "목록에 작성된 모든 할 일이 삭제됩니다. 삭제하시겠습니까?"
-                eventWhenConfirm = TodoListEvent.DeleteTaskList
+                eventWhenConfirm = TodoListEvent.DeleteTaskList(selectedTaskListId())
             }
             is TodoListViewModel.DialogType.DeleteCompletedTaskItem -> {
                 titleText = "완료된 할 일을 모두 삭제하시겠습니까?"
                 contentText = ""
-                eventWhenConfirm = TodoListEvent.DeleteCompletedTaskItems
+                eventWhenConfirm = TodoListEvent.DeleteCompletedTaskItems(selectedTaskListId())
             }
         }
         AlertDialog(

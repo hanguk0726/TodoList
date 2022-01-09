@@ -3,10 +3,7 @@ package com.example.todolist.common.util.synchronization
 import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
-import androidx.work.WorkerParameters
+import androidx.work.*
 import com.example.todolist.feature.todolist.data.remote.TaskItemApi
 import com.example.todolist.feature.todolist.data.remote.TaskListApi
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskItem
@@ -21,6 +18,7 @@ import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListU
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 
 @HiltWorker
@@ -39,50 +37,56 @@ class SynchronizeWorker @AssistedInject constructor(
     private val userId = androidId
 
     override suspend fun doWork(): Result {
+        try {
+            // scroll to refresh action 이거나 처음 시작했을 경우 실행
+            // 작업이후에 ViewModel가 인식하는가 Check
+            val taskListsFromLocal = taskListRepository.getTaskLists()
+            val taskListsFromRemote =
+                taskListRepository.getTaskListsOnRemote(userId).body() ?: emptyList()
 
-
-        // scroll to refresh action 이거나 처음 시작했을 경우 실행
-        // 작업이후에 ViewModel가 인식하는가 Check
-
-        val taskListsFromLocal = taskListRepository.getTaskLists()
-        val taskListsFromRemote = taskListRepository.getTaskListsOnRemote(userId).body() ?: emptyList()
-
-        Log.i("SynchronizeWorker","current size of taskListsFromLocal :: ${taskListsFromLocal.size}")
-
-        // Case : local에 있고 remote에 없음
-        if (taskListsFromLocal.isNotEmpty()) {
-            taskListsFromLocal.forEach { taskList ->
-                synchronizeTaskItemLocalToRemote(taskList.id!!)
-                synchronizeTaskListLocalToRemote(taskList)
-            }
-        }
-
-        // Case : remote에 있고 local에 없음
-        if (taskListsFromRemote.isNotEmpty()) {
-            taskListsFromRemote.forEach { taskListDto ->
-                val taskList = taskListDto.toTaskList()
-                if (!taskListsFromLocal.contains(taskList)) {
-                    taskListRepository.insertTaskList(
-                        taskList.copy(
-                            isSynchronizedWithRemote = true
-                        )
-                    )
+            // Case : local에 있고 remote에 없음
+            if (taskListsFromLocal.isNotEmpty()) {
+                taskListsFromLocal.forEach { taskList ->
+                    synchronizeTaskItemLocalToRemote(taskList.id!!)
+                    synchronizeTaskListLocalToRemote(taskList)
                 }
-                val taskItemsFromRemote = taskItemRepository
-                    .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).body()?.map {
-                        it.toTaskItem()
-                    } ?: emptyList()
-                val taskItemsFromLocal = taskItemRepository.getTaskItemsByTaskListId(taskList.id)
+            }
 
-                taskItemsFromRemote.forEach {
-                    if (!taskItemsFromLocal.contains(it)) {
-                        taskItemRepository.insertTaskItem(it)
+            // Case : remote에 있고 local에 없음
+            if (taskListsFromRemote.isNotEmpty()) {
+                taskListsFromRemote.forEach { taskListDto ->
+                    val taskList = taskListDto.toTaskList()
+                    if (!taskListsFromLocal.contains(taskList)) {
+                        taskListRepository.insertTaskList(
+                            taskList.copy(
+                                isSynchronizedWithRemote = true
+                            )
+                        )
+                    }
+                    val taskItemsFromRemote = taskItemRepository
+                        .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).body()?.map {
+                            it.toTaskItem()
+                        } ?: emptyList()
+                    val taskItemsFromLocal =
+                        taskItemRepository.getTaskItemsByTaskListId(taskList.id)
+
+                    taskItemsFromRemote.forEach {
+                        if (!taskItemsFromLocal.contains(it)) {
+                            taskItemRepository.insertTaskItem(it)
+                        }
                     }
                 }
             }
-        }
+            return Result.success()
 
-        return Result.success()
+        } catch (e: Exception) {
+            Log.e(
+                "SynchronizeWorker",
+                "Failed to [executeSynchronizeWork]. it will retry automatically.\n" +
+                        "cause :: ${e.message}"
+            )
+            return Result.retry()
+        }
     }
 
     private suspend fun synchronizeTaskItemLocalToRemote(taskListId: Long) {
@@ -132,10 +136,21 @@ class SynchronizeWorker @AssistedInject constructor(
 
 
 fun executeSynchronizeWork(appContext: Context) {
+    Log.i("SynchronizeWorker", "SynchronizeWorker is requested")
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
     val synchronizeWorkRequest =
         OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)
+//            .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
             .build()
     WorkManager
         .getInstance(appContext)
         .enqueue(synchronizeWorkRequest)
+
 }

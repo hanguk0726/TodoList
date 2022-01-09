@@ -1,6 +1,5 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
-import androidx.compose.ui.focus.FocusState
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 
 
@@ -10,11 +9,11 @@ sealed class TodoListEvent{
     data class ConfirmDeleteTaskList(val selectedTaskListId: Long): TodoListEvent()
     data class ConfirmDeleteCompletedTaskItems(val selectedTaskListId: Long): TodoListEvent()
     data class ToggleTaskItemCompletionState(val taskItem: TaskItem): TodoListEvent()
+    data class DeleteTaskList(val selectedTaskListId: Long) : TodoListEvent()
+    data class SaveTaskItem(val selectedTaskListId: Long) : TodoListEvent()
+    data class DeleteCompletedTaskItems(val selectedTaskListId: Long) : TodoListEvent()
     object LoadLastSelectedTaskListPosition: TodoListEvent()
     object LastTaskListPositionHasSelected: TodoListEvent()
-    object DeleteTaskList: TodoListEvent()
-    object SaveTaskItem: TodoListEvent()
-    object DeleteCompletedTaskItems: TodoListEvent()
 
 
 }

@@ -34,8 +34,6 @@ class TodoListViewModel @Inject constructor(
         const val TASK_LIST_POSITION_KEY = "task_list_position_key"
     }
 
-    private var selectedTaskListId: Long? = null
-
     private val _taskItemTitle = mutableStateOf(
         TodoListTextFieldState(
             hint = "새 할 일"
@@ -158,7 +156,7 @@ class TodoListViewModel @Inject constructor(
                     try {
                         val selectedTaskList =
                             taskListsState.value.taskLists
-                                .find { el -> el.id!! == selectedTaskListId }
+                                .find { el -> el.id!! == event.selectedTaskListId }
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
                         val taskItemsToDelete =
                             taskItemUseCases.getTaskItemsByTaskListId.noFlow(selectedTaskList!!.id!!)
@@ -177,7 +175,7 @@ class TodoListViewModel @Inject constructor(
                     }
                 } else {
                     viewModelScope.launch {
-                        onEvent(TodoListEvent.DeleteTaskList)
+                        onEvent(TodoListEvent.DeleteTaskList(event.selectedTaskListId))
                         _eventFlow.emit(UiEvent.CloseMenuRightModalBottomSheet)
                     }
                 }
@@ -199,7 +197,7 @@ class TodoListViewModel @Inject constructor(
             is TodoListEvent.DeleteCompletedTaskItems -> {
                 viewModelScope.launch {
                     try {
-                        val taskItems = getTaskItems(selectedTaskListId!!)
+                        val taskItems = getTaskItems(event.selectedTaskListId)
                         if (taskItems.isNotEmpty()) {
                             val completedTaskItems = taskItems.filter { el ->
                                 el.isCompleted
@@ -223,7 +221,7 @@ class TodoListViewModel @Inject constructor(
                         taskItemUseCases.addTaskItem(
                             TaskItem(
                                 title = taskItemTitle.value.text,
-                                taskListId = selectedTaskListId!!
+                                taskListId = event.selectedTaskListId
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveTaskItem)
@@ -234,7 +232,6 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             is TodoListEvent.SelectTaskList -> {
-                selectedTaskListId = event.selectedTaskListId
                 viewModelScope.launch {
                     saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
                 }
@@ -246,7 +243,6 @@ class TodoListViewModel @Inject constructor(
                         val lastSelectedTaskList = taskListsState.value.taskLists
                             .find { el -> el.id!!.toInt() == lastSelectedTaskListId }
                         lastSelectedTaskList?.let {
-                            selectedTaskListId = lastSelectedTaskList.id
                             val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
                             _eventFlow.emit(UiEvent.ScrollTaskListPosition(index))
                         }
