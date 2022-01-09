@@ -16,7 +16,11 @@ class TaskItemRepositoryImpl(
     private val api: TaskItemApi
 ) : TaskItemRepository {
 
-    override fun getTaskItemsByTaskListId(id: Long): Flow<List<TaskItem>> {
+    override fun getTaskItemsByTaskListIdAsFlow(id: Long): Flow<List<TaskItem>> {
+        return dao.getTaskItemsByTaskListIdAsFlow(id)
+    }
+
+    override suspend fun getTaskItemsByTaskListId(id: Long): List<TaskItem> {
         return dao.getTaskItemsByTaskListId(id)
     }
 
@@ -36,11 +40,11 @@ class TaskItemRepositoryImpl(
         return dao.updateTaskItem(*taskItem)
     }
 
-    override suspend fun getTaskItemsByTaskListIdOnRemote(taskListId: Long, userId: String): List<TaskItemDto> {
+    override suspend fun getTaskItemsByTaskListIdOnRemote(taskListId: Long, userId: String): Response<List<TaskItemDto>> {
         return api.getTaskItemsByTaskListId(taskListId, userId)
     }
 
-    override suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: String): TaskItemDto {
+    override suspend fun getTaskItemByIdOnRemote(taskItemId: Long, userId: String): Response<TaskItemDto> {
         return api.getTaskItemById(taskItemId, userId)
     }
 

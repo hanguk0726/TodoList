@@ -50,7 +50,7 @@ class TodoListViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    private var getTaskListsJob: Job? = null
+    private var requestLatestDataJob: Job? = null
 
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
@@ -65,12 +65,35 @@ class TodoListViewModel @Inject constructor(
     }
 
     private fun requestLatestData() {
-        getTaskListsJob?.cancel()
-        getTaskListsJob = getTaskLists().onEach { result ->
-            _taskListsState.value.taskLists.forEach {
-                loadTaskItemsOnPoolByTaskListId(it.id!!)
+        requestLatestDataJob?.cancel()
+        requestLatestDataJob = getTaskLists().onEach {
+            it.forEach { taskList ->
+                loadTaskItemsOnPoolByTaskListId(taskList.id!!)
             }
         }.launchIn(viewModelScope)
+    }
+
+
+    private fun getTaskLists(): Flow<List<TaskList>> {
+        return taskListUseCases.getTaskLists()
+            .onEach { result ->
+                if (result.isEmpty()) {
+                    val initialTaskList = TaskList(
+                        name = "할 일 목록",
+                        createdTimestamp = System.currentTimeMillis(),
+                        id = null
+                    )
+                    val taskListId = initializeFirstTaskList(initialTaskList)
+                    _taskListsState.value = taskListsState.value.copy(
+                        taskLists = listOf(initialTaskList.copy(id = taskListId))
+                    )
+                } else {
+                    _taskListsState.value = taskListsState.value.copy(
+                        taskLists = result
+                    )
+                }
+                result
+            }
     }
 
     fun getTaskItems(targetTaskListId: Long): List<TaskItem> {
@@ -138,10 +161,7 @@ class TodoListViewModel @Inject constructor(
                                 .find { el -> el.id!! == selectedTaskListId }
                         taskListUseCases.deleteTaskList(selectedTaskList!!)
                         val taskItemsToDelete =
-                            taskItemUseCases.getTaskItemsByTaskListId(selectedTaskList!!.id!!)
-                                .flatMapConcat {
-                                    it.asFlow()
-                                }.toList()
+                            taskItemUseCases.getTaskItemsByTaskListId.noFlow(selectedTaskList!!.id!!)
                         taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
                     } catch (e: InvalidTaskListException) {
                         Log.e("TodoListViewModel", "${e.message ?: "Couldn't delete taskList"}")
@@ -266,27 +286,6 @@ class TodoListViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-
-    private fun getTaskLists(): Flow<List<TaskList>> {
-        return taskListUseCases.getTaskLists()
-            .onEach { result ->
-                if (result == null || result.isEmpty()) {
-                    val initialTaskList = TaskList(
-                        name = "할 일 목록",
-                        createdTimestamp = System.currentTimeMillis(),
-                        id = null
-                    )
-                    val taskListId = initializeFirstTaskList(initialTaskList)
-                    _taskListsState.value = taskListsState.value.copy(
-                        taskLists = listOf(initialTaskList.copy(id = taskListId))
-                    )
-                } else {
-                }
-                _taskListsState.value = taskListsState.value.copy(
-                    taskLists = result
-                )
-            }
-    }
 
     private suspend fun initializeFirstTaskList(taskList: TaskList): Long =
         withContext(viewModelScope.coroutineContext) {

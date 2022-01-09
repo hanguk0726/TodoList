@@ -14,10 +14,7 @@ import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextF
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -223,8 +220,7 @@ class EditTaskItemViewModel @Inject constructor(
                 _taskListsState.value = taskListsState.value.copy(
                     taskLists = result
                 )
-            }
-            .launchIn(viewModelScope)
+            }.launchIn(viewModelScope)
     }
 
     sealed class UiEvent {

@@ -10,7 +10,9 @@ import retrofit2.http.*
 
 interface TaskListRepository {
 
-    fun getTaskLists(): Flow<List<TaskList>>
+    fun getTaskListsAsFlow(): Flow<List<TaskList>>
+
+    suspend fun getTaskLists(): List<TaskList>
 
     suspend fun getTaskListById(id: Long): TaskList?
 
@@ -20,9 +22,9 @@ interface TaskListRepository {
 
     suspend fun updateTaskList(vararg taskList: TaskList)
 
-    suspend fun getTaskListsOnRemote(userId: String): List<TaskListDto>
+    suspend fun getTaskListsOnRemote(userId: String): Response<List<TaskListDto>>
 
-    suspend fun getTaskListByIdOnRemote(taskListId: Long, userId: String) : TaskListDto
+    suspend fun getTaskListByIdOnRemote(taskListId: Long, userId: String) : Response<TaskListDto>
 
     suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto) : Response<Void>
 

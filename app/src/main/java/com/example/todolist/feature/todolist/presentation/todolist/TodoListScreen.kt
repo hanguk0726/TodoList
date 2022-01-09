@@ -349,6 +349,7 @@ fun TodoListScreen(
                     ) {
                         val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
                         val itemList = viewModel.getTaskItems(eachTaskListId).filter { !it.needToBeDeleted }
+
                         items(itemList, key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
                             AnimatedVisibility(
                                 visible = !taskItem.isCompleted,

@@ -10,10 +10,10 @@ import retrofit2.http.*
 interface TaskListApi {
 
     @GET("/v1/taskLists")
-    suspend fun getTaskLists(@Query("userId") userId: String): List<TaskListDto>
+    suspend fun getTaskLists(@Query("userId") userId: String): Response<List<TaskListDto>>
 
     @GET("/v1/taskLists/{taskListId}")
-    suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: String) : TaskListDto
+    suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: String) : Response<TaskListDto>
 
     @POST("/v1/taskLists")
     suspend fun insertTaskList(@Body vararg taskListDto: TaskListDto) : Response<Void>

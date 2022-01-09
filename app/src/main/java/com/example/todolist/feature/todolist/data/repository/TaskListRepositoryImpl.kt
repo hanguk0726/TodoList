@@ -6,8 +6,6 @@ import com.example.todolist.feature.todolist.data.remote.dto.TaskListDto
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import kotlinx.coroutines.flow.Flow
-import okhttp3.ResponseBody
-import retrofit2.Call
 import retrofit2.Response
 
 class TaskListRepositoryImpl(
@@ -15,7 +13,11 @@ class TaskListRepositoryImpl(
     private val api: TaskListApi
 ) : TaskListRepository {
 
-    override fun getTaskLists(): Flow<List<TaskList>> {
+    override fun getTaskListsAsFlow(): Flow<List<TaskList>> {
+        return dao.getTaskListsAsFlow()
+    }
+
+    override suspend fun getTaskLists(): List<TaskList> {
         return dao.getTaskLists()
     }
 
@@ -23,7 +25,7 @@ class TaskListRepositoryImpl(
         return dao.getTaskListById(id)
     }
 
-    override suspend fun insertTaskList(vararg taskList: TaskList) : List<Long> {
+    override suspend fun insertTaskList(vararg taskList: TaskList): List<Long> {
         return dao.insertTaskList(*taskList)
     }
 
@@ -35,27 +37,33 @@ class TaskListRepositoryImpl(
         return dao.updateTaskList(*taskList)
     }
 
-    override suspend fun getTaskListsOnRemote(userId: String): List<TaskListDto> {
+    override suspend fun getTaskListsOnRemote(userId: String): Response<List<TaskListDto>> {
         return api.getTaskLists(userId)
     }
 
-    override suspend fun getTaskListByIdOnRemote(taskListId: Long, userId: String): TaskListDto {
+    override suspend fun getTaskListByIdOnRemote(
+        taskListId: Long,
+        userId: String
+    ): Response<TaskListDto> {
         return api.getTaskListById(taskListId, userId)
     }
 
     override suspend fun insertTaskListOnRemote(vararg taskListDto: TaskListDto): Response<Void> {
         return api.insertTaskList(
-            taskListDto = *taskListDto)
+            taskListDto = *taskListDto
+        )
     }
 
     override suspend fun deleteTaskListOnRemote(vararg taskListDto: TaskListDto): Response<Void> {
         return api.deleteTaskList(
-            taskListDto = *taskListDto)
+            taskListDto = *taskListDto
+        )
     }
 
     override suspend fun updateTaskListOnRemote(vararg taskListDto: TaskListDto): Response<Void> {
         return api.updateTaskList(
-            taskListDto = *taskListDto)
+            taskListDto = *taskListDto
+        )
     }
 
 }

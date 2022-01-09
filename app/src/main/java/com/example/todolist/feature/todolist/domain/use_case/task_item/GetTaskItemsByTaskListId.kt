@@ -4,25 +4,37 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
 import com.example.todolist.feature.todolist.domain.util.OrderType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import javax.inject.Named
 
 class GetTaskItemsByTaskListId(
-    private val repository: TaskItemRepository,
-    @Named("androidId") private val androidId: String
+    private val repository: TaskItemRepository
 ) {
 
     @Throws(InvalidTaskItemException::class)
     operator fun invoke(
         id: Long,
-        order: OrderType = OrderType.Descending
+        order: OrderType = OrderType.Descending,
     ): Flow<List<TaskItem>> {
-        return repository.getTaskItemsByTaskListId(id).map { taskItems ->
+        return repository.getTaskItemsByTaskListIdAsFlow(id).map { taskItems ->
             when (order) {
                 is OrderType.Ascending -> taskItems.sortedBy { it.createdTimestamp }
                 is OrderType.Descending -> taskItems.sortedByDescending { it.createdTimestamp }
             }
+        }
+    }
+
+    @Throws(InvalidTaskItemException::class)
+    suspend fun noFlow(
+        id: Long,
+        order: OrderType = OrderType.Descending
+    ): List<TaskItem> {
+        val taskItems = repository.getTaskItemsByTaskListId(id)
+        return when (order) {
+            is OrderType.Ascending -> taskItems.sortedBy { it.createdTimestamp }
+            is OrderType.Descending -> taskItems.sortedByDescending { it.createdTimestamp }
         }
     }
 }

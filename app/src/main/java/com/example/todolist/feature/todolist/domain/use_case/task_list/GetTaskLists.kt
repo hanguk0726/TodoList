@@ -4,19 +4,19 @@ import com.example.todolist.feature.todolist.domain.model.InvalidTaskListExcepti
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import com.example.todolist.feature.todolist.domain.util.OrderType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import javax.inject.Named
 
 class GetTaskLists(
-    private val repository: TaskListRepository,
-    @Named("androidId") private val androidId: String
+    private val repository: TaskListRepository
 ) {
     @Throws(InvalidTaskListException::class)
     operator fun invoke(
         order: OrderType = OrderType.Ascending
     ): Flow<List<TaskList>> {
-        return repository.getTaskLists().map { taskLists ->
+        return repository.getTaskListsAsFlow().map { taskLists ->
             when (order) {
                 is OrderType.Ascending -> taskLists.sortedBy { it.createdTimestamp }
                 is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }

@@ -1,6 +1,7 @@
 package com.example.todolist.common.util.synchronization
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequest
@@ -44,8 +45,10 @@ class SynchronizeWorker @AssistedInject constructor(
         // 작업이후에 ViewModel가 인식하는가 Check
 
         val taskListsFromLocal = taskListRepository.getTaskLists()
-        val taskListsFromRemote = taskListRepository.getTaskListsOnRemote(userId)
-        println("mylogger ${taskListsFromLocal}")
+        val taskListsFromRemote = taskListRepository.getTaskListsOnRemote(userId).body() ?: emptyList()
+
+        Log.i("SynchronizeWorker","current size of taskListsFromLocal :: ${taskListsFromLocal.size}")
+
         // Case : local에 있고 remote에 없음
         if (taskListsFromLocal.isNotEmpty()) {
             taskListsFromLocal.forEach { taskList ->
@@ -66,9 +69,9 @@ class SynchronizeWorker @AssistedInject constructor(
                     )
                 }
                 val taskItemsFromRemote = taskItemRepository
-                    .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).map {
+                    .getTaskItemsByTaskListIdOnRemote(taskList.id!!, userId).body()?.map {
                         it.toTaskItem()
-                    }
+                    } ?: emptyList()
                 val taskItemsFromLocal = taskItemRepository.getTaskItemsByTaskListId(taskList.id)
 
                 taskItemsFromRemote.forEach {

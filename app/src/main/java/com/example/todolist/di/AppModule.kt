@@ -103,7 +103,7 @@ object AppModule {
             addTaskList = AddTaskList(repository, androidId, appContext),
             deleteTaskList = DeleteTaskList(repository, androidId, appContext),
             getTaskListById = GetTaskListById(repository),
-            getTaskLists = GetTaskLists(repository, androidId),
+            getTaskLists = GetTaskLists(repository),
             updateTaskList = UpdateTaskList(repository, androidId, appContext)
         )
     }
@@ -119,7 +119,7 @@ object AppModule {
             addTaskItem = AddTaskItem(repository, androidId, appContext),
             deleteTaskItem = DeleteTaskItem(repository, androidId, appContext),
             getTaskItemById = GetTaskItemById(repository),
-            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository, androidId),
+            getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository),
             updateTaskItem = UpdateTaskItem(repository, androidId, appContext)
         )
     }
