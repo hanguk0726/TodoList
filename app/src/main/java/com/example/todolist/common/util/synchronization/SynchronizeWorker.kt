@@ -3,6 +3,8 @@ package com.example.todolist.common.util.synchronization
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.example.todolist.feature.todolist.data.remote.TaskItemApi
 import com.example.todolist.feature.todolist.data.remote.TaskListApi
@@ -18,7 +20,6 @@ import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListU
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import java.math.BigInteger
 import javax.inject.Named
 
 @HiltWorker
@@ -44,9 +45,9 @@ class SynchronizeWorker @AssistedInject constructor(
 
         val taskListsFromLocal = taskListRepository.getTaskLists()
         val taskListsFromRemote = taskListRepository.getTaskListsOnRemote(userId)
-
+        println("mylogger ${taskListsFromLocal}")
         // Case : local에 있고 remote에 없음
-        if(taskListsFromLocal.isNotEmpty()){
+        if (taskListsFromLocal.isNotEmpty()) {
             taskListsFromLocal.forEach { taskList ->
                 synchronizeTaskItemLocalToRemote(taskList.id!!)
                 synchronizeTaskListLocalToRemote(taskList)
@@ -54,7 +55,7 @@ class SynchronizeWorker @AssistedInject constructor(
         }
 
         // Case : remote에 있고 local에 없음
-        if(taskListsFromRemote.isNotEmpty()){
+        if (taskListsFromRemote.isNotEmpty()) {
             taskListsFromRemote.forEach { taskListDto ->
                 val taskList = taskListDto.toTaskList()
                 if (!taskListsFromLocal.contains(taskList)) {
@@ -83,7 +84,7 @@ class SynchronizeWorker @AssistedInject constructor(
 
     private suspend fun synchronizeTaskItemLocalToRemote(taskListId: Long) {
         val taskItems = taskItemRepository.getTaskItemsByTaskListId(taskListId)
-        if(taskItems.isEmpty()) return
+        if (taskItems.isEmpty()) return
         taskItems.forEach { taskItem ->
             if (taskItem.needToBeDeleted) {
                 taskItemUseCases.deleteTaskItem(taskItem)
@@ -93,7 +94,7 @@ class SynchronizeWorker @AssistedInject constructor(
                     val result = taskItemApi.synchronizeTaskItem(
                         taskItemDto = arrayOf(item)
                     )
-                    if (result.isExecuted) {
+                    if (result.isSuccessful) {
                         taskItemUseCases.updateTaskItem(
                             taskItem.copy(
                                 isSynchronizedWithRemote = true
@@ -114,7 +115,7 @@ class SynchronizeWorker @AssistedInject constructor(
                 val result = taskListApi.synchronizeTaskList(
                     taskListDto = arrayOf(item)
                 )
-                if (result.isExecuted) {
+                if (result.isSuccessful) {
                     taskListUseCases.updateTaskList(
                         taskList.copy(
                             isSynchronizedWithRemote = true
@@ -124,4 +125,14 @@ class SynchronizeWorker @AssistedInject constructor(
             }
         }
     }
+}
+
+
+fun executeSynchronizeWork(appContext: Context) {
+    val synchronizeWorkRequest =
+        OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)
+            .build()
+    WorkManager
+        .getInstance(appContext)
+        .enqueue(synchronizeWorkRequest)
 }

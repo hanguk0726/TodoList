@@ -9,6 +9,7 @@ import com.example.todolist.feature.todolist.domain.repository.TaskItemRepositor
 import kotlinx.coroutines.flow.Flow
 import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Response
 
 class TaskItemRepositoryImpl(
     private val dao: TaskItemDao,
@@ -43,17 +44,17 @@ class TaskItemRepositoryImpl(
         return api.getTaskItemById(taskItemId, userId)
     }
 
-    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto): Call<ResponseBody> {
+    override suspend fun insertTaskItemOnRemote(vararg taskItemDto:TaskItemDto): Response<Void> {
         return api.insertTaskItem(
             taskItemDto = *taskItemDto)
     }
 
-    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Call<ResponseBody> {
+    override suspend fun deleteTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Response<Void> {
         return api.deleteTaskItem(
             taskItemDto = *taskItemDto)
     }
 
-    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Call<ResponseBody> {
+    override suspend fun updateTaskItemOnRemote(vararg taskItemDto: TaskItemDto): Response<Void> {
         return api.updateTaskItem(
             taskItemDto = *taskItemDto)
     }

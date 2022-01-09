@@ -4,6 +4,7 @@ import com.example.todolist.feature.todolist.data.remote.dto.TaskListDto
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.*
 
 interface TaskListApi {
@@ -15,15 +16,16 @@ interface TaskListApi {
     suspend fun getTaskListById(@Path("taskListId") taskListId: Long, @Query("userId") userId: String) : TaskListDto
 
     @POST("/v1/taskLists")
-    suspend fun insertTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun insertTaskList(@Body vararg taskListDto: TaskListDto) : Response<Void>
 
-    @DELETE("/v1/taskLists")
-    suspend fun deleteTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    //@DELETE DOES NOT ALLOW @Body
+    @HTTP(method = "DELETE", path = "/v1/taskLists", hasBody = true)
+    suspend fun deleteTaskList(@Body vararg taskListDto: TaskListDto) : Response<Void>
 
     @PUT("/v1/taskLists")
-    suspend fun updateTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun updateTaskList(@Body vararg taskListDto: TaskListDto) : Response<Void>
 
     @POST("/v1/taskLists/synchronizeTaskList")
-    suspend fun synchronizeTaskList(@Body vararg taskListDto: TaskListDto) : Call<ResponseBody>
+    suspend fun synchronizeTaskList(@Body vararg taskListDto: TaskListDto) : Response<Void>
 
 }

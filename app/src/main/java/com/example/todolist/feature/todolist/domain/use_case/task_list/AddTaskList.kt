@@ -1,22 +1,24 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_list
 
-import com.example.todolist.common.Constants
-import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
+import android.content.Context
+import com.example.todolist.common.util.synchronization.executeSynchronizeWork
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskListDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
-import java.math.BigInteger
-import javax.inject.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 class AddTaskList(
     private val repository: TaskListRepository,
-    @Named("androidId") private val androidId: String
+    private val androidId: String,
+    private val appContext: Context
 ) {
 
     @Throws(InvalidTaskListException::class)
-    suspend operator fun invoke(vararg taskList: TaskList) : List<Long> {
-        if(taskList.any { el -> el.name.isBlank() }){
+    suspend operator fun invoke(vararg taskList: TaskList): List<Long> {
+        if (taskList.any { el -> el.name.isBlank() }) {
             throw InvalidTaskListException("the name of the list can't be empty")
         }
 
@@ -32,15 +34,19 @@ class AddTaskList(
             item.toTaskListDto(androidId)
         }
 
-        val result = repository.insertTaskListOnRemote(
-            taskListDto = *taskItemDto.toTypedArray())
+        CoroutineScope(Dispatchers.IO).async {
+            val result = repository.insertTaskListOnRemote(
+                taskListDto = *taskItemDto.toTypedArray()
+            )
 
-        if(result.isExecuted ) {
-            val data = taskList.map {
-                val item = it.copy(isSynchronizedWithRemote = true)
-                item
+            if (result.isSuccessful) {
+                val data = taskList.map {
+                    val item = it.copy(isSynchronizedWithRemote = true)
+                    item
+                }
+                repository.updateTaskList(*data.toTypedArray())
             }
-            repository.updateTaskList(*data.toTypedArray())
+            executeSynchronizeWork(appContext)
         }
 
         return ids

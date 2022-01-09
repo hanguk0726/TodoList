@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.provider.Settings
-import androidx.compose.ui.unit.Constraints
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -27,7 +26,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.math.BigInteger
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -54,7 +52,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskItemApi() : TaskItemApi {
+    fun provideTaskItemApi(): TaskItemApi {
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -64,7 +62,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskListApi() : TaskListApi {
+    fun provideTaskListApi(): TaskListApi {
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -84,37 +82,45 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTaskListRepository(db : TodoListDatabase, api : TaskListApi): TaskListRepository {
+    fun provideTaskListRepository(db: TodoListDatabase, api: TaskListApi): TaskListRepository {
         return TaskListRepositoryImpl(db.taskListDao, api)
     }
 
     @Provides
     @Singleton
-    fun provideTaskItemRepository(db : TodoListDatabase, api : TaskItemApi): TaskItemRepository {
+    fun provideTaskItemRepository(db: TodoListDatabase, api: TaskItemApi): TaskItemRepository {
         return TaskItemRepositoryImpl(db.taskItemDao, api)
     }
 
     @Provides
     @Singleton
-    fun provideTaskListUseCases(repository: TaskListRepository, @Named("androidId") androidId: String): TaskListUseCases {
+    fun provideTaskListUseCases(
+        repository: TaskListRepository,
+        @Named("androidId") androidId: String,
+        @ApplicationContext appContext: Context
+    ): TaskListUseCases {
         return TaskListUseCases(
-            addTaskList = AddTaskList(repository, androidId),
-            deleteTaskList = DeleteTaskList(repository, androidId),
+            addTaskList = AddTaskList(repository, androidId, appContext),
+            deleteTaskList = DeleteTaskList(repository, androidId, appContext),
             getTaskListById = GetTaskListById(repository, androidId),
             getTaskLists = GetTaskLists(repository, androidId),
-            updateTaskList = UpdateTaskList(repository, androidId)
+            updateTaskList = UpdateTaskList(repository, androidId, appContext)
         )
     }
 
     @Provides
     @Singleton
-    fun provideTaskItemUseCases(repository: TaskItemRepository, @Named("androidId")  androidId: String): TaskItemUseCases {
+    fun provideTaskItemUseCases(
+        repository: TaskItemRepository,
+        @Named("androidId") androidId: String,
+        @ApplicationContext appContext: Context
+    ): TaskItemUseCases {
         return TaskItemUseCases(
-            addTaskItem = AddTaskItem(repository, androidId),
-            deleteTaskItem = DeleteTaskItem(repository, androidId),
+            addTaskItem = AddTaskItem(repository, androidId, appContext),
+            deleteTaskItem = DeleteTaskItem(repository, androidId, appContext),
             getTaskItemById = GetTaskItemById(repository, androidId),
             getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository, androidId),
-            updateTaskItem = UpdateTaskItem(repository, androidId)
+            updateTaskItem = UpdateTaskItem(repository, androidId, appContext)
         )
     }
 

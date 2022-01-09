@@ -1,15 +1,12 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_list
 
 import android.util.Log
-import com.example.todolist.common.Constants
-import com.example.todolist.feature.todolist.data.remote.dto.toTaskItem
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskList
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import retrofit2.HttpException
 import java.io.IOException
-import java.math.BigInteger
 import javax.inject.Named
 
 class GetTaskListById(
@@ -19,6 +16,10 @@ class GetTaskListById(
 
     @Throws(InvalidTaskListException::class)
     suspend operator fun invoke(id: Long): TaskList? {
+        return repository.getTaskListById(id)
+    }
+
+    suspend fun fromRemote(id: Long): TaskList? {
         return try {
             repository.getTaskListByIdOnRemote(id, androidId).toTaskList()
         } catch (e: HttpException) {

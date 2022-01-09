@@ -18,10 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.example.todolist.common.ui.theme.TodoListTheme
-import com.example.todolist.common.util.synchronization.SynchronizeWorker
+import com.example.todolist.common.util.synchronization.executeSynchronizeWork
 import com.example.todolist.feature.todolist.presentation.addEditTaskList.AddTaskListScreen
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemScreen
 import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskItemViewModel
@@ -29,7 +27,6 @@ import com.example.todolist.feature.todolist.presentation.todolist.TodoListScree
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
-import java.math.BigInteger
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -45,18 +42,13 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     @Named("androidId")
-    lateinit var androidId : String
-
+    lateinit var androidId: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity"," ANDROID_ID :: $androidId")
+        Log.d("MainActivity", " ANDROID_ID :: $androidId")
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        val synchronizeWorkRequest =
-            OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)
-                .build()
-        WorkManager
-            .getInstance(applicationContext)
-            .enqueue(synchronizeWorkRequest)
+        executeSynchronizeWork(applicationContext)
+
         setContent {
             TodoListTheme {
                 ProvideWindowInsets(

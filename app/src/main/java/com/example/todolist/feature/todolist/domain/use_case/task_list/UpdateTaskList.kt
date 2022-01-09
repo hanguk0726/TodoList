@@ -1,17 +1,19 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_list
 
-import com.example.todolist.common.Constants
-import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
+import android.content.Context
+import com.example.todolist.common.util.synchronization.executeSynchronizeWork
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskListDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
-import java.math.BigInteger
-import javax.inject.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 class UpdateTaskList(
     private val repository: TaskListRepository,
-    @Named("androidId") private val androidId: String
+    private val androidId: String,
+    private val appContext: Context
 ) {
 
     @Throws(InvalidTaskListException::class)
@@ -20,18 +22,22 @@ class UpdateTaskList(
             val item = it.copy(
                 isSynchronizedWithRemote = false
             )
+            repository.updateTaskList(item)
             item.toTaskListDto(androidId)
         }
 
-        val result = repository.updateTaskListOnRemote(
-            taskListDto = *taskItemDto.toTypedArray())
-
-        if(result.isExecuted) {
-            val data = taskList.map {
-                val item = it.copy(isSynchronizedWithRemote = true)
-                item
+        CoroutineScope(Dispatchers.IO).async {
+            val result = repository.updateTaskListOnRemote(
+                taskListDto = *taskItemDto.toTypedArray()
+            )
+            if (result.isSuccessful) {
+                val data = taskList.map {
+                    val item = it.copy(isSynchronizedWithRemote = true)
+                    item
+                }
+                repository.updateTaskList(*data.toTypedArray())
             }
-            repository.updateTaskList(*data.toTypedArray())
+            executeSynchronizeWork(appContext)
         }
     }
 }
