@@ -1,7 +1,5 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_list
 
-import android.content.Context
-import com.example.todolist.common.util.synchronization.executeSynchronizeWork
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskListDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
@@ -12,8 +10,7 @@ import kotlinx.coroutines.async
 
 class UpdateTaskList(
     private val repository: TaskListRepository,
-    private val androidId: String,
-    private val appContext: Context
+    private val androidId: String
 ) {
 
     @Throws(InvalidTaskListException::class)
@@ -37,7 +34,6 @@ class UpdateTaskList(
                 }
                 repository.updateTaskList(*data.toTypedArray())
             }
-            executeSynchronizeWork(appContext)
         }
     }
 }

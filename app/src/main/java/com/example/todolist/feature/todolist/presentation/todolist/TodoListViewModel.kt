@@ -1,5 +1,7 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -10,6 +12,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.common.util.synchronization.executeSynchronizeWork
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
@@ -18,16 +21,18 @@ import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemU
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
-
+@SuppressLint("StaticFieldLeak")
 @HiltViewModel
 class TodoListViewModel @Inject constructor(
     private val taskItemUseCases: TaskItemUseCases,
     private val taskListUseCases: TaskListUseCases,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     companion object {
@@ -57,11 +62,23 @@ class TodoListViewModel @Inject constructor(
 
     private val _dialogType = mutableStateOf<DialogType>(DialogType.DeleteTaskList)
     val dialogType: State<DialogType> = _dialogType
+    private val _isRefreshing = MutableStateFlow(false)
+
+    val isRefreshing: StateFlow<Boolean>
+        get() = _isRefreshing.asStateFlow()
 
     init {
         requestLatestData()
     }
 
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.emit(true)
+            executeSynchronizeWork(appContext)
+            delay(2000L)
+            _isRefreshing.emit(false)
+        }
+    }
     private fun requestLatestData() {
         requestLatestDataJob?.cancel()
         requestLatestDataJob = getTaskLists().onEach {

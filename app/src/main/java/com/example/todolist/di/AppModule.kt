@@ -96,15 +96,14 @@ object AppModule {
     @Singleton
     fun provideTaskListUseCases(
         repository: TaskListRepository,
-        @Named("androidId") androidId: String,
-        @ApplicationContext appContext: Context
+        @Named("androidId") androidId: String
     ): TaskListUseCases {
         return TaskListUseCases(
-            addTaskList = AddTaskList(repository, androidId, appContext),
-            deleteTaskList = DeleteTaskList(repository, androidId, appContext),
+            addTaskList = AddTaskList(repository, androidId),
+            deleteTaskList = DeleteTaskList(repository, androidId),
             getTaskListById = GetTaskListById(repository),
             getTaskLists = GetTaskLists(repository),
-            updateTaskList = UpdateTaskList(repository, androidId, appContext)
+            updateTaskList = UpdateTaskList(repository, androidId)
         )
     }
 
@@ -112,15 +111,14 @@ object AppModule {
     @Singleton
     fun provideTaskItemUseCases(
         repository: TaskItemRepository,
-        @Named("androidId") androidId: String,
-        @ApplicationContext appContext: Context
+        @Named("androidId") androidId: String
     ): TaskItemUseCases {
         return TaskItemUseCases(
-            addTaskItem = AddTaskItem(repository, androidId, appContext),
-            deleteTaskItem = DeleteTaskItem(repository, androidId, appContext),
+            addTaskItem = AddTaskItem(repository, androidId),
+            deleteTaskItem = DeleteTaskItem(repository, androidId),
             getTaskItemById = GetTaskItemById(repository),
             getTaskItemsByTaskListId = GetTaskItemsByTaskListId(repository),
-            updateTaskItem = UpdateTaskItem(repository, androidId, appContext)
+            updateTaskItem = UpdateTaskItem(repository, androidId)
         )
     }
 
