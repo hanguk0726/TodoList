@@ -1,49 +1,63 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_item
 
 
+import android.util.Log
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 
 class AddTaskItem(
     private val repository: TaskItemRepository,
     private val androidId: String
 ) {
-
     @Throws(InvalidTaskItemException::class)
     suspend operator fun invoke(vararg taskItem: TaskItem): List<Long> {
         if (taskItem.any { el -> el.title.isBlank() }) {
             throw InvalidTaskItemException("the name of the task can't be empty")
         }
 
-        val ids = mutableListOf<Long>()
+        val insertedTaskItem = addTaskItemOnLocal(*taskItem)
 
-        val taskItemDto = taskItem.map {
+        val ids = insertedTaskItem.map { it.id!! }
+
+        addTaskItemOnRemote(*insertedTaskItem.toTypedArray())
+
+        return ids
+    }
+
+
+    private suspend fun addTaskItemOnLocal(vararg taskItem: TaskItem): List<TaskItem> {
+        val insertedTaskItem = mutableListOf<TaskItem>()
+        taskItem.forEach {
             val id = repository.insertTaskItem(it).first()
             val item = it.copy(
                 id = id,
                 isSynchronizedWithRemote = false
             )
-            ids.add(id)
-            item.toTaskItemDto(androidId)
+            insertedTaskItem.add(item)
         }
-        CoroutineScope(Dispatchers.IO).async {
+        return insertedTaskItem
+    }
+
+    private suspend fun addTaskItemOnRemote(vararg taskItem: TaskItem) =
+        withContext(Dispatchers.IO) {
+            val taskItemDto = taskItem.map {
+                it.toTaskItemDto(userId = androidId)
+            }
             val result = repository.insertTaskItemOnRemote(
                 taskItemDto = taskItemDto.toTypedArray()
             )
 
             if (result.isSuccessful) {
                 val data = taskItem.map {
-                    val item = it.copy(isSynchronizedWithRemote = true)
-                    item
+                    it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskItem(*data.toTypedArray())
+            } else {
+                Log.e("AddTaskItem", "Failed to execute the task on remote")
             }
         }
-        return ids
-    }
 }

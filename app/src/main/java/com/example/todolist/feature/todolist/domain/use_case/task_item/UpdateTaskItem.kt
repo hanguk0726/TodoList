@@ -1,12 +1,12 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_item
 
+import android.util.Log
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 
 class UpdateTaskItem(
     private val repository: TaskItemRepository,
@@ -19,25 +19,33 @@ class UpdateTaskItem(
             throw InvalidTaskItemException("the name of the task can't be empty")
         }
 
-        val taskItemDto = taskItem.map {
-            val item = it.copy(
-                isSynchronizedWithRemote = false
+        taskItem.forEach {
+            repository.updateTaskItem(
+                it.copy(
+                    isSynchronizedWithRemote = false
+                )
             )
-            repository.updateTaskItem(item)
-            item.toTaskItemDto(androidId)
         }
-        CoroutineScope(Dispatchers.IO).async {
+        updateTaskItemOnRemote(*taskItem)
+    }
+
+    private suspend fun updateTaskItemOnRemote(vararg taskItem: TaskItem) =
+        withContext(Dispatchers.IO) {
+
+            val taskItemDto = taskItem.map {
+                it.toTaskItemDto(userId = androidId)
+            }
             val result = repository.updateTaskItemOnRemote(
                 taskItemDto = taskItemDto.toTypedArray()
             )
 
             if (result.isSuccessful) {
                 val data = taskItem.map {
-                    val item = it.copy(isSynchronizedWithRemote = true)
-                    item
+                    it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskItem(*data.toTypedArray())
+            } else {
+                Log.e("UpdateTaskItem", "Failed to execute the task on remote")
             }
         }
-    }
 }

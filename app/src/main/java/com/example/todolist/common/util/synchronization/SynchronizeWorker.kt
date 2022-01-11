@@ -202,9 +202,11 @@ class SynchronizeWorker @AssistedInject constructor(
 
 
 private const val uniqueWorkName = "synchronizeWork"
+
 private val constraints = Constraints.Builder()
     .setRequiredNetworkType(NetworkType.CONNECTED)
     .build()
+
 private val synchronizeWorkRequest =
     OneTimeWorkRequest.Builder(SynchronizeWorker::class.java)
         .setConstraints(constraints)

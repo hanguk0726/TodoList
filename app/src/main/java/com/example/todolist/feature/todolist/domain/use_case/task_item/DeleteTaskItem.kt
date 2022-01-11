@@ -1,12 +1,12 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_item
 
+import android.util.Log
 import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 
 class DeleteTaskItem(
     private val repository: TaskItemRepository,
@@ -16,7 +16,12 @@ class DeleteTaskItem(
     @Throws(InvalidTaskItemException::class)
     suspend operator fun invoke(vararg taskItem: TaskItem) {
         repository.deleteTaskItem(*taskItem)
-        CoroutineScope(Dispatchers.IO).async {
+
+        deleteTaskItemOnRemote(*taskItem)
+    }
+
+    private suspend fun deleteTaskItemOnRemote(vararg taskItem: TaskItem) =
+        withContext(Dispatchers.IO) {
             val taskItemDto = taskItem.map { it.toTaskItemDto(androidId) }
 
             val result = repository.deleteTaskItemOnRemote(
@@ -24,12 +29,11 @@ class DeleteTaskItem(
             )
 
             if (!result.isSuccessful) {
+                Log.e("DeleteTaskItem", "Failed to execute the task on remote")
                 val data = taskItem.map {
-                    val item = it.copy(needToBeDeleted = true)
-                    item
+                    it.copy(needToBeDeleted = true)
                 }
                 repository.updateTaskItem(*data.toTypedArray())
             }
         }
-    }
 }
