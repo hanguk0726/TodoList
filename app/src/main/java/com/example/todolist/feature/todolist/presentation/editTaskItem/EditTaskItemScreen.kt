@@ -31,8 +31,8 @@ import com.example.todolist.common.ui.theme.themedGray
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
 @Composable
@@ -147,7 +147,7 @@ fun EditTaskItemScreen(
             Row(
                 Modifier
                     .noRippleClickable {
-                        scope.async {
+                        scope.launch {
                             modalBottomSheetState.show()
                         }
                     }

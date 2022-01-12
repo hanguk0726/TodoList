@@ -19,7 +19,7 @@ import com.example.todolist.common.ui.theme.ScrimColor
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalPagerApi::class,
@@ -52,7 +52,7 @@ fun AddTaskItemModalBottomSheet(
     BackHandler(
         enabled = isShowing,
         onBack = {
-            scope.async {
+            scope.launch {
                 keyboardController?.hide()
                 state.hide()
             }

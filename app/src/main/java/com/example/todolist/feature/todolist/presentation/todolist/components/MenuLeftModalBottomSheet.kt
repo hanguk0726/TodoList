@@ -22,7 +22,7 @@ import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalPagerApi::class,
@@ -80,7 +80,7 @@ fun MenuLeftModalBottomSheet(
                                 Modifier
                             }.padding(start = 56.dp)
                                 .noRippleClickable {
-                                    scope.async {
+                                    scope.launch {
                                         pagerState.animateScrollToPage(index)
                                         state.hide()
                                     }

@@ -6,7 +6,9 @@ import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AddTaskItem(
@@ -43,7 +45,7 @@ class AddTaskItem(
     }
 
     private suspend fun addTaskItemOnRemote(vararg taskItem: TaskItem) =
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val taskItemDto = taskItem.map {
                     it.toTaskItemDto(userId = androidId)
@@ -52,7 +54,7 @@ class AddTaskItem(
                     taskItemDto = taskItemDto.toTypedArray()
                 )
 
-                if (!result.isSuccessful) return@withContext
+                if (!result.isSuccessful) return@launch
 
                 val data = taskItem.map {
                     it.copy(isSynchronizedWithRemote = true)

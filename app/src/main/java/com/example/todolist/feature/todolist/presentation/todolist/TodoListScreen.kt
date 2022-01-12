@@ -50,8 +50,8 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 @OptIn(
@@ -169,7 +169,7 @@ fun TodoListScreen(
     }
 
     LaunchedEffect(key1 = true) {
-        async {
+        launch {
             menuLeftModalBottomSheetState.hide()
             menuRightModalBottomSheetState.hide()
         }
@@ -190,7 +190,7 @@ fun TodoListScreen(
                     viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
                 }
                 is TodoListViewModel.UiEvent.SaveTaskItem -> {
-                    async {
+                    launch {
                         addTaskItemModalBottomSheetState.hide()
                     }
                 }
@@ -198,7 +198,7 @@ fun TodoListScreen(
                     showDeleteTaskListDialog = true
                 }
                 is TodoListViewModel.UiEvent.CloseMenuRightModalBottomSheet -> {
-                    async {
+                    launch {
                         menuRightModalBottomSheetState.hide()
                     }
                 }
@@ -226,7 +226,7 @@ fun TodoListScreen(
             FadeSlideAnimatedVisibility(showMainBottomSheetScaffold) {
                 FloatingActionButton(
                     onClick = {
-                        scope.async {
+                        scope.launch {
                             if (addTaskItemModalBottomSheetState.isVisible) {
                                 addTaskItemModalBottomSheetState.hide()
                             } else {
@@ -255,7 +255,7 @@ fun TodoListScreen(
                     elevation = if (isSystemInDarkTheme()) 0.dp else AppBarDefaults.BottomAppBarElevation,
                     content = {
                         IconButton(onClick = {
-                            scope.async {
+                            scope.launch {
                                 menuLeftModalBottomSheetState.show()
                             }
                         }) {
@@ -263,7 +263,7 @@ fun TodoListScreen(
                         }
                         Spacer(modifier = Modifier.weight(1.0f))
                         IconButton(onClick = {
-                            scope.async {
+                            scope.launch {
                                 menuRightModalBottomSheetState.show()
                             }
                         }) {
@@ -311,7 +311,7 @@ fun TodoListScreen(
                         taskListsState.taskLists.forEachIndexed { index, taskList ->
                             val isSelected = currentPageState() == index
                             Tab(selected = isSelected, onClick = {
-                                scope.async {
+                                scope.launch {
                                     pagerState.animateScrollToPage(index)
                                 }
                             }, text = {
@@ -400,7 +400,7 @@ fun TodoListScreen(
                                             TaskItemCompletionButton(
                                                 taskItem.isCompleted,
                                                 onClick = {
-                                                    scope.async {
+                                                    scope.launch {
                                                         viewModel.onEvent(
                                                             TodoListEvent.ToggleTaskItemCompletionState(
                                                                 taskItem
@@ -486,7 +486,7 @@ fun TodoListScreen(
                                                 TaskItemCompletionButton(
                                                     taskItem.isCompleted,
                                                     onClick = {
-                                                        scope.async {
+                                                        scope.launch {
                                                             viewModel.onEvent(
                                                                 TodoListEvent.ToggleTaskItemCompletionState(
                                                                     taskItem
@@ -505,8 +505,6 @@ fun TodoListScreen(
                     }
                 }
             }
-
-
         }
     }
 
@@ -646,7 +644,7 @@ fun TodoListScreen(
                     paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
                 ) {
                     showDeleteTaskListDialog = false
-                    scope.async {
+                    scope.launch {
                         menuRightModalBottomSheetState.hide()
                     }
                     viewModel.onEvent(eventWhenConfirm)

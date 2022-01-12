@@ -5,7 +5,9 @@ import com.example.todolist.feature.todolist.data.remote.dto.toTaskItemDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.repository.TaskItemRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class DeleteTaskItem(
@@ -21,7 +23,7 @@ class DeleteTaskItem(
     }
 
     private suspend fun deleteTaskItemOnRemote(vararg taskItem: TaskItem) =
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
            try {
                val taskItemDto = taskItem.map { it.toTaskItemDto(androidId) }
 
@@ -29,7 +31,7 @@ class DeleteTaskItem(
                    taskItemDto = taskItemDto.toTypedArray()
                )
 
-               if (result.isSuccessful) return@withContext
+               if (result.isSuccessful) return@launch
 
                Log.e("DeleteTaskItem", "Failed to execute the task on remote")
                val data = taskItem.map {

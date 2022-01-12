@@ -23,7 +23,7 @@ import com.example.todolist.common.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalPagerApi::class,
@@ -43,7 +43,7 @@ fun EditTaskItemTaskListIdModalBottomSheet(
     BackHandler(
         enabled = state.isVisible,
         onBack = {
-            scope.async {
+            scope.launch {
                 state.hide()
             }
         }
@@ -64,11 +64,11 @@ fun EditTaskItemTaskListIdModalBottomSheet(
                         Modifier
                             .noRippleClickable {
                                 if (isCurrentlySelected) {
-                                    scope.async {
+                                    scope.launch {
                                         state.hide()
                                     }
                                 } else {
-                                    scope.async {
+                                    scope.launch {
                                         onClickTaskList(taskItem.id!!, el.id!!)
                                         state.hide()
                                     }

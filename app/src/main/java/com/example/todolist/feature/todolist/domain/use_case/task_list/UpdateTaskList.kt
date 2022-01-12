@@ -5,7 +5,9 @@ import com.example.todolist.feature.todolist.data.remote.dto.toTaskListDto
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class UpdateTaskList(
@@ -29,7 +31,7 @@ class UpdateTaskList(
     }
 
     private suspend fun updateTaskListOnRemote(vararg taskList: TaskList) =
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
 
                 val taskListDto = taskList.map {
@@ -39,7 +41,7 @@ class UpdateTaskList(
                     taskListDto = taskListDto.toTypedArray()
                 )
 
-                if (!result.isSuccessful) return@withContext
+                if (!result.isSuccessful) return@launch
                 val data = taskList.map {
                     it.copy(isSynchronizedWithRemote = true)
                 }
