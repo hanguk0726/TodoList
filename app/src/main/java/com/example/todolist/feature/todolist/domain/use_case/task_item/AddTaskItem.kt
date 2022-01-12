@@ -44,20 +44,22 @@ class AddTaskItem(
 
     private suspend fun addTaskItemOnRemote(vararg taskItem: TaskItem) =
         withContext(Dispatchers.IO) {
-            val taskItemDto = taskItem.map {
-                it.toTaskItemDto(userId = androidId)
-            }
-            val result = repository.insertTaskItemOnRemote(
-                taskItemDto = taskItemDto.toTypedArray()
-            )
+            try {
+                val taskItemDto = taskItem.map {
+                    it.toTaskItemDto(userId = androidId)
+                }
+                val result = repository.insertTaskItemOnRemote(
+                    taskItemDto = taskItemDto.toTypedArray()
+                )
 
-            if (result.isSuccessful) {
+                if (!result.isSuccessful) return@withContext
+
                 val data = taskItem.map {
                     it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskItem(*data.toTypedArray())
-            } else {
-                Log.e("AddTaskItem", "Failed to execute the task on remote")
+            } catch (e: Exception) {
+                Log.e("AddTaskItem", e.message.toString())
             }
         }
 }

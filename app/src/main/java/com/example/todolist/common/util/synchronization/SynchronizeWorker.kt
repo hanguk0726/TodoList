@@ -51,13 +51,13 @@ class SynchronizeWorker @AssistedInject constructor(
             }
 
 
-            // Case : exists in remote, not in local
+            // Case : Local is latest, Remote is not
             if (remoteTaskLists.isNotEmpty()) {
                 synchronizeRemoteTaskListsToLocal(remoteTaskLists, localTaskLists)
                 synchronizeRemoteTaskItemsToLocal(remoteTaskListIds)
             }
 
-            // Case :  exists in local, not in remote
+            // Case : Remote is latest, Local is not
             if (localTaskLists.isNotEmpty()) {
                 synchronizeLocalTaskItemsToRemote(
                     localTaskListIds,

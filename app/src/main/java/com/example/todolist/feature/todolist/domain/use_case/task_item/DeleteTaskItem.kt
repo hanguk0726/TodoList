@@ -22,18 +22,23 @@ class DeleteTaskItem(
 
     private suspend fun deleteTaskItemOnRemote(vararg taskItem: TaskItem) =
         withContext(Dispatchers.IO) {
-            val taskItemDto = taskItem.map { it.toTaskItemDto(androidId) }
+           try {
+               val taskItemDto = taskItem.map { it.toTaskItemDto(androidId) }
 
-            val result = repository.deleteTaskItemOnRemote(
-                taskItemDto = taskItemDto.toTypedArray()
-            )
+               val result = repository.deleteTaskItemOnRemote(
+                   taskItemDto = taskItemDto.toTypedArray()
+               )
 
-            if (!result.isSuccessful) {
-                Log.e("DeleteTaskItem", "Failed to execute the task on remote")
-                val data = taskItem.map {
-                    it.copy(needToBeDeleted = true)
-                }
-                repository.updateTaskItem(*data.toTypedArray())
-            }
+               if (result.isSuccessful) return@withContext
+
+               Log.e("DeleteTaskItem", "Failed to execute the task on remote")
+               val data = taskItem.map {
+                   it.copy(needToBeDeleted = true)
+               }
+               repository.updateTaskItem(*data.toTypedArray())
+
+           } catch (e : Exception){
+               Log.e("DeleteTaskItem", e.message.toString())
+           }
         }
 }

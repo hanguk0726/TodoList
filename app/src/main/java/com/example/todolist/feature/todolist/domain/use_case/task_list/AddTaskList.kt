@@ -43,20 +43,21 @@ class AddTaskList(
 
     private suspend fun addTaskListOnRemote(vararg taskList: TaskList) =
         withContext(Dispatchers.IO) {
-            val taskListDto = taskList.map {
-                it.toTaskListDto(userId = androidId)
-            }
-            val result = repository.insertTaskListOnRemote(
-                taskListDto = taskListDto.toTypedArray()
-            )
+            try {
+                val taskListDto = taskList.map {
+                    it.toTaskListDto(userId = androidId)
+                }
+                val result = repository.insertTaskListOnRemote(
+                    taskListDto = taskListDto.toTypedArray()
+                )
 
-            if (result.isSuccessful) {
+                if (!result.isSuccessful) return@withContext
                 val data = taskList.map {
                     it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskList(*data.toTypedArray())
-            } else {
-                Log.e("AddTaskList", "Failed to execute the task on remote")
+            } catch (e: Exception) {
+                Log.e("AddTaskList", e.message.toString())
             }
         }
 }

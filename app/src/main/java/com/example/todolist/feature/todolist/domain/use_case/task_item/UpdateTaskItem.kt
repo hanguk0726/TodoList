@@ -32,20 +32,21 @@ class UpdateTaskItem(
     private suspend fun updateTaskItemOnRemote(vararg taskItem: TaskItem) =
         withContext(Dispatchers.IO) {
 
-            val taskItemDto = taskItem.map {
-                it.toTaskItemDto(userId = androidId)
-            }
-            val result = repository.updateTaskItemOnRemote(
-                taskItemDto = taskItemDto.toTypedArray()
-            )
+            try {
+                val taskItemDto = taskItem.map {
+                    it.toTaskItemDto(userId = androidId)
+                }
+                val result = repository.updateTaskItemOnRemote(
+                    taskItemDto = taskItemDto.toTypedArray()
+                )
 
-            if (result.isSuccessful) {
+                if (!result.isSuccessful) return@withContext
                 val data = taskItem.map {
                     it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskItem(*data.toTypedArray())
-            } else {
-                Log.e("UpdateTaskItem", "Failed to execute the task on remote")
+            } catch (e: Exception) {
+                Log.e("UpdateTaskItem", e.message.toString())
             }
         }
 }

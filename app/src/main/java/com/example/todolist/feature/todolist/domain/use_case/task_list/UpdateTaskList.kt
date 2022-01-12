@@ -30,21 +30,22 @@ class UpdateTaskList(
 
     private suspend fun updateTaskListOnRemote(vararg taskList: TaskList) =
         withContext(Dispatchers.IO) {
+            try {
 
-            val taskListDto = taskList.map {
-                it.toTaskListDto(userId = androidId)
-            }
-            val result = repository.updateTaskListOnRemote(
-                taskListDto = taskListDto.toTypedArray()
-            )
+                val taskListDto = taskList.map {
+                    it.toTaskListDto(userId = androidId)
+                }
+                val result = repository.updateTaskListOnRemote(
+                    taskListDto = taskListDto.toTypedArray()
+                )
 
-            if (result.isSuccessful) {
+                if (!result.isSuccessful) return@withContext
                 val data = taskList.map {
                     it.copy(isSynchronizedWithRemote = true)
                 }
                 repository.updateTaskList(*data.toTypedArray())
-            } else {
-                Log.e("UpdateTaskList", "Failed to execute the task on remote")
+            } catch (e: Exception) {
+                Log.e("UpdateTaskList", e.message.toString())
             }
         }
 }
