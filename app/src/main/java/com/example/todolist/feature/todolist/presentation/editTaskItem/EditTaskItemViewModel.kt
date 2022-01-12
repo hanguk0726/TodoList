@@ -38,7 +38,6 @@ class EditTaskItemViewModel @Inject constructor(
             hint = "세부 정보 추가"
         )
     )
-
     val taskItemDetail: State<TodoListTextFieldState> = _taskItemDetail
 
     private val _taskListsState = mutableStateOf(TaskListsState())
@@ -53,7 +52,7 @@ class EditTaskItemViewModel @Inject constructor(
     private var lastDeletedTaskItem: TaskItem? = null
     private var getTaskListsJob: Job? = null
 
-    val currentTaskItemTaskList: TaskList?
+    val currentTaskListOfTaskItem: TaskList?
         get() {
             val taskItem = _taskItemState.value
             return taskItem?.let {
@@ -192,26 +191,26 @@ class EditTaskItemViewModel @Inject constructor(
         }
     }
 
-    suspend fun loadTaskItemValues(_taskItemId: Long): TaskItem? {
-        return try {
-            val targetTaskItem = taskItemUseCases.getTaskItemById(_taskItemId)
-            _taskItemState.value = targetTaskItem
-            _taskItemTitle.value = taskItemTitle.value.copy(
-                text = targetTaskItem!!.title,
-            )
-            _taskItemTitle.value = taskItemTitle.value.copy(
-                isHintVisible = taskItemTitle.value.text.isBlank()
-            )
-            _taskItemDetail.value = taskItemDetail.value.copy(
-                text = targetTaskItem.detail,
-            )
-            _taskItemDetail.value = taskItemDetail.value.copy(
-                isHintVisible = taskItemDetail.value.text.isBlank()
-            )
-            targetTaskItem
-        } catch (e: InvalidTaskItemException) {
-            Log.e("EditTaskItemViewModel", "${e.message ?: "Couldn't get the taskItem"}")
-            null
+    fun loadTaskItemValues(_taskItemId: Long) {
+        viewModelScope.launch {
+            try {
+                val targetTaskItem = taskItemUseCases.getTaskItemById(_taskItemId)
+                _taskItemState.value = targetTaskItem
+                _taskItemTitle.value = taskItemTitle.value.copy(
+                    text = targetTaskItem!!.title,
+                )
+                _taskItemTitle.value = taskItemTitle.value.copy(
+                    isHintVisible = taskItemTitle.value.text.isBlank()
+                )
+                _taskItemDetail.value = taskItemDetail.value.copy(
+                    text = targetTaskItem.detail,
+                )
+                _taskItemDetail.value = taskItemDetail.value.copy(
+                    isHintVisible = taskItemDetail.value.text.isBlank()
+                )
+            } catch (e: InvalidTaskItemException) {
+                Log.e("EditTaskItemViewModel", "${e.message ?: "Couldn't get the taskItem"}")
+            }
         }
     }
 

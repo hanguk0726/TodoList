@@ -6,7 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
 import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
@@ -27,21 +28,16 @@ fun AddTaskListScreen(
     taskListId: Long,
     viewModel: AddEditTaskListViewModel = hiltViewModel()
 ) {
-    rememberSystemUiController().setSystemBarsColor(
-        color = MaterialTheme.colors.background
-    )
+    applyAddEditTaskListScreenTheme()
 
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
 
-    val scope = rememberCoroutineScope()
+    SideEffect {
+        setUpInitialData(taskListId, viewModel)
+    }
 
     LaunchedEffect(key1 = true) {
-        if(taskListId == -1L){
-            viewModel.clearTaskListNameTextField()
-        } else {
-            viewModel.loadTaskListNameToModify(taskListId)
-        }
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {
@@ -65,46 +61,79 @@ fun AddTaskListScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                IconButton(onClick = {
-                    navController.navigateUp()
-                }) {
-                    Icon(
-                        Icons.Default.Close,
-                        "close add task list screen",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (taskListId == -1L) "새 목록 만들기" else "목록 이름 변경하기", fontSize = 20.sp)
-                Spacer(modifier = Modifier.weight(1.0f))
-                PureTextButton(
-                    text = "완료",
-                    textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
-                ) {
-                    viewModel.onEvent(AddEditTaskListEvent.SaveTaskList(taskListId))
-                }
-            }
+            TopMenu(navController, taskListId, viewModel)
 
             SemiTransparentDivider()
 
-            TransparentHintTextField(
-                modifier = Modifier.padding(16.dp),
-                text = taskListNameState.text,
-                hint = taskListNameState.hint,
-                textStyle = MaterialTheme.typography.body1,
-                isHintVisible = taskListNameState.isHintVisible,
-                onValueChange = {
-                    viewModel.onEvent(AddEditTaskListEvent.EnterTaskListName(it))
-                },
-            )
+            AddEditTaskListTextField(taskListNameState, viewModel)
 
             SemiTransparentDivider()
         }
     }
+}
+
+@Composable
+private fun applyAddEditTaskListScreenTheme() {
+    rememberSystemUiController().setSystemBarsColor(
+        color = MaterialTheme.colors.background
+    )
+}
+
+private fun setUpInitialData(taskListId: Long, viewModel: AddEditTaskListViewModel) {
+    if (taskListId == -1L) {
+        viewModel.clearTaskListNameTextField()
+    } else {
+        viewModel.loadTaskListNameToModify(taskListId)
+    }
+}
+
+@Composable
+private fun TopMenu(
+    navController: NavController,
+    taskListId: Long,
+    viewModel: AddEditTaskListViewModel
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        IconButton(onClick = {
+            navController.navigateUp()
+        }) {
+            Icon(
+                Icons.Default.Close,
+                "close add task list screen",
+                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(if (taskListId == -1L) "새 목록 만들기" else "목록 이름 변경하기", fontSize = 20.sp)
+        Spacer(modifier = Modifier.weight(1.0f))
+        PureTextButton(
+            text = "완료",
+            textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+        ) {
+            viewModel.onEvent(AddEditTaskListEvent.SaveTaskList(taskListId))
+        }
+    }
+}
+
+
+@Composable
+private fun AddEditTaskListTextField(
+    taskListNameState: TodoListTextFieldState,
+    viewModel: AddEditTaskListViewModel
+) {
+    TransparentHintTextField(
+        modifier = Modifier.padding(16.dp),
+        text = taskListNameState.text,
+        hint = taskListNameState.hint,
+        textStyle = MaterialTheme.typography.body1,
+        isHintVisible = taskListNameState.isHintVisible,
+        onValueChange = {
+            viewModel.onEvent(AddEditTaskListEvent.EnterTaskListName(it))
+        },
+    )
 }

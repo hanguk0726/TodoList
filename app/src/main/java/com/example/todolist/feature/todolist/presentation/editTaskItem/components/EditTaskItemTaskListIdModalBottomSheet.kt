@@ -15,11 +15,11 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.todolist.common.ui.theme.ScrimColor
+import com.example.todolist.common.ui.theme.themedBlue
 import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
-import com.example.todolist.common.ui.theme.ScrimColor
-import com.example.todolist.common.ui.theme.themedBlue
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +39,6 @@ fun EditTaskItemTaskListIdModalBottomSheet(
     taskItem: TaskItem,
     onClickTaskList: (taskItemId: Long, targetTaskListId: Long) -> Unit
 ) {
-
     BackHandler(
         enabled = state.isVisible,
         onBack = {
@@ -55,45 +54,57 @@ fun EditTaskItemTaskListIdModalBottomSheet(
         sheetElevation = 0.dp,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        content = {},
         sheetContent = {
             Column {
                 Text("이동 대상 목록", color = Color.Gray, modifier = Modifier.padding(16.dp))
-                taskListsState.taskLists.forEach { el ->
-                    val isCurrentlySelected = el.id == taskItem.taskListId
-                    Row(
-                        Modifier
-                            .noRippleClickable {
-                                if (isCurrentlySelected) {
-                                    scope.launch {
-                                        state.hide()
-                                    }
-                                } else {
-                                    scope.launch {
-                                        onClickTaskList(taskItem.id!!, el.id!!)
-                                        state.hide()
-                                    }
-                                }
-                            }
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            el.name,
-                            color = if (isCurrentlySelected) themedBlue else Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.weight(1.0f))
-                        if (isCurrentlySelected) {
-                            Icon(
-                                Icons.Default.Check,
-                                "taskList currently selected for taskItem",
-                                tint = themedBlue
-                            )
+                taskListsToMoveTaskItem(
+                    scope, state, taskListsState, taskItem, onClickTaskList
+                )
+            }
+        }
+    )
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun taskListsToMoveTaskItem(
+    scope: CoroutineScope,
+    state: ModalBottomSheetState,
+    taskListsState: TaskListsState,
+    taskItem: TaskItem,
+    onClickTaskList: (taskItemId: Long, targetTaskListId: Long) -> Unit
+) {
+    taskListsState.taskLists.forEach { el ->
+        val isCurrentlySelected = el.id == taskItem.taskListId
+        Row(
+            Modifier
+                .noRippleClickable {
+                    if (isCurrentlySelected) {
+                        scope.launch {
+                            state.hide()
+                        }
+                    } else {
+                        scope.launch {
+                            onClickTaskList(taskItem.id!!, el.id!!)
+                            state.hide()
                         }
                     }
                 }
+                .padding(16.dp)
+        ) {
+            Text(
+                el.name,
+                color = if (isCurrentlySelected) themedBlue else Color.Unspecified
+            )
+            Spacer(modifier = Modifier.weight(1.0f))
+            if (isCurrentlySelected) {
+                Icon(
+                    Icons.Default.Check,
+                    "taskList currently selected for taskItem",
+                    tint = themedBlue
+                )
             }
         }
-    ) {
-
     }
-
 }
