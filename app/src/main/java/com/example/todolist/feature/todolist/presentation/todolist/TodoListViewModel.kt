@@ -22,8 +22,11 @@ import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListU
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -79,6 +82,7 @@ class TodoListViewModel @Inject constructor(
             _isRefreshing.emit(false)
         }
     }
+
     private fun requestLatestData() {
         requestLatestDataJob?.cancel()
         requestLatestDataJob = getTaskLists().onEach {
@@ -300,15 +304,14 @@ class TodoListViewModel @Inject constructor(
     }
 
 
-    private suspend fun initializeFirstTaskList(taskList: TaskList): Long =
-        withContext(viewModelScope.coroutineContext) {
-            return@withContext try {
-                taskListUseCases.addTaskList(taskList).first()
-            } catch (e: Exception) {
-                Log.e("TodoListViewModel", "${e.message ?: "Couldn't create the taskList"}")
-                -1L
-            }
+    private suspend fun initializeFirstTaskList(taskList: TaskList): Long {
+        return try {
+            taskListUseCases.addTaskList(taskList).first()
+        } catch (e: Exception) {
+            Log.e("TodoListViewModel", "${e.message ?: "Couldn't create the taskList"}")
+            -1L
         }
+    }
 
     private suspend fun saveLastSelectedTaskListId(id: Int) {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)

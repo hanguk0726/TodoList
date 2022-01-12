@@ -14,8 +14,6 @@ import com.example.todolist.feature.todolist.domain.use_case.task_item.TaskItemU
 import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListUseCases
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 
@@ -147,11 +145,10 @@ class SynchronizeWorker @AssistedInject constructor(
 
                 if (existsAndUpdatedInRemote) return@taskItem
 
-                val result = withContext(Dispatchers.IO) {
-                    taskItemApi.synchronizeTaskItem(
-                        taskItemDto = arrayOf(taskItem.toTaskItemDto(userId))
-                    )
-                }
+                val result = taskItemApi.synchronizeTaskItem(
+                    taskItemDto = arrayOf(taskItem.toTaskItemDto(userId))
+                )
+
 
                 if (result.isSuccessful) {
                     taskItemUseCases.updateTaskItem(
@@ -188,11 +185,10 @@ class SynchronizeWorker @AssistedInject constructor(
 
             if (existsAndUpdatedInRemote) return@forEach
 
-            val result = withContext(Dispatchers.IO) {
-                taskListApi.synchronizeTaskList(
-                    taskListDto = arrayOf(taskList.toTaskListDto(userId))
-                )
-            }
+            val result = taskListApi.synchronizeTaskList(
+                taskListDto = arrayOf(taskList.toTaskListDto(userId))
+            )
+
 
             if (result.isSuccessful) {
                 taskListUseCases.updateTaskList(

@@ -500,7 +500,6 @@ fun TodoListScreen(
                                     }
                                 }
                             }
-
                         }
                     }
                 }
@@ -613,6 +612,7 @@ fun TodoListScreen(
             }
         )
     }
+
     if (showDeleteTaskListDialog) {
         val titleText: String
         val contentText: String

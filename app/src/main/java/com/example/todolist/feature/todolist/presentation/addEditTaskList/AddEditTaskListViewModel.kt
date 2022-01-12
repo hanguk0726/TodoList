@@ -26,12 +26,10 @@ class AddEditTaskListViewModel @Inject constructor(
             hint = "새 목록 이름"
         )
     )
-
     val taskListName: State<TodoListTextFieldState> = _taskListName
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
-
 
 
     fun onEvent(event: AddEditTaskListEvent) {
@@ -61,6 +59,7 @@ class AddEditTaskListViewModel @Inject constructor(
             }
         }
     }
+
     fun clearTaskListNameTextField() {
         _taskListName.value = _taskListName.value.copy(
             text = "",
@@ -77,6 +76,7 @@ class AddEditTaskListViewModel @Inject constructor(
             )
         }
     }
+
     sealed class UiEvent {
         object SaveTaskList : UiEvent()
     }
