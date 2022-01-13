@@ -115,12 +115,16 @@ class TodoListViewModel @Inject constructor(
             }
     }
 
-    fun getTaskItems(targetTaskListId: Long): List<TaskItem> {
+    private fun getTaskItems(targetTaskListId: Long): List<TaskItem> {
         return if (taskItemStatePool.containsKey(targetTaskListId)) {
             taskItemStatePool[targetTaskListId]!!.taskItemsState.value.taskItems
         } else {
             emptyList()
         }
+    }
+
+    fun getTaskItemsToDisplay(targetTaskListId: Long): List<TaskItem> {
+        return getTaskItems(targetTaskListId).filter { !it.needToBeDeleted }
     }
 
     fun onEvent(event: TodoListEvent) {
@@ -164,7 +168,7 @@ class TodoListViewModel @Inject constructor(
                             ))
                         }
                     } catch (e: InvalidTaskItemException) {
-                        Log.e("TodoListViewModel", "${e.message ?: "Couldn't update taskItem"}")
+                        Log.e("TodoListViewModel", e.message ?: "Couldn't update taskItem")
                     }
                 }
             }
@@ -183,7 +187,7 @@ class TodoListViewModel @Inject constructor(
                             taskItemUseCases.getTaskItemsByTaskListId.noFlow(selectedTaskList!!.id!!)
                         taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
                     } catch (e: InvalidTaskListException) {
-                        Log.e("TodoListViewModel", "${e.message ?: "Couldn't delete taskList"}")
+                        Log.e("TodoListViewModel", e.message ?: "Couldn't delete taskList")
                     }
                 }
             }

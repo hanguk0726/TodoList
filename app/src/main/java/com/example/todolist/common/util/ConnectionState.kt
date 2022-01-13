@@ -71,6 +71,7 @@ fun NetworkCallback(callback: (ConnectionState)->Unit) : ConnectivityManager.Net
     }
 }
 
+@ExperimentalCoroutinesApi
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun connectivityState(): State<ConnectionState> {

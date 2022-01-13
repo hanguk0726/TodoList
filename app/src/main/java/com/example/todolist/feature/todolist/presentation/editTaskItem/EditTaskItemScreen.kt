@@ -31,9 +31,11 @@ import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@DelicateCoroutinesApi
 @ExperimentalMaterialApi
 @Composable
 fun EditTaskItemScreen(
@@ -226,6 +228,7 @@ private fun ChangeTaskListOfTaskItemBar(
 }
 
 
+@DelicateCoroutinesApi
 @Composable
 private fun TaskItemTitleTextField(
     taskItemTitleState: TodoListTextFieldState,
@@ -243,6 +246,7 @@ private fun TaskItemTitleTextField(
     )
 }
 
+@DelicateCoroutinesApi
 @Composable
 private fun TaskItemDetailTextField(
     viewModel: EditTaskItemViewModel,

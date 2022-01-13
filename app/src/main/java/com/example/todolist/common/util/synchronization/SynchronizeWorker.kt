@@ -115,7 +115,6 @@ class SynchronizeWorker @AssistedInject constructor(
                     )
                 )
             }
-
         }
     }
 
@@ -189,7 +188,6 @@ class SynchronizeWorker @AssistedInject constructor(
                 taskListDto = arrayOf(taskList.toTaskListDto(userId))
             )
 
-
             if (result.isSuccessful) {
                 taskListUseCases.updateTaskList(
                     taskList.copy(
@@ -229,6 +227,7 @@ fun executeSynchronizeWork(appContext: Context) {
 
     WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.KEEP, synchronizeWorkRequest)
+        .enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, synchronizeWorkRequest)
+
 
 }

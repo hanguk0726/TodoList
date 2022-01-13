@@ -8,6 +8,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -56,6 +57,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -76,22 +78,18 @@ fun TodoListScreen(
     editTaskItemViewModel: EditTaskItemViewModel,
 ) {
 
-    applyTodoListScreenTheme()
-
-
-    val taskListsState = viewModel.taskListsState.value
-
-    var showDeleteTaskListDialogState = remember { mutableStateOf(false) }
-
     val mainScaffoldState = rememberScaffoldState()
-
-    val showMainBottomSheetScaffold = remember { mutableStateOf(value = true) }
 
     val scope = rememberCoroutineScope()
 
+    var showDeleteTaskListDialogState = remember { mutableStateOf(false) }
+
+    val showMainScaffoldBottomAppBar = remember { mutableStateOf(value = true) }
+
+    val addTaskItemFocusRequester = remember { FocusRequester() }
+
     val addTaskItemModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    val addTaskItemFocusRequester = remember { FocusRequester() }
 
     val menuLeftModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -103,6 +101,7 @@ fun TodoListScreen(
         initialPage = 0,
     )
 
+    val taskListsState = viewModel.taskListsState.value
 
     val currentPageState = { getTargetPage(pagerState) }
 
@@ -115,78 +114,29 @@ fun TodoListScreen(
         }
     }
 
-    alertNetworkConnectionState(mainScaffoldState)
+    //Effects
+    ApplyTodoListScreenTheme()
+    AlertNetworkConnectionState(mainScaffoldState)
+    EmitSelectTaskListTabEvent(pagerState, taskListsState, viewModel, selectedTaskListId)
+    DisposeMainScaffoldBottomAppBarVisibility(
+        addTaskItemModalBottomSheetState,
+        showMainScaffoldBottomAppBar,
+        menuLeftModalBottomSheetState,
+        menuRightModalBottomSheetState
+    )
+    DisposeModalBottomSheetState(
+        menuLeftModalBottomSheetState, menuRightModalBottomSheetState
+    )
+    ObserveEditTaskItemEvent(editTaskItemViewModel, mainScaffoldState)
+    ObserveUiEvent(
+        viewModel,
+        mainScaffoldState,
+        pagerState,
+        addTaskItemModalBottomSheetState,
+        showDeleteTaskListDialogState,
+        menuRightModalBottomSheetState
+    )
 
-    LaunchedEffect(key1 = pagerState.isScrollInProgress) {
-        if (taskListsState.taskLists.isNotEmpty()) {
-            viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId()))
-        }
-    }
-
-    LaunchedEffect(
-        key1 = addTaskItemModalBottomSheetState.targetValue
-    ) {
-        showMainBottomSheetScaffold.value =
-            menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
-    }
-
-    LaunchedEffect(key1 = true) {
-        editTaskItemViewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
-                    val snackbarResult =
-                        mainScaffoldState.snackbarHostState.showSnackbar(
-                            message = event.message,
-                            actionLabel = event.actionLabel,
-                        )
-                    if (snackbarResult == SnackbarResult.ActionPerformed) {
-                        event.action()
-                    }
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        launch {
-            menuLeftModalBottomSheetState.hide()
-            menuRightModalBottomSheetState.hide()
-        }
-
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is TodoListViewModel.UiEvent.ShowSnackbar -> {
-                    val snackbarResult = mainScaffoldState.snackbarHostState.showSnackbar(
-                        message = event.message,
-                        actionLabel = event.actionLabel,
-                    )
-                    if (snackbarResult == SnackbarResult.ActionPerformed) {
-                        event.action()
-                    }
-                }
-                is TodoListViewModel.UiEvent.ScrollTaskListPosition -> {
-                    pagerState.scrollToPage(event.index)
-                    viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
-                }
-                is TodoListViewModel.UiEvent.SaveTaskItem -> {
-                    launch {
-                        addTaskItemModalBottomSheetState.hide()
-                    }
-                }
-                is TodoListViewModel.UiEvent.ShowConfirmDialog -> {
-                    showDeleteTaskListDialogState.value = true
-                }
-                is TodoListViewModel.UiEvent.CloseMenuRightModalBottomSheet -> {
-                    launch {
-                        menuRightModalBottomSheetState.hide()
-                    }
-                }
-                else -> {
-                    Log.i("TodoLisScreen", "Wrong event called :: ${event.javaClass.name}")
-                }
-            }
-        }
-    }
 
     Scaffold(
         backgroundColor = MaterialTheme.colors.background,
@@ -202,7 +152,7 @@ fun TodoListScreen(
             )
         },
         floatingActionButton = {
-            FadeSlideAnimatedVisibility(showMainBottomSheetScaffold) {
+            FadeSlideAnimatedVisibility(showMainScaffoldBottomAppBar) {
                 FloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -227,7 +177,7 @@ fun TodoListScreen(
         floatingActionButtonPosition = FabPosition.Center,
 
         bottomBar = {
-            FadeSlideAnimatedVisibility(showMainBottomSheetScaffold) {
+            FadeSlideAnimatedVisibility(showMainScaffoldBottomAppBar) {
                 BottomAppBar(
                     modifier = Modifier.navigationBarsPadding(),
                     cutoutShape = RoundedCornerShape(50),
@@ -309,7 +259,7 @@ fun TodoListScreen(
 
 
 @Composable
-private fun applyTodoListScreenTheme() {
+private fun ApplyTodoListScreenTheme() {
     rememberSystemUiController().run {
         if (isSystemInDarkTheme()) {
             setNavigationBarColor(
@@ -326,16 +276,19 @@ private fun applyTodoListScreenTheme() {
     }
 }
 
+@ExperimentalCoroutinesApi
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-private fun alertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
-
+private fun AlertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
     val connection by connectivityState()
     val isDisconnected = connection == ConnectionState.Unavailable
+
     LaunchedEffect(isDisconnected) {
-        mainScaffoldState.snackbarHostState.showSnackbar(
-            message = "인터넷에 연결되어 있지 안습니다. 일부 기능은 사용할 수 없으며 다시 온라인 상태가 되면 변경사항이 저장됩니다.",
-        )
+        if (isDisconnected) {
+            mainScaffoldState.snackbarHostState.showSnackbar(
+                message = "인터넷에 연결되어 있지 않습니다. 일부 기능은 사용할 수 없으며 다시 온라인 상태가 되면 변경사항이 저장됩니다.",
+            )
+        }
     }
 }
 
@@ -505,16 +458,13 @@ private fun TodoListTaskItems(
                 baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
             ),
         ) { pageIndex ->
-
             LazyColumn(
                 Modifier
                     .fillMaxSize()
                     .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
             ) {
                 val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                val itemList = viewModel.getTaskItems(eachTaskListId)
-                    .filter { !it.needToBeDeleted }
-
+                val itemList = viewModel.getTaskItemsToDisplay(eachTaskListId)
                 items(
                     itemList,
                     key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
@@ -723,7 +673,7 @@ private fun TodoListMenuRightModalBottomSheet(
         },
 
         deleteCompletedItems = {
-            val itemList = viewModel.getTaskItems(selectedTaskListId())
+            val itemList = viewModel.getTaskItemsToDisplay(selectedTaskListId())
             val isEnabled = itemList.any { el -> el.isCompleted }
             ListItem(
                 modifier = Modifier
@@ -815,4 +765,129 @@ private fun TodoListAddTaskItemModalBottomSheet(
         }
     )
 
+}
+
+@ExperimentalPagerApi
+@Composable
+private fun EmitSelectTaskListTabEvent(
+    pagerState: PagerState,
+    taskListsState: TaskListsState,
+    viewModel: TodoListViewModel,
+    selectedTaskListId: () -> Long
+) {
+    LaunchedEffect(key1 = pagerState.isScrollInProgress) {
+        if (taskListsState.taskLists.isNotEmpty()) {
+            viewModel.onEvent(TodoListEvent.SelectTaskList(selectedTaskListId()))
+        }
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun DisposeMainScaffoldBottomAppBarVisibility(
+    addTaskItemModalBottomSheetState: ModalBottomSheetState,
+    showMainScaffoldBottomAppBar: MutableState<Boolean>,
+    menuLeftModalBottomSheetState: ModalBottomSheetState,
+    menuRightModalBottomSheetState: ModalBottomSheetState
+) {
+    LaunchedEffect(
+        key1 = addTaskItemModalBottomSheetState.targetValue
+    ) {
+        val isLeftModalBottomSheetHidden =
+            menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
+        val isRightModalBottomSheetHidden =
+            menuRightModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
+        showMainScaffoldBottomAppBar.value =
+            isLeftModalBottomSheetHidden && isRightModalBottomSheetHidden
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun DisposeModalBottomSheetState(
+    menuLeftModalBottomSheetState: ModalBottomSheetState,
+    menuRightModalBottomSheetState: ModalBottomSheetState
+) {
+    LaunchedEffect(
+        key1 = true
+    ) {
+        launch {
+            menuLeftModalBottomSheetState.hide()
+            menuRightModalBottomSheetState.hide()
+        }
+    }
+}
+
+@Composable
+private fun ObserveEditTaskItemEvent(
+    editTaskItemViewModel: EditTaskItemViewModel,
+    mainScaffoldState: ScaffoldState
+) {
+    LaunchedEffect(key1 = true) {
+        editTaskItemViewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
+                    val snackbarResult =
+                        mainScaffoldState.snackbarHostState.showSnackbar(
+                            message = event.message,
+                            actionLabel = event.actionLabel,
+                        )
+                    if (snackbarResult == SnackbarResult.ActionPerformed) {
+                        event.action()
+                    }
+                }
+                else -> {
+                }
+            }
+        }
+    }
+}
+
+
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
+@Composable
+private fun ObserveUiEvent(
+    viewModel: TodoListViewModel,
+    mainScaffoldState: ScaffoldState,
+    pagerState: PagerState,
+    addTaskItemModalBottomSheetState: ModalBottomSheetState,
+    showDeleteTaskListDialogState: MutableState<Boolean>,
+    menuRightModalBottomSheetState: ModalBottomSheetState
+) {
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is TodoListViewModel.UiEvent.ShowSnackbar -> {
+                    val snackbarResult = mainScaffoldState.snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.actionLabel,
+                    )
+                    if (snackbarResult == SnackbarResult.ActionPerformed) {
+                        event.action()
+                    }
+                }
+                is TodoListViewModel.UiEvent.ScrollTaskListPosition -> {
+                    pagerState.scrollToPage(event.index)
+                    viewModel.onEvent(TodoListEvent.LastTaskListPositionHasSelected)
+                }
+                is TodoListViewModel.UiEvent.SaveTaskItem -> {
+                    launch {
+                        addTaskItemModalBottomSheetState.hide()
+                    }
+                }
+                is TodoListViewModel.UiEvent.ShowConfirmDialog -> {
+                    showDeleteTaskListDialogState.value = true
+                }
+                is TodoListViewModel.UiEvent.CloseMenuRightModalBottomSheet -> {
+                    launch {
+                        menuRightModalBottomSheetState.hide()
+                    }
+                }
+                else -> {
+                    Log.i("TodoLisScreen", "Wrong event called :: ${event.javaClass.name}")
+                }
+            }
+        }
+    }
 }
