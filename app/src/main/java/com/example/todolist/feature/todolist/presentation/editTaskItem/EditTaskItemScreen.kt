@@ -59,12 +59,8 @@ fun EditTaskItemScreen(
     val taskListsState = viewModel.taskListsState.value
     val taskItem = viewModel.taskItemState.value
 
-
-    SideEffect {
-        viewModel.loadTaskItemValues(taskItemId)
-    }
-
     LaunchedEffect(key1 = true) {
+        viewModel.loadTaskItemValues(taskItemId)
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
@@ -78,6 +74,7 @@ fun EditTaskItemScreen(
             }
         }
     }
+
     Scaffold(
         Modifier.fillMaxSize(),
         scaffoldState = scaffoldState,

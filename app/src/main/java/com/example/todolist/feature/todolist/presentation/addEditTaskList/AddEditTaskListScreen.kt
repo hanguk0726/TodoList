@@ -33,11 +33,9 @@ fun AddTaskListScreen(
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
 
-    SideEffect {
-        setUpInitialData(taskListId, viewModel)
-    }
 
     LaunchedEffect(key1 = true) {
+        setUpInitialData(taskListId, viewModel)
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {

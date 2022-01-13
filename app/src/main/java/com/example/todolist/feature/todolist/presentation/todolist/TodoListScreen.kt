@@ -1,6 +1,8 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -34,6 +36,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todolist.common.ui.theme.themedBlue
+import com.example.todolist.common.util.ConnectionState
+import com.example.todolist.common.util.connectivityState
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
 import com.example.todolist.feature.todolist.presentation.components.CustomSnackbarHost
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
@@ -41,6 +45,7 @@ import com.example.todolist.feature.todolist.presentation.editTaskItem.EditTaskI
 import com.example.todolist.feature.todolist.presentation.todolist.components.*
 import com.example.todolist.feature.todolist.presentation.todolist.util.getTargetPage
 import com.example.todolist.feature.todolist.presentation.util.Screen
+import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsHeight
@@ -50,10 +55,12 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
+@RequiresApi(Build.VERSION_CODES.S)
 @OptIn(
     ExperimentalSnapperApi::class,
     ExperimentalPagerApi::class,
@@ -69,26 +76,12 @@ fun TodoListScreen(
     editTaskItemViewModel: EditTaskItemViewModel,
 ) {
 
-    rememberSystemUiController().run {
-        if (isSystemInDarkTheme()) {
-            setNavigationBarColor(
-                color = Color.DarkGray
-            )
-        } else {
-            setNavigationBarColor(
-                color = Color.White
-            )
-        }
-        setStatusBarColor(
-            color = Color.Transparent
-        )
-    }
+    applyTodoListScreenTheme()
 
-    val taskItemTitleState = viewModel.taskItemTitle.value
 
     val taskListsState = viewModel.taskListsState.value
 
-    val dialogTypeState = viewModel.dialogType.value
+    var showDeleteTaskListDialogState = remember { mutableStateOf(false) }
 
     val mainScaffoldState = rememberScaffoldState()
 
@@ -110,7 +103,6 @@ fun TodoListScreen(
         initialPage = 0,
     )
 
-    val showCompletedTaskItems = remember { mutableStateOf(value = false) }
 
     val currentPageState = { getTargetPage(pagerState) }
 
@@ -118,25 +110,12 @@ fun TodoListScreen(
         try {
             taskListsState.taskLists[currentPageState()].id!!
         } catch (e: InvalidTaskListException) {
-            Log.e("TodoListScreen", "${e.message ?: "Couldn't get taskList"}")
+            Log.e("TodoListScreen", e.message ?: "Couldn't get taskList")
             -1L
         }
     }
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val isShowCompletedTaskItemsButtonEnabled = remember { mutableStateOf(true) }
-    val isShowCompletedTaskItemsButtonRotated = remember { mutableStateOf(false) }
-    val showCompletedTaskItemsButtonAngle: Float by animateFloatAsState(
-        targetValue = if (isShowCompletedTaskItemsButtonRotated.value) 180F else 0F,
-        animationSpec = tween(
-            durationMillis = 500,
-            easing = FastOutSlowInEasing
-        ),
-        finishedListener = {
-            isShowCompletedTaskItemsButtonEnabled.value = true
-        }
-    )
 
-    var showDeleteTaskListDialog by remember { mutableStateOf(false) }
+    alertNetworkConnectionState(mainScaffoldState)
 
     LaunchedEffect(key1 = pagerState.isScrollInProgress) {
         if (taskListsState.taskLists.isNotEmpty()) {
@@ -195,7 +174,7 @@ fun TodoListScreen(
                     }
                 }
                 is TodoListViewModel.UiEvent.ShowConfirmDialog -> {
-                    showDeleteTaskListDialog = true
+                    showDeleteTaskListDialogState.value = true
                 }
                 is TodoListViewModel.UiEvent.CloseMenuRightModalBottomSheet -> {
                     launch {
@@ -254,259 +233,560 @@ fun TodoListScreen(
                     cutoutShape = RoundedCornerShape(50),
                     elevation = if (isSystemInDarkTheme()) 0.dp else AppBarDefaults.BottomAppBarElevation,
                     content = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                menuLeftModalBottomSheetState.show()
-                            }
-                        }) {
-                            Icon(Icons.Default.Menu, "show menu on left")
-                        }
-                        Spacer(modifier = Modifier.weight(1.0f))
-                        IconButton(onClick = {
-                            scope.launch {
-                                menuRightModalBottomSheetState.show()
-                            }
-                        }) {
-                            Icon(Icons.Default.MoreVert, "show menu on right")
-                        }
+                        BottomMenu(
+                            scope, menuLeftModalBottomSheetState, menuRightModalBottomSheetState
+                        )
                     },
                 )
             }
         }
     ) { bottomAppBarPadding ->
-
-            Column {
-                Box(
+        Column {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "Task",
                     Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (taskListsState.taskLists.isNotEmpty()) {
+                TodoListScrollableTabRow(
+                    viewModel,
+                    navController,
+                    scope,
+                    currentPageState,
+                    pagerState,
+                    taskListsState
+                )
+                SemiTransparentDivider()
+                TodoListTaskItems(
+                    viewModel, pagerState, taskListsState, bottomAppBarPadding, navController, scope
+                )
+            }
+        }
+    }
+    TodoListAddTaskItemModalBottomSheet(
+        scope,
+        addTaskItemModalBottomSheetState,
+        addTaskItemFocusRequester,
+        viewModel,
+        selectedTaskListId
+    )
+
+    TodoListMenuLeftModalBottomSheet(
+        scope,
+        menuLeftModalBottomSheetState,
+        viewModel,
+        pagerState,
+        navController
+    )
+    if (taskListsState.taskLists.isNotEmpty()) {
+        TodoListMenuRightModalBottomSheet(
+            viewModel,
+            scope,
+            selectedTaskListId,
+            menuRightModalBottomSheetState,
+            navController,
+            taskListsState
+        )
+    }
+    DeleteDialog(
+        viewModel,
+        scope,
+        showDeleteTaskListDialogState,
+        menuRightModalBottomSheetState,
+        selectedTaskListId
+    )
+
+}
+
+
+@Composable
+private fun applyTodoListScreenTheme() {
+    rememberSystemUiController().run {
+        if (isSystemInDarkTheme()) {
+            setNavigationBarColor(
+                color = Color.DarkGray
+            )
+        } else {
+            setNavigationBarColor(
+                color = Color.White
+            )
+        }
+        setStatusBarColor(
+            color = Color.Transparent
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun alertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
+
+    val connection by connectivityState()
+    val isDisconnected = connection == ConnectionState.Unavailable
+    LaunchedEffect(isDisconnected) {
+        mainScaffoldState.snackbarHostState.showSnackbar(
+            message = "인터넷에 연결되어 있지 안습니다. 일부 기능은 사용할 수 없으며 다시 온라인 상태가 되면 변경사항이 저장됩니다.",
+        )
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun DeleteDialog(
+    viewModel: TodoListViewModel,
+    scope: CoroutineScope,
+    showDeleteTaskListDialogState: MutableState<Boolean>,
+    menuRightModalBottomSheetState: ModalBottomSheetState,
+    selectedTaskListId: () -> Long
+) {
+    val dialogTypeState = viewModel.dialogType.value
+
+    if (showDeleteTaskListDialogState.value) {
+        val titleText: String
+        val contentText: String
+        val confirmButtonText = "삭제"
+        val eventWhenConfirm: TodoListEvent
+
+        when (dialogTypeState) {
+            is TodoListViewModel.DialogType.DeleteTaskList -> {
+                titleText = "목록을 삭제하시겠습니까?"
+                contentText = "목록에 작성된 모든 할 일이 삭제됩니다. 삭제하시겠습니까?"
+                eventWhenConfirm = TodoListEvent.DeleteTaskList(selectedTaskListId())
+            }
+            is TodoListViewModel.DialogType.DeleteCompletedTaskItem -> {
+                titleText = "완료된 할 일을 모두 삭제하시겠습니까?"
+                contentText = ""
+                eventWhenConfirm = TodoListEvent.DeleteCompletedTaskItems(selectedTaskListId())
+            }
+        }
+        AlertDialog(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .padding(8.dp),
+            onDismissRequest = { showDeleteTaskListDialogState.value = false },
+            title = { Text(titleText) },
+            text = { Text(contentText) },
+            confirmButton = {
+                PureTextButton(
+                    text = confirmButtonText, textColor = themedBlue,
+                    paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
                 ) {
-                    Text(
-                        "Task",
-                        Modifier
-                            .fillMaxWidth(),
-                        fontSize = 24.sp,
-                        textAlign = TextAlign.Center
-                    )
+                    showDeleteTaskListDialogState.value = false
+                    scope.launch {
+                        menuRightModalBottomSheetState.hide()
+                    }
+                    viewModel.onEvent(eventWhenConfirm)
+                }
+            },
+            dismissButton = {
+                PureTextButton(
+                    text = "취소", textColor = themedBlue,
+                    paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
+                ) {
+                    showDeleteTaskListDialogState.value = false
+                }
+            },
+        )
+    }
+}
+
+
+@ExperimentalPagerApi
+@Composable
+private fun TodoListScrollableTabRow(
+    viewModel: TodoListViewModel,
+    navController: NavController,
+    scope: CoroutineScope,
+    currentPageState: () -> Int,
+    pagerState: PagerState,
+    taskListsState: TaskListsState
+) {
+    ScrollableTabRow(
+        selectedTabIndex = currentPageState(),
+        edgePadding = 8.dp,
+        backgroundColor = MaterialTheme.colors.background,
+        indicator = @Composable { tabPositions ->
+            TabRowDefaults.Indicator(
+                Modifier
+                    .pagerTabIndicatorOffset(pagerState, tabPositions)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 8.dp,
+                            topEnd = 8.dp,
+                        )
+                    ),
+                color = themedBlue
+            )
+        }) {
+        taskListsState.taskLists.forEachIndexed { index, taskList ->
+            val isSelected = currentPageState() == index
+            Tab(selected = isSelected, onClick = {
+                scope.launch {
+                    pagerState.animateScrollToPage(index)
+                }
+            }, text = {
+                Text(
+                    text = taskList.name,
+                    color = if (isSelected) themedBlue else MaterialTheme.colors.onSurface
+                )
+            }, selectedContentColor = themedBlue)
+        }
+        TextButton(
+            onClick = { navController.navigate(Screen.AddEditTaskListScreen.route) },
+            modifier = Modifier.padding(start = 16.dp)
+        ) {
+            Icon(
+                Icons.Filled.Add, "add new task list",
+                tint = MaterialTheme.colors.onSurface
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("새 목록", fontSize = 14.sp)
+        }
+        if (!viewModel.lastSelectedTaskListPositionLoaded.value) {
+            viewModel.onEvent(TodoListEvent.LoadLastSelectedTaskListPosition)
+        }
+    }
+}
+
+@ExperimentalMaterialApi
+@ExperimentalSnapperApi
+@ExperimentalPagerApi
+@Composable
+private fun TodoListTaskItems(
+    viewModel: TodoListViewModel,
+    pagerState: PagerState,
+    taskListsState: TaskListsState,
+    bottomAppBarPadding: PaddingValues,
+    navController: NavController,
+    scope: CoroutineScope
+) {
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val showCompletedTaskItems = remember { mutableStateOf(value = false) }
+    val isShowCompletedTaskItemsButtonEnabled = remember { mutableStateOf(true) }
+    val isShowCompletedTaskItemsButtonRotated = remember { mutableStateOf(false) }
+    val showCompletedTaskItemsButtonAngle: Float by animateFloatAsState(
+        targetValue = if (isShowCompletedTaskItemsButtonRotated.value) 180F else 0F,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = FastOutSlowInEasing
+        ),
+        finishedListener = {
+            isShowCompletedTaskItemsButtonEnabled.value = true
+        }
+    )
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
+        onRefresh = { viewModel.refresh() },
+        indicator = { state, trigger ->
+            SwipeRefreshIndicator(
+                state = state,
+                refreshTriggerDistance = trigger,
+                scale = true,
+                contentColor = themedBlue,
+                shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+                refreshingOffset = 32.dp
+            )
+        }
+    ) {
+        HorizontalPager(
+            taskListsState.taskLists.size,
+            state = pagerState,
+            flingBehavior = rememberFlingBehaviorMultiplier(
+                multiplier = 0.5f,
+                baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
+            ),
+        ) { pageIndex ->
+
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
+            ) {
+                val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
+                val itemList = viewModel.getTaskItems(eachTaskListId)
+                    .filter { !it.needToBeDeleted }
+
+                items(
+                    itemList,
+                    key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
+                    AnimatedVisibility(
+                        visible = !taskItem.isCompleted,
+                        enter = expandVertically(
+                            animationSpec = tween(delayMillis = 700),
+                            expandFrom = Alignment.Top
+                        ) + fadeIn(animationSpec = tween(delayMillis = 700)),
+                        exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
+                                shrinkVertically(
+                                    animationSpec = tween(delayMillis = 700),
+                                    shrinkTowards = Alignment.Top
+                                )
+                    ) {
+                        ListItem(
+                            Modifier
+                                .clickable {
+                                    navController.navigate(
+                                        Screen.EditTaskItemScreen.route +
+                                                "?taskItemId=${taskItem.id}"
+                                    )
+                                }
+                                .fillMaxSize(),
+                            text = {
+                                Text(taskItem.title)
+                            },
+                            icon = {
+                                TaskItemCompletionButton(
+                                    taskItem.isCompleted,
+                                    onClick = {
+                                        scope.launch {
+                                            viewModel.onEvent(
+                                                TodoListEvent.ToggleTaskItemCompletionState(
+                                                    taskItem
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
 
-                if (taskListsState.taskLists.isNotEmpty()) {
-                    ScrollableTabRow(
-                        selectedTabIndex = currentPageState(),
-                        edgePadding = 8.dp,
-                        backgroundColor = MaterialTheme.colors.background,
-                        indicator = @Composable { tabPositions ->
-                            TabRowDefaults.Indicator(
-                                Modifier
-                                    .pagerTabIndicatorOffset(pagerState, tabPositions)
-                                    .clip(
-                                        RoundedCornerShape(
-                                            topStart = 8.dp,
-                                            topEnd = 8.dp,
-                                        )
-                                    ),
-                                color = themedBlue
+                item {
+                    val count = itemList.count { el -> el.isCompleted }
+                    AnimatedVisibility(
+                        visible = itemList.any { el -> el.isCompleted },
+                        enter = fadeIn(
+                            animationSpec = tween(
+                                delayMillis = 400,
+                                durationMillis = 500
                             )
-                        }) {
-                        taskListsState.taskLists.forEachIndexed { index, taskList ->
-                            val isSelected = currentPageState() == index
-                            Tab(selected = isSelected, onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            }, text = {
-                                Text(
-                                    text = taskList.name,
-                                    color = if (isSelected) themedBlue else MaterialTheme.colors.onSurface
-                                )
-                            }, selectedContentColor = themedBlue)
-                        }
-                        TextButton(
-                            onClick = { navController.navigate(Screen.AddEditTaskListScreen.route) },
-                            modifier = Modifier.padding(start = 16.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Add, "add new task list",
-                                tint = MaterialTheme.colors.onSurface
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("새 목록", fontSize = 14.sp)
-                        }
-                        if (!viewModel.lastSelectedTaskListPositionLoaded.value) {
-                            viewModel.onEvent(TodoListEvent.LoadLastSelectedTaskListPosition)
-                        }
-                    }
-                    SemiTransparentDivider()
-                    SwipeRefresh(
-                        state = rememberSwipeRefreshState(isRefreshing),
-                        onRefresh = { viewModel.refresh() },
-                        indicator = { state, trigger ->
-                            SwipeRefreshIndicator(
-                                state = state,
-                                refreshTriggerDistance = trigger,
-                                scale = true,
-                                contentColor = themedBlue,
-                                shape =  MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
-                                refreshingOffset = 32.dp
-                            )
-                        }
-                    ) {
-                    HorizontalPager(
-                        taskListsState.taskLists.size,
-                        state = pagerState,
-                        flingBehavior = rememberFlingBehaviorMultiplier(
-                            multiplier = 0.5f,
-                            baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
                         ),
-                    ) { pageIndex ->
+                        exit = fadeOut(
+                            animationSpec = tween(
+                                delayMillis = 400,
+                                durationMillis = 500
+                            )
+                        )
+                    ) {
+                        SemiTransparentDivider()
+                        ListItem(
+                            Modifier.clickable(
+                                enabled = isShowCompletedTaskItemsButtonEnabled.value
+                            ) {
+                                showCompletedTaskItems.value =
+                                    !showCompletedTaskItems.value
+                                isShowCompletedTaskItemsButtonRotated.value =
+                                    !isShowCompletedTaskItemsButtonRotated.value
+                                isShowCompletedTaskItemsButtonEnabled.value = false
+                            },
+                            text = { Text("완료됨(${count}개)") },
+                            trailing = {
+                                Icon(
+                                    Icons.Default.ExpandMore,
+                                    "show completed takeItem",
+                                    Modifier.rotate(showCompletedTaskItemsButtonAngle)
+                                )
+                            }
+                        )
+                    }
+                }
 
-                        LazyColumn(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
-                        ) {
-                            val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                            val itemList = viewModel.getTaskItems(eachTaskListId)
-                                .filter { !it.needToBeDeleted }
-
-                            items(
-                                itemList,
-                                key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
-                                AnimatedVisibility(
-                                    visible = !taskItem.isCompleted,
-                                    enter = expandVertically(
+                if (showCompletedTaskItems.value) {
+                    items(
+                        itemList,
+                        key = { it.id!!.toString() + "completed" }) { taskItem ->
+                        AnimatedVisibility(
+                            visible = taskItem.isCompleted,
+                            enter = expandVertically(
+                                animationSpec = tween(delayMillis = 700),
+                                expandFrom = Alignment.Top
+                            ) + fadeIn(animationSpec = tween(delayMillis = 700)),
+                            exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
+                                    shrinkVertically(
                                         animationSpec = tween(delayMillis = 700),
-                                        expandFrom = Alignment.Top
-                                    ) + fadeIn(animationSpec = tween(delayMillis = 700)),
-                                    exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
-                                            shrinkVertically(
-                                                animationSpec = tween(delayMillis = 700),
-                                                shrinkTowards = Alignment.Top
-                                            )
-                                ) {
-                                    ListItem(
-                                        Modifier
-                                            .clickable {
-                                                navController.navigate(
-                                                    Screen.EditTaskItemScreen.route +
-                                                            "?taskItemId=${taskItem.id}"
-                                                )
-                                            }
-                                            .fillMaxSize(),
-                                        text = {
-                                            Text(taskItem.title)
-                                        },
-                                        icon = {
-                                            TaskItemCompletionButton(
-                                                taskItem.isCompleted,
-                                                onClick = {
-                                                    scope.launch {
-                                                        viewModel.onEvent(
-                                                            TodoListEvent.ToggleTaskItemCompletionState(
-                                                                taskItem
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            )
-                                        }
+                                        shrinkTowards = Alignment.Top
                                     )
-                                }
-                            }
-
-                            item {
-                                val count = itemList.count { el -> el.isCompleted }
-                                AnimatedVisibility(
-                                    visible = itemList.any { el -> el.isCompleted },
-                                    enter = fadeIn(
-                                        animationSpec = tween(
-                                            delayMillis = 400,
-                                            durationMillis = 500
-                                        )
-                                    ),
-                                    exit = fadeOut(
-                                        animationSpec = tween(
-                                            delayMillis = 400,
-                                            durationMillis = 500
-                                        )
-                                    )
-                                ) {
-                                    SemiTransparentDivider()
-                                    ListItem(
-                                        Modifier.clickable(
-                                            enabled = isShowCompletedTaskItemsButtonEnabled.value
-                                        ) {
-                                            showCompletedTaskItems.value =
-                                                !showCompletedTaskItems.value
-                                            isShowCompletedTaskItemsButtonRotated.value =
-                                                !isShowCompletedTaskItemsButtonRotated.value
-                                            isShowCompletedTaskItemsButtonEnabled.value = false
-                                        },
-                                        text = { Text("완료됨(${count}개)") },
-                                        trailing = {
-                                            Icon(
-                                                Icons.Default.ExpandMore,
-                                                "show completed takeItem",
-                                                Modifier.rotate(showCompletedTaskItemsButtonAngle)
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-
-                            if (showCompletedTaskItems.value) {
-                                items(
-                                    itemList,
-                                    key = { it.id!!.toString() + "completed" }) { taskItem ->
-                                    AnimatedVisibility(
-                                        visible = taskItem.isCompleted,
-                                        enter = expandVertically(
-                                            animationSpec = tween(delayMillis = 700),
-                                            expandFrom = Alignment.Top
-                                        ) + fadeIn(animationSpec = tween(delayMillis = 700)),
-                                        exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
-                                                shrinkVertically(
-                                                    animationSpec = tween(delayMillis = 700),
-                                                    shrinkTowards = Alignment.Top
-                                                )
-                                    ) {
-                                        ListItem(
-                                            Modifier
-                                                .clickable {
-                                                    navController.navigate(
-                                                        Screen.EditTaskItemScreen.route +
-                                                                "?taskItemId=${taskItem.id}"
-                                                    )
-                                                }
-                                                .fillMaxSize(),
-                                            text = {
-                                                Text(taskItem.title)
-                                            },
-                                            icon = {
-                                                TaskItemCompletionButton(
-                                                    taskItem.isCompleted,
-                                                    onClick = {
-                                                        scope.launch {
-                                                            viewModel.onEvent(
-                                                                TodoListEvent.ToggleTaskItemCompletionState(
-                                                                    taskItem
-                                                                )
-                                                            )
-                                                        }
-                                                    }
-                                                )
-                                            }
+                        ) {
+                            ListItem(
+                                Modifier
+                                    .clickable {
+                                        navController.navigate(
+                                            Screen.EditTaskItemScreen.route +
+                                                    "?taskItemId=${taskItem.id}"
                                         )
                                     }
+                                    .fillMaxSize(),
+                                text = {
+                                    Text(taskItem.title)
+                                },
+                                icon = {
+                                    TaskItemCompletionButton(
+                                        taskItem.isCompleted,
+                                        onClick = {
+                                            scope.launch {
+                                                viewModel.onEvent(
+                                                    TodoListEvent.ToggleTaskItemCompletionState(
+                                                        taskItem
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    )
                                 }
-                            }
+                            )
                         }
                     }
                 }
             }
         }
     }
+}
 
+@ExperimentalMaterialApi
+@Composable
+private fun BottomMenu(
+    scope: CoroutineScope,
+    menuLeftModalBottomSheetState: ModalBottomSheetState,
+    menuRightModalBottomSheetState: ModalBottomSheetState,
+) {
+    Row {
+        IconButton(onClick = {
+            scope.launch {
+                menuLeftModalBottomSheetState.show()
+            }
+        }) {
+            Icon(Icons.Default.Menu, "show menu on left")
+        }
+        Spacer(modifier = Modifier.weight(1.0f))
+        IconButton(onClick = {
+            scope.launch {
+                menuRightModalBottomSheetState.show()
+            }
+        }) {
+            Icon(Icons.Default.MoreVert, "show menu on right")
+        }
+    }
+}
+
+
+@ExperimentalMaterialApi
+@Composable
+private fun TodoListMenuRightModalBottomSheet(
+    viewModel: TodoListViewModel,
+    scope: CoroutineScope,
+    selectedTaskListId: () -> Long,
+    menuRightModalBottomSheetState: ModalBottomSheetState,
+    navController: NavController,
+    taskListsState: TaskListsState
+) {
+    MenuRightModalBottomSheet(
+        scope = scope,
+        state = menuRightModalBottomSheetState,
+        taskListId = selectedTaskListId(),
+        changeTaskListName = {
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable {
+                        navController.navigate(
+                            Screen.AddEditTaskListScreen.route +
+                                    "?taskListId=${selectedTaskListId()}"
+                        )
+                    },
+                text = { Text("목록 이름 변경") }
+            )
+        },
+        deleteTaskList = {
+            val isEnabled = taskListsState.taskLists.size > 1
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable(
+                        enabled = isEnabled
+                    ) {
+                        viewModel.onEvent(TodoListEvent.ConfirmDeleteTaskList(selectedTaskListId()))
+                    },
+                text = {
+                    Text(
+                        "목록 삭제",
+                        color = if (isEnabled) Color.Unspecified else Color.Gray
+                    )
+                }
+            )
+        },
+
+        deleteCompletedItems = {
+            val itemList = viewModel.getTaskItems(selectedTaskListId())
+            val isEnabled = itemList.any { el -> el.isCompleted }
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable(
+                        enabled = isEnabled
+                    ) {
+                        viewModel.onEvent(
+                            TodoListEvent.ConfirmDeleteCompletedTaskItems(
+                                selectedTaskListId()
+                            )
+                        )
+                    },
+                text = {
+                    Text(
+                        "완료된 할 일 모두 삭제",
+                        color = if (isEnabled) Color.Unspecified else Color.Gray
+                    )
+                }
+            )
+        }
+    )
+}
+
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
+@Composable
+private fun TodoListMenuLeftModalBottomSheet(
+    scope: CoroutineScope,
+    menuLeftModalBottomSheetState: ModalBottomSheetState,
+    viewModel: TodoListViewModel,
+    pagerState: PagerState,
+    navController: NavController
+) {
+    MenuLeftModalBottomSheet(
+        scope = scope,
+        state = menuLeftModalBottomSheetState,
+        taskListsState = viewModel.taskListsState,
+        pagerState = pagerState,
+        addTaskListItemButton = {
+            ListItem(
+                modifier = Modifier
+                    .noRippleClickable {
+                        navController.navigate(
+                            Screen.AddEditTaskListScreen.route +
+                                    "?taskListId=${-1L}"
+                        )
+                    },
+                icon = { Icon(Icons.Filled.Add, "add new task list") },
+                text = { Text("새 목록 만들기") })
+        }
+    )
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun TodoListAddTaskItemModalBottomSheet(
+    scope: CoroutineScope,
+    addTaskItemModalBottomSheetState: ModalBottomSheetState,
+    addTaskItemFocusRequester: FocusRequester,
+    viewModel: TodoListViewModel,
+    selectedTaskListId: () -> Long
+) {
+    val taskItemTitleState = viewModel.taskItemTitle.value
     AddTaskItemModalBottomSheet(
         scope = scope,
         state = addTaskItemModalBottomSheetState,
@@ -535,129 +815,4 @@ fun TodoListScreen(
         }
     )
 
-    MenuLeftModalBottomSheet(
-        scope = scope,
-        state = menuLeftModalBottomSheetState,
-        taskListsState = viewModel.taskListsState,
-        pagerState = pagerState,
-        addTaskListItemButton = {
-            ListItem(
-                modifier = Modifier
-                    .noRippleClickable {
-                        navController.navigate(
-                            Screen.AddEditTaskListScreen.route +
-                                    "?taskListId=${-1L}"
-                        )
-                    },
-                icon = { Icon(Icons.Filled.Add, "add new task list") },
-                text = { Text("새 목록 만들기") })
-        }
-    )
-    if (taskListsState.taskLists.isNotEmpty()) {
-        MenuRightModalBottomSheet(
-            scope = scope,
-            state = menuRightModalBottomSheetState,
-            taskListId = selectedTaskListId(),
-            changeTaskListName = {
-                ListItem(
-                    modifier = Modifier
-                        .noRippleClickable {
-                            navController.navigate(
-                                Screen.AddEditTaskListScreen.route +
-                                        "?taskListId=${selectedTaskListId()}"
-                            )
-                        },
-                    text = { Text("목록 이름 변경") }
-                )
-            },
-            deleteTaskList = {
-                val isEnabled = taskListsState.taskLists.size > 1
-                ListItem(
-                    modifier = Modifier
-                        .noRippleClickable(
-                            enabled = isEnabled
-                        ) {
-                            viewModel.onEvent(TodoListEvent.ConfirmDeleteTaskList(selectedTaskListId()))
-                        },
-                    text = {
-                        Text(
-                            "목록 삭제",
-                            color = if (isEnabled) Color.Unspecified else Color.Gray
-                        )
-                    }
-                )
-            },
-
-            deleteCompletedItems = {
-                val itemList = viewModel.getTaskItems(selectedTaskListId())
-                val isEnabled = itemList.any { el -> el.isCompleted }
-                ListItem(
-                    modifier = Modifier
-                        .noRippleClickable(
-                            enabled = isEnabled
-                        ) {
-                            viewModel.onEvent(
-                                TodoListEvent.ConfirmDeleteCompletedTaskItems(
-                                    selectedTaskListId()
-                                )
-                            )
-                        },
-                    text = {
-                        Text(
-                            "완료된 할 일 모두 삭제",
-                            color = if (isEnabled) Color.Unspecified else Color.Gray
-                        )
-                    }
-                )
-            }
-        )
-    }
-
-    if (showDeleteTaskListDialog) {
-        val titleText: String
-        val contentText: String
-        val confirmButtonText = "삭제"
-        val eventWhenConfirm: TodoListEvent
-
-        when (dialogTypeState) {
-            is TodoListViewModel.DialogType.DeleteTaskList -> {
-                titleText = "목록을 삭제하시겠습니까?"
-                contentText = "목록에 작성된 모든 할 일이 삭제됩니다. 삭제하시겠습니까?"
-                eventWhenConfirm = TodoListEvent.DeleteTaskList(selectedTaskListId())
-            }
-            is TodoListViewModel.DialogType.DeleteCompletedTaskItem -> {
-                titleText = "완료된 할 일을 모두 삭제하시겠습니까?"
-                contentText = ""
-                eventWhenConfirm = TodoListEvent.DeleteCompletedTaskItems(selectedTaskListId())
-            }
-        }
-        AlertDialog(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .padding(8.dp),
-            onDismissRequest = { showDeleteTaskListDialog = false },
-            title = { Text(titleText) },
-            text = { Text(contentText) },
-            confirmButton = {
-                PureTextButton(
-                    text = confirmButtonText, textColor = themedBlue,
-                    paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
-                ) {
-                    showDeleteTaskListDialog = false
-                    scope.launch {
-                        menuRightModalBottomSheetState.hide()
-                    }
-                    viewModel.onEvent(eventWhenConfirm)
-                }
-            },
-            dismissButton = {
-                PureTextButton(
-                    text = "취소", textColor = themedBlue,
-                    paddingValues = PaddingValues(8.dp, 8.dp, 16.dp, 16.dp)
-                ) {
-                    showDeleteTaskListDialog = false
-                }
-            },
-        )
-    }
 }

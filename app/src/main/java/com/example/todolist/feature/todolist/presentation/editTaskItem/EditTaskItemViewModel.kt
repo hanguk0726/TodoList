@@ -66,6 +66,7 @@ class EditTaskItemViewModel @Inject constructor(
         getTaskLists()
     }
 
+    @DelicateCoroutinesApi
     fun onEvent(event: EditTaskItemEvent) {
         when (event) {
             is EditTaskItemEvent.EnterTaskItemTitle -> {
@@ -94,7 +95,7 @@ class EditTaskItemViewModel @Inject constructor(
                                 detail = taskItemDetail.value.text,
                                 isCompleted = taskItem!!.isCompleted,
                                 taskListId = taskItem.taskListId,
-                                createdTimestamp = taskItem.createdTimestamp!!,
+                                createdTimestamp = taskItem.createdTimestamp,
                                 id = taskItem.id
                             )
                         )
@@ -102,7 +103,7 @@ class EditTaskItemViewModel @Inject constructor(
                     } catch (e: InvalidTaskItemException) {
                         Log.e(
                             "EditTaskItemViewModel",
-                            "${e.message ?: "Couldn't save the taskItem"}"
+                            e.message ?: "Couldn't save the taskItem"
                         )
                     }
                 }
@@ -122,7 +123,7 @@ class EditTaskItemViewModel @Inject constructor(
                     } catch (e: InvalidTaskItemException) {
                         Log.e(
                             "EditTaskItemViewModel",
-                            "${e.message ?: "Couldn't save the taskItem"}"
+                            e.message ?: "Couldn't save the taskItem"
                         )
                     }
                 }
@@ -142,7 +143,7 @@ class EditTaskItemViewModel @Inject constructor(
                     } catch (e: Exception) {
                         Log.e(
                             "EditTaskItemViewModel",
-                            "${e.message ?: "Couldn't show snackbar for deleting taskItem"}"
+                            e.message ?: "Couldn't show snackbar for deleting taskItem"
                         )
                     }
                 }
