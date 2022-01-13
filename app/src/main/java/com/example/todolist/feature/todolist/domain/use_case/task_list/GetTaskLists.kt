@@ -1,6 +1,8 @@
 package com.example.todolist.feature.todolist.domain.use_case.task_list
 
+import com.example.todolist.feature.todolist.domain.model.InvalidTaskItemException
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
+import com.example.todolist.feature.todolist.domain.model.TaskItem
 import com.example.todolist.feature.todolist.domain.model.TaskList
 import com.example.todolist.feature.todolist.domain.repository.TaskListRepository
 import com.example.todolist.feature.todolist.domain.util.OrderType
@@ -21,6 +23,17 @@ class GetTaskLists(
                 is OrderType.Ascending -> taskLists.sortedBy { it.createdTimestamp }
                 is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
             }
+        }
+    }
+
+    @Throws(InvalidTaskItemException::class)
+    suspend fun noFlow(
+        order: OrderType = OrderType.Ascending
+    ): List<TaskList> {
+        val taskLists = repository.getTaskLists()
+        return when (order) {
+            is OrderType.Ascending -> taskLists.sortedBy { it.createdTimestamp }
+            is OrderType.Descending -> taskLists.sortedByDescending { it.createdTimestamp }
         }
     }
 }

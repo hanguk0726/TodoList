@@ -12,8 +12,6 @@ sealed class TodoListEvent{
     data class DeleteTaskList(val selectedTaskListId: Long) : TodoListEvent()
     data class SaveTaskItem(val selectedTaskListId: Long) : TodoListEvent()
     data class DeleteCompletedTaskItems(val selectedTaskListId: Long) : TodoListEvent()
-    object LoadLastSelectedTaskListPosition: TodoListEvent()
-    object LastTaskListPositionHasSelected: TodoListEvent()
 
 
 }

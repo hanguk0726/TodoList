@@ -22,11 +22,8 @@ import com.example.todolist.feature.todolist.domain.use_case.task_list.TaskListU
 import com.example.todolist.feature.todolist.presentation.util.TaskListsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -50,9 +47,6 @@ class TodoListViewModel @Inject constructor(
 
     val taskItemTitle: State<TodoListTextFieldState> = _taskItemTitle
 
-    private val _lastSelectedTaskListPositionLoaded = mutableStateOf(false)
-    val lastSelectedTaskListPositionLoaded = _lastSelectedTaskListPositionLoaded
-
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
@@ -61,7 +55,7 @@ class TodoListViewModel @Inject constructor(
     private val _taskListsState = mutableStateOf(TaskListsState())
     val taskListsState: State<TaskListsState> = _taskListsState
 
-    private var taskItemStatePool = HashMap<Long, TaskItemStatePool>()
+    private var taskItemStateManagerPool = HashMap<Long, TaskItemStateManager>()
 
     private val _dialogType = mutableStateOf<DialogType>(DialogType.DeleteTaskList)
     val dialogType: State<DialogType> = _dialogType
@@ -116,8 +110,8 @@ class TodoListViewModel @Inject constructor(
     }
 
     private fun getTaskItems(targetTaskListId: Long): List<TaskItem> {
-        return if (taskItemStatePool.containsKey(targetTaskListId)) {
-            taskItemStatePool[targetTaskListId]!!.taskItemsState.value.taskItems
+        return if (taskItemStateManagerPool.containsKey(targetTaskListId)) {
+            taskItemStateManagerPool[targetTaskListId]!!.taskItemsState.value.taskItems
         } else {
             emptyList()
         }
@@ -234,7 +228,7 @@ class TodoListViewModel @Inject constructor(
                     } catch (e: InvalidTaskItemException) {
                         Log.e(
                             "TodoListViewModel",
-                            "${e.message ?: "Couldn't delete completed taskItems"}"
+                            e.message ?: "Couldn't delete completed taskItems"
                         )
                     }
                 }
@@ -261,49 +255,34 @@ class TodoListViewModel @Inject constructor(
                     saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
                 }
             }
-            is TodoListEvent.LoadLastSelectedTaskListPosition -> {
-                viewModelScope.launch {
-                    val lastSelectedTaskListId = readLastSelectedTaskListId()
-                    if (lastSelectedTaskListId != -1) {
-                        val lastSelectedTaskList = taskListsState.value.taskLists
-                            .find { el -> el.id!!.toInt() == lastSelectedTaskListId }
-                        lastSelectedTaskList?.let {
-                            val index = taskListsState.value.taskLists.indexOf(lastSelectedTaskList)
-                            _eventFlow.emit(UiEvent.ScrollTaskListPosition(index))
-                        }
-                    }
-                }
-
-            }
-            is TodoListEvent.LastTaskListPositionHasSelected -> {
-                _lastSelectedTaskListPositionLoaded.value = true
-            }
         }
     }
 
 
     private fun loadTaskItemsOnPoolByTaskListId(targetTaskListId: Long) {
-        var taskItemManager = if (taskItemStatePool.containsKey(targetTaskListId)) {
-            taskItemStatePool[targetTaskListId]!!
+        var taskItemStateManager = if (taskItemStateManagerPool.containsKey(targetTaskListId)) {
+            taskItemStateManagerPool[targetTaskListId]!!
         } else {
-            TaskItemStatePool()
+            TaskItemStateManager()
         }
-        taskItemManager.getTaskItemsJob?.cancel()
-        taskItemManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
+        taskItemStateManager.getTaskItemsJob?.cancel()
+        taskItemStateManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
             targetTaskListId
         ).onEach { result ->
-            taskItemManager._taskItemsState.value = taskItemManager.taskItemsState.value.copy(
-                taskItems = result
-            )
-            taskItemStatePool[targetTaskListId] = taskItemManager
+            taskItemStateManager._taskItemsState.value =
+                taskItemStateManager.taskItemsState.value.copy(
+                    taskItems = result
+                )
+            taskItemStateManagerPool[targetTaskListId] = taskItemStateManager
             val validIds = taskListsState.value.taskLists.map { el -> el.id }.toList()
-            val newMap = HashMap<Long, TaskItemStatePool>()
+            val newTaskItemStateManagerPool = HashMap<Long, TaskItemStateManager>()
             for (i in validIds) {
-                taskItemStatePool[i]?.let {
-                    newMap[i!!] = it
+                taskItemStateManagerPool[i]?.let {
+                    newTaskItemStateManagerPool[i!!] = it
                 }
             }
-            taskItemStatePool = newMap
+            taskItemStateManagerPool = newTaskItemStateManagerPool
+            _eventFlow.emit(UiEvent.Recompose)
         }.launchIn(viewModelScope)
     }
 
@@ -324,11 +303,13 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    private suspend fun readLastSelectedTaskListId(): Int {
+    private fun readLastSelectedTaskListId(): Int {
         val dataStoreKey = intPreferencesKey(TASK_LIST_POSITION_KEY)
-        return dataStore.data.map { preferences ->
-            preferences[dataStoreKey] ?: -1
-        }.first()
+        return runBlocking {
+            dataStore.data.map {
+                it[dataStoreKey] ?: -1
+            }.first()
+        }
     }
 
     fun clearTaskItemTitleTextField() {
@@ -338,7 +319,21 @@ class TodoListViewModel @Inject constructor(
         )
     }
 
-    data class TaskItemStatePool(
+    fun loadLastSelectedTaskListPosition(): Int {
+        val lastSelectedTaskListId = readLastSelectedTaskListId()
+        if (lastSelectedTaskListId == -1) return 0
+        val taskLists = runBlocking {
+            taskListUseCases.getTaskLists.noFlow()
+        }
+        val lastSelectedTaskList = taskLists.find { el -> el.id!!.toInt() == lastSelectedTaskListId }
+        lastSelectedTaskList?.let {
+            val index = taskLists.indexOf(lastSelectedTaskList)
+            return if (index < 0) 0 else index
+        }
+        return 0
+    }
+
+    data class TaskItemStateManager(
         val _taskItemsState: MutableState<TaskItemsState> = mutableStateOf(TaskItemsState()),
         val taskItemsState: State<TaskItemsState> = _taskItemsState,
         var getTaskItemsJob: Job? = null
@@ -358,10 +353,8 @@ class TodoListViewModel @Inject constructor(
 
         data class ScrollTaskListPosition(val index: Int) : UiEvent()
         object ShowConfirmDialog : UiEvent()
-        object SaveTaskList : UiEvent()
         object SaveTaskItem : UiEvent()
-        object CompleteTaskItem : UiEvent()
-        object RestoreTaskItemFromCompletion : UiEvent()
         object CloseMenuRightModalBottomSheet : UiEvent()
+        object Recompose : UiEvent()
     }
 }

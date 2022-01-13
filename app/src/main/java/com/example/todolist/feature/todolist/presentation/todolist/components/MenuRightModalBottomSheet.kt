@@ -18,9 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 )
 @Composable
 fun MenuRightModalBottomSheet(
-    scope: CoroutineScope,
     state: ModalBottomSheetState,
-    taskListId: Long = -1L,
     changeTaskListName: @Composable () -> Unit,
     deleteTaskList: @Composable () -> Unit,
     deleteCompletedItems: @Composable () -> Unit,
