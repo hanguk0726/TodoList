@@ -47,6 +47,13 @@ class TodoListViewModel @Inject constructor(
 
     val taskItemTitle: State<TodoListTextFieldState> = _taskItemTitle
 
+    // LazyColumn DOES NOT get noticed data change in same data holder object
+    // so it needs to be recomposed manually
+    @Suppress("LocalVariableName", "PropertyName")
+    val RECOMPOSES_REQUEST = "recompose_request"
+    private val _recomposeEventFlow = MutableSharedFlow<String>()
+    val recomposeEventFlow = _recomposeEventFlow.asSharedFlow()
+
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
@@ -181,7 +188,7 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             taskItemStateManagerPool = newTaskItemStateManagerPool
-            _eventFlow.emit(UiEvent.RequestRecompose)
+            _recomposeEventFlow.emit(RECOMPOSES_REQUEST)
         }.launchIn(viewModelScope)
     }
 
@@ -391,8 +398,6 @@ class TodoListViewModel @Inject constructor(
         object ShowConfirmDialog : UiEvent()
         object SaveTaskItem : UiEvent()
         object CloseMenuRightModalBottomSheet : UiEvent()
-        // LazyColumn DOES NOT get noticed data change in same data holder object
-        // so it needs to be recomposed manually
-        object RequestRecompose: UiEvent()
+
     }
 }

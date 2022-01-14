@@ -121,10 +121,7 @@ fun TodoListScreen(
     AlertNetworkConnectionState(mainScaffoldState, viewModel)
     EmitSelectTaskListTabEvent(pagerState, taskListsState, viewModel, selectedTaskListId)
     DisposeMainScaffoldBottomAppBarVisibility(
-        addTaskItemModalBottomSheetState,
         showMainScaffoldBottomAppBar,
-        menuLeftModalBottomSheetState,
-        menuRightModalBottomSheetState
     )
     DisposeModalBottomSheetState(
         menuLeftModalBottomSheetState, menuRightModalBottomSheetState
@@ -137,7 +134,9 @@ fun TodoListScreen(
         addTaskItemModalBottomSheetState,
         showDeleteTaskListDialogState,
         menuRightModalBottomSheetState,
-        recomposeKey
+    )
+    ObserveRecomposeRequest(
+        viewModel, recomposeKey
     )
 
 
@@ -803,20 +802,12 @@ private fun EmitSelectTaskListTabEvent(
 @ExperimentalMaterialApi
 @Composable
 private fun DisposeMainScaffoldBottomAppBarVisibility(
-    addTaskItemModalBottomSheetState: ModalBottomSheetState,
     showMainScaffoldBottomAppBar: MutableState<Boolean>,
-    menuLeftModalBottomSheetState: ModalBottomSheetState,
-    menuRightModalBottomSheetState: ModalBottomSheetState
 ) {
     LaunchedEffect(
-        key1 = addTaskItemModalBottomSheetState.targetValue
+        key1 = true
     ) {
-        val isLeftModalBottomSheetHidden =
-            menuLeftModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
-        val isRightModalBottomSheetHidden =
-            menuRightModalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden
-        showMainScaffoldBottomAppBar.value =
-            isLeftModalBottomSheetHidden && isRightModalBottomSheetHidden
+        showMainScaffoldBottomAppBar.value = true
     }
 }
 
@@ -871,8 +862,8 @@ private fun ObserveUiEvent(
     pagerState: PagerState,
     addTaskItemModalBottomSheetState: ModalBottomSheetState,
     showDeleteTaskListDialogState: MutableState<Boolean>,
-    menuRightModalBottomSheetState: ModalBottomSheetState,
-    recomposeKey: MutableState<Int>
+    menuRightModalBottomSheetState: ModalBottomSheetState
+
 ) {
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
@@ -902,9 +893,21 @@ private fun ObserveUiEvent(
                         menuRightModalBottomSheetState.hide()
                     }
                 }
-                is TodoListViewModel.UiEvent.RequestRecompose -> {
-                    recomposeKey.value++
-                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ObserveRecomposeRequest(
+    viewModel: TodoListViewModel,
+    recomposeKey: MutableState<Int>
+) {
+    LaunchedEffect(key1 = true) {
+        viewModel.recomposeEventFlow.collectLatest { requestCode ->
+            if (requestCode == viewModel.RECOMPOSES_REQUEST) {
+                if (recomposeKey.value > 1000) recomposeKey.value = 0
+                recomposeKey.value++
             }
         }
     }
