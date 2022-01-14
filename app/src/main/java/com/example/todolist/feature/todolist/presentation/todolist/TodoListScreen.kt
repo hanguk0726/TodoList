@@ -55,11 +55,13 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
+@DelicateCoroutinesApi
 @ExperimentalCoroutinesApi
 @RequiresApi(Build.VERSION_CODES.S)
 @OptIn(
@@ -80,8 +82,6 @@ fun TodoListScreen(
     val mainScaffoldState = rememberScaffoldState()
 
     val scope = rememberCoroutineScope()
-
-    val recomposeKey = remember { mutableStateOf(0) }
 
     val showDeleteTaskListDialogState = remember { mutableStateOf(false) }
 
@@ -106,9 +106,7 @@ fun TodoListScreen(
     val currentPageState = { getTargetPage(pagerState) }
 
     val selectedTaskListId = {
-        val isTaskListsLoaded =
-            taskListsState.taskLists.size > currentPageState() && currentPageState() >= 0 && taskListsState.taskLists.isNotEmpty()
-        if (isTaskListsLoaded) {
+        if (taskListsState.taskLists.isNotEmpty()) {
             taskListsState.taskLists[currentPageState()].id!!
         } else {
             Log.e("TodoListScreen", "Couldn't get taskList")
@@ -136,8 +134,7 @@ fun TodoListScreen(
         pagerState,
         addTaskItemModalBottomSheetState,
         showDeleteTaskListDialogState,
-        menuRightModalBottomSheetState,
-        recomposeKey
+        menuRightModalBottomSheetState
     )
 
 
@@ -211,7 +208,6 @@ fun TodoListScreen(
 
             if (taskListsState.taskLists.isNotEmpty()) {
                 TodoListScrollableTabRow(
-                    viewModel,
                     navController,
                     scope,
                     currentPageState,
@@ -225,8 +221,7 @@ fun TodoListScreen(
                     taskListsState,
                     bottomAppBarPadding,
                     navController,
-                    scope,
-                    recomposeKey
+                    scope
                 )
             }
         }
@@ -300,6 +295,7 @@ private fun AlertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
     }
 }
 
+@DelicateCoroutinesApi
 @ExperimentalMaterialApi
 @Composable
 private fun DeleteDialog(
@@ -364,7 +360,6 @@ private fun DeleteDialog(
 @ExperimentalPagerApi
 @Composable
 private fun TodoListScrollableTabRow(
-    viewModel: TodoListViewModel,
     navController: NavController,
     scope: CoroutineScope,
     currentPageState: () -> Int,
@@ -415,6 +410,7 @@ private fun TodoListScrollableTabRow(
     }
 }
 
+@DelicateCoroutinesApi
 @ExperimentalMaterialApi
 @ExperimentalSnapperApi
 @ExperimentalPagerApi
@@ -425,8 +421,7 @@ private fun TodoListTaskItems(
     taskListsState: TaskListsState,
     bottomAppBarPadding: PaddingValues,
     navController: NavController,
-    scope: CoroutineScope,
-    recomposeKey: MutableState<Int>
+    scope: CoroutineScope
 ) {
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val showCompletedTaskItems = remember { mutableStateOf(value = false) }
@@ -464,19 +459,104 @@ private fun TodoListTaskItems(
                 baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
             ),
         ) { pageIndex ->
-            key(recomposeKey.value) {
-                LazyColumn(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
-                ) {
-                    val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                    val itemList = viewModel.getTaskItemsToDisplay(eachTaskListId)
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
+            ) {
+                val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
+                val itemList = viewModel.getTaskItemsToDisplay(eachTaskListId)
+                items(
+                    itemList,
+                    key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
+                    AnimatedVisibility(
+                        visible = !taskItem.isCompleted,
+                        enter = expandVertically(
+                            animationSpec = tween(delayMillis = 700),
+                            expandFrom = Alignment.Top
+                        ) + fadeIn(animationSpec = tween(delayMillis = 700)),
+                        exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
+                                shrinkVertically(
+                                    animationSpec = tween(delayMillis = 700),
+                                    shrinkTowards = Alignment.Top
+                                )
+                    ) {
+                        ListItem(
+                            Modifier
+                                .clickable {
+                                    navController.navigate(
+                                        Screen.EditTaskItemScreen.route +
+                                                "?taskItemId=${taskItem.id}"
+                                    )
+                                }
+                                .fillMaxSize(),
+                            text = {
+                                Text(taskItem.title)
+                            },
+                            icon = {
+                                TaskItemCompletionButton(
+                                    taskItem.isCompleted,
+                                    onClick = {
+                                        scope.launch {
+                                            viewModel.onEvent(
+                                                TodoListEvent.ToggleTaskItemCompletionState(
+                                                    taskItem
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
+
+                item {
+                    val count = itemList.count { el -> el.isCompleted }
+                    AnimatedVisibility(
+                        visible = itemList.any { el -> el.isCompleted },
+                        enter = fadeIn(
+                            animationSpec = tween(
+                                delayMillis = 400,
+                                durationMillis = 500
+                            )
+                        ),
+                        exit = fadeOut(
+                            animationSpec = tween(
+                                delayMillis = 400,
+                                durationMillis = 500
+                            )
+                        )
+                    ) {
+                        SemiTransparentDivider()
+                        ListItem(
+                            Modifier.clickable(
+                                enabled = isShowCompletedTaskItemsButtonEnabled.value
+                            ) {
+                                showCompletedTaskItems.value =
+                                    !showCompletedTaskItems.value
+                                isShowCompletedTaskItemsButtonRotated.value =
+                                    !isShowCompletedTaskItemsButtonRotated.value
+                                isShowCompletedTaskItemsButtonEnabled.value = false
+                            },
+                            text = { Text("완료됨(${count}개)") },
+                            trailing = {
+                                Icon(
+                                    Icons.Default.ExpandMore,
+                                    "show completed takeItem",
+                                    Modifier.rotate(showCompletedTaskItemsButtonAngle)
+                                )
+                            }
+                        )
+                    }
+                }
+
+                if (showCompletedTaskItems.value) {
                     items(
                         itemList,
-                        key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
+                        key = { it.id!!.toString() + "completed" }) { taskItem ->
                         AnimatedVisibility(
-                            visible = !taskItem.isCompleted,
+                            visible = taskItem.isCompleted,
                             enter = expandVertically(
                                 animationSpec = tween(delayMillis = 700),
                                 expandFrom = Alignment.Top
@@ -516,93 +596,6 @@ private fun TodoListTaskItems(
                             )
                         }
                     }
-
-                    item {
-                        val count = itemList.count { el -> el.isCompleted }
-                        AnimatedVisibility(
-                            visible = itemList.any { el -> el.isCompleted },
-                            enter = fadeIn(
-                                animationSpec = tween(
-                                    delayMillis = 400,
-                                    durationMillis = 500
-                                )
-                            ),
-                            exit = fadeOut(
-                                animationSpec = tween(
-                                    delayMillis = 400,
-                                    durationMillis = 500
-                                )
-                            )
-                        ) {
-                            SemiTransparentDivider()
-                            ListItem(
-                                Modifier.clickable(
-                                    enabled = isShowCompletedTaskItemsButtonEnabled.value
-                                ) {
-                                    showCompletedTaskItems.value =
-                                        !showCompletedTaskItems.value
-                                    isShowCompletedTaskItemsButtonRotated.value =
-                                        !isShowCompletedTaskItemsButtonRotated.value
-                                    isShowCompletedTaskItemsButtonEnabled.value = false
-                                },
-                                text = { Text("완료됨(${count}개)") },
-                                trailing = {
-                                    Icon(
-                                        Icons.Default.ExpandMore,
-                                        "show completed takeItem",
-                                        Modifier.rotate(showCompletedTaskItemsButtonAngle)
-                                    )
-                                }
-                            )
-                        }
-                    }
-
-                    if (showCompletedTaskItems.value) {
-                        items(
-                            itemList,
-                            key = { it.id!!.toString() + "completed" }) { taskItem ->
-                            AnimatedVisibility(
-                                visible = taskItem.isCompleted,
-                                enter = expandVertically(
-                                    animationSpec = tween(delayMillis = 700),
-                                    expandFrom = Alignment.Top
-                                ) + fadeIn(animationSpec = tween(delayMillis = 700)),
-                                exit = fadeOut(animationSpec = tween(delayMillis = 400)) +
-                                        shrinkVertically(
-                                            animationSpec = tween(delayMillis = 700),
-                                            shrinkTowards = Alignment.Top
-                                        )
-                            ) {
-                                ListItem(
-                                    Modifier
-                                        .clickable {
-                                            navController.navigate(
-                                                Screen.EditTaskItemScreen.route +
-                                                        "?taskItemId=${taskItem.id}"
-                                            )
-                                        }
-                                        .fillMaxSize(),
-                                    text = {
-                                        Text(taskItem.title)
-                                    },
-                                    icon = {
-                                        TaskItemCompletionButton(
-                                            taskItem.isCompleted,
-                                            onClick = {
-                                                scope.launch {
-                                                    viewModel.onEvent(
-                                                        TodoListEvent.ToggleTaskItemCompletionState(
-                                                            taskItem
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -636,6 +629,7 @@ private fun BottomMenu(
 }
 
 
+@DelicateCoroutinesApi
 @ExperimentalMaterialApi
 @Composable
 private fun TodoListMenuRightModalBottomSheet(
@@ -732,6 +726,7 @@ private fun TodoListMenuLeftModalBottomSheet(
     )
 }
 
+@DelicateCoroutinesApi
 @ExperimentalMaterialApi
 @Composable
 private fun TodoListAddTaskItemModalBottomSheet(
@@ -772,6 +767,7 @@ private fun TodoListAddTaskItemModalBottomSheet(
 
 }
 
+@DelicateCoroutinesApi
 @ExperimentalPagerApi
 @Composable
 private fun EmitSelectTaskListTabEvent(
@@ -858,8 +854,7 @@ private fun ObserveUiEvent(
     pagerState: PagerState,
     addTaskItemModalBottomSheetState: ModalBottomSheetState,
     showDeleteTaskListDialogState: MutableState<Boolean>,
-    menuRightModalBottomSheetState: ModalBottomSheetState,
-    recomposeKey: MutableState<Int>
+    menuRightModalBottomSheetState: ModalBottomSheetState
 ) {
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
@@ -888,9 +883,6 @@ private fun ObserveUiEvent(
                     launch {
                         menuRightModalBottomSheetState.hide()
                     }
-                }
-                is TodoListViewModel.UiEvent.Recompose -> run {
-                    recomposeKey.value += 1
                 }
             }
         }

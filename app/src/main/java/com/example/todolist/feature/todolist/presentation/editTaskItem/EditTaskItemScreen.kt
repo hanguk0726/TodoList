@@ -9,7 +9,10 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Notes
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -44,8 +47,6 @@ fun EditTaskItemScreen(
     viewModel: EditTaskItemViewModel
 ) {
 
-    applyEditTaskItemScreenTheme()
-
 
     val scaffoldState = rememberScaffoldState()
     val taskItemTitleState = viewModel.taskItemTitle.value
@@ -61,21 +62,8 @@ fun EditTaskItemScreen(
     val taskListsState = viewModel.taskListsState.value
     val taskItem = viewModel.taskItemState.value
 
-    LaunchedEffect(key1 = true) {
-        viewModel.loadTaskItemValues(taskItemId)
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
-                    navController.navigateUp()
-                }
-                is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
-                    navController.navigateUp()
-                }
-                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
-                }
-            }
-        }
-    }
+    ApplyEditTaskItemScreenTheme()
+    ObserveUiEvent(viewModel, navController, taskItemId)
 
     Scaffold(
         Modifier.fillMaxSize(),
@@ -132,7 +120,7 @@ fun EditTaskItemScreen(
 }
 
 @Composable
-private fun applyEditTaskItemScreenTheme() {
+private fun ApplyEditTaskItemScreenTheme() {
     rememberSystemUiController().run {
         if (isSystemInDarkTheme()) {
             setNavigationBarColor(
@@ -149,6 +137,7 @@ private fun applyEditTaskItemScreenTheme() {
     }
 }
 
+@DelicateCoroutinesApi
 @Composable
 private fun ChangeTaskItemCompleteStateBottomSheet(
     taskItem: TaskItem?,
@@ -165,6 +154,7 @@ private fun ChangeTaskItemCompleteStateBottomSheet(
     }
 }
 
+@DelicateCoroutinesApi
 @Composable
 private fun TopMenu(viewModel: EditTaskItemViewModel) {
     Row(
@@ -278,4 +268,27 @@ private fun TaskItemDetailTextField(
             )
         }
     }
+}
+
+@Composable
+private fun ObserveUiEvent(
+    viewModel: EditTaskItemViewModel, navController: NavController,
+    taskItemId: Long
+) {
+    LaunchedEffect(key1 = true) {
+        viewModel.loadTaskItemValues(taskItemId)
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is EditTaskItemViewModel.UiEvent.DeleteTaskItem -> {
+                    navController.navigateUp()
+                }
+                is EditTaskItemViewModel.UiEvent.SaveTaskItem -> {
+                    navController.navigateUp()
+                }
+                is EditTaskItemViewModel.UiEvent.ShowSnackbar -> {
+                }
+            }
+        }
+    }
+
 }

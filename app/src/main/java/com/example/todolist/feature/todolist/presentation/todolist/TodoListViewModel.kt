@@ -79,18 +79,13 @@ class TodoListViewModel @Inject constructor(
 
     private fun requestLatestData() {
         requestLatestDataJob?.cancel()
-        requestLatestDataJob = getTaskLists().onEach {
-            it.forEach { taskList ->
-                loadTaskItemsOnPoolByTaskListId(taskList.id!!)
-            }
-        }.launchIn(viewModelScope)
+        requestLatestDataJob = getTaskLists().launchIn(viewModelScope)
     }
-
 
     private fun getTaskLists(): Flow<List<TaskList>> {
         return taskListUseCases.getTaskLists()
-            .onEach { result ->
-                if (result.isEmpty()) {
+            .onEach { taskLists ->
+                if (taskLists.isEmpty()) {
                     val initialTaskList = TaskList(
                         name = "할 일 목록",
                         createdTimestamp = System.currentTimeMillis(),
@@ -102,10 +97,12 @@ class TodoListViewModel @Inject constructor(
                     )
                 } else {
                     _taskListsState.value = taskListsState.value.copy(
-                        taskLists = result
+                        taskLists = taskLists
                     )
                 }
-                result
+                taskLists.forEach {
+                    loadTaskItemsOnPoolByTaskListId(it.id!!)
+                }
             }
     }
 
@@ -121,150 +118,46 @@ class TodoListViewModel @Inject constructor(
         return getTaskItems(targetTaskListId).filter { !it.needToBeDeleted }
     }
 
+    @DelicateCoroutinesApi
     fun onEvent(event: TodoListEvent) {
         when (event) {
             is TodoListEvent.EnterTaskItemTitle -> {
-                _taskItemTitle.value = taskItemTitle.value.copy(
-                    text = event.value,
-                )
-                // 한번에 init 하면 같은 시점에 대해서 isBlank 판정이 안된다.
-                _taskItemTitle.value = taskItemTitle.value.copy(
-                    isHintVisible = taskItemTitle.value.text.isBlank(),
-                )
+                enterTaskItemTitle(event.value)
             }
             is TodoListEvent.ToggleTaskItemCompletionState -> {
-                viewModelScope.launch {
-                    try {
-                        val original = event.taskItem
-                        val modified = original.copy(
-                            isCompleted = !original.isCompleted
-                        )
-                        taskItemUseCases.updateTaskItem(modified)
-                        if (modified.isCompleted) {
-                            _eventFlow.emit(UiEvent.ShowSnackbar(
-                                message = "할 일 1개가 완료됨",
-                                actionLabel = "실행취소",
-                                action = {
-                                    viewModelScope.launch {
-                                        taskItemUseCases.updateTaskItem(original)
-                                    }
-                                }
-                            ))
-                        } else {
-                            _eventFlow.emit(UiEvent.ShowSnackbar(
-                                message = "할 일 1개가 미완료로 표시됨",
-                                actionLabel = "실행취소",
-                                action = {
-                                    viewModelScope.launch {
-                                        taskItemUseCases.updateTaskItem(original)
-                                    }
-                                }
-                            ))
-                        }
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e("TodoListViewModel", e.message ?: "Couldn't update taskItem")
-                    }
-                }
+                toggleTaskItemCompletionState(event.taskItem)
             }
 
             is TodoListEvent.DeleteTaskList -> {
-                GlobalScope.launch {
-                    _eventFlow.emit(UiEvent.ScrollTaskListPosition(0))
-                }
-                viewModelScope.launch {
-                    try {
-                        val selectedTaskList =
-                            taskListsState.value.taskLists
-                                .find { el -> el.id!! == event.selectedTaskListId }
-                        taskListUseCases.deleteTaskList(selectedTaskList!!)
-                        val taskItemsToDelete =
-                            taskItemUseCases.getTaskItemsByTaskListId.noFlow(selectedTaskList!!.id!!)
-                        taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
-                    } catch (e: InvalidTaskListException) {
-                        Log.e("TodoListViewModel", e.message ?: "Couldn't delete taskList")
-                    }
-                }
+                deleteTaskList(event.selectedTaskListId)
             }
 
             is TodoListEvent.ConfirmDeleteTaskList -> {
-                if (getTaskItems(event.selectedTaskListId).isNotEmpty()) {
-                    viewModelScope.launch {
-                        _dialogType.value = DialogType.DeleteTaskList
-                        _eventFlow.emit(UiEvent.ShowConfirmDialog)
-                    }
-                } else {
-                    viewModelScope.launch {
-                        onEvent(TodoListEvent.DeleteTaskList(event.selectedTaskListId))
-                        _eventFlow.emit(UiEvent.CloseMenuRightModalBottomSheet)
-                    }
-                }
+                confirmDeleteTaskList(event.selectedTaskListId)
             }
             is TodoListEvent.ConfirmDeleteCompletedTaskItems -> {
-                viewModelScope.launch {
-                    val taskItems = getTaskItems(event.selectedTaskListId)
-                    if (taskItems.isNotEmpty()) {
-                        val completedTaskItems = taskItems.filter { el ->
-                            el.isCompleted
-                        }
-                        if (completedTaskItems.isNotEmpty()) {
-                            _dialogType.value = DialogType.DeleteCompletedTaskItem
-                            _eventFlow.emit(UiEvent.ShowConfirmDialog)
-                        }
-                    }
-                }
+                confirmDeleteCompletedTaskItems(event.selectedTaskListId)
             }
             is TodoListEvent.DeleteCompletedTaskItems -> {
-                viewModelScope.launch {
-                    try {
-                        val taskItems = getTaskItems(event.selectedTaskListId)
-                        if (taskItems.isNotEmpty()) {
-                            val completedTaskItems = taskItems.filter { el ->
-                                el.isCompleted
-                            }
-                            if (completedTaskItems.isNotEmpty()) {
-                                taskItemUseCases.deleteTaskItem(*completedTaskItems.toTypedArray())
-                            }
-                        }
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e(
-                            "TodoListViewModel",
-                            e.message ?: "Couldn't delete completed taskItems"
-                        )
-                    }
-                }
-
+                deleteCompletedTaskItems(event.selectedTaskListId)
             }
             is TodoListEvent.SaveTaskItem -> {
-                viewModelScope.launch {
-                    try {
-                        taskItemUseCases.addTaskItem(
-                            TaskItem(
-                                title = taskItemTitle.value.text,
-                                taskListId = event.selectedTaskListId
-                            )
-                        )
-                        _eventFlow.emit(UiEvent.SaveTaskItem)
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e("TodoListViewModel", "${e.message ?: "Couldn't save taskItem"}")
-                    }
-
-                }
+                saveTaskItem(event.selectedTaskListId)
             }
             is TodoListEvent.SelectTaskList -> {
-                viewModelScope.launch {
-                    saveLastSelectedTaskListId(event.selectedTaskListId.toInt())
-                }
+                selectTaskList(event.selectedTaskListId)
             }
         }
     }
 
 
     private fun loadTaskItemsOnPoolByTaskListId(targetTaskListId: Long) {
-        var taskItemStateManager = if (taskItemStateManagerPool.containsKey(targetTaskListId)) {
+        val taskItemStateManager = if (taskItemStateManagerPool.containsKey(targetTaskListId)) {
             taskItemStateManagerPool[targetTaskListId]!!
         } else {
             TaskItemStateManager()
         }
+
         taskItemStateManager.getTaskItemsJob?.cancel()
         taskItemStateManager.getTaskItemsJob = taskItemUseCases.getTaskItemsByTaskListId(
             targetTaskListId
@@ -282,7 +175,6 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             taskItemStateManagerPool = newTaskItemStateManagerPool
-            _eventFlow.emit(UiEvent.Recompose)
         }.launchIn(viewModelScope)
     }
 
@@ -291,7 +183,7 @@ class TodoListViewModel @Inject constructor(
         return try {
             taskListUseCases.addTaskList(taskList).first()
         } catch (e: Exception) {
-            Log.e("TodoListViewModel", "${e.message ?: "Couldn't create the taskList"}")
+            Log.e("TodoListViewModel", e.message ?: "Couldn't create the taskList")
             -1L
         }
     }
@@ -325,12 +217,149 @@ class TodoListViewModel @Inject constructor(
         val taskLists = runBlocking {
             taskListUseCases.getTaskLists.noFlow()
         }
-        val lastSelectedTaskList = taskLists.find { el -> el.id!!.toInt() == lastSelectedTaskListId }
+        val lastSelectedTaskList =
+            taskLists.find { el -> el.id!!.toInt() == lastSelectedTaskListId }
         lastSelectedTaskList?.let {
-            val index = taskLists.indexOf(lastSelectedTaskList)
-            return if (index < 0) 0 else index
+            return taskLists.indexOf(lastSelectedTaskList)
         }
         return 0
+    }
+
+    private fun enterTaskItemTitle(value: String) {
+        _taskItemTitle.value = taskItemTitle.value.copy(
+            text = value,
+        )
+        _taskItemTitle.value = taskItemTitle.value.copy(
+            isHintVisible = taskItemTitle.value.text.isBlank(),
+        )
+    }
+
+    private fun toggleTaskItemCompletionState(taskItem: TaskItem) {
+        viewModelScope.launch {
+            try {
+                val modified = taskItem.copy(
+                    isCompleted = !taskItem.isCompleted
+                )
+                taskItemUseCases.updateTaskItem(modified)
+                if (modified.isCompleted) {
+                    _eventFlow.emit(UiEvent.ShowSnackbar(
+                        message = "할 일 1개가 완료됨",
+                        actionLabel = "실행취소",
+                        action = {
+                            viewModelScope.launch {
+                                taskItemUseCases.updateTaskItem(taskItem)
+                            }
+                        }
+                    ))
+                } else {
+                    _eventFlow.emit(UiEvent.ShowSnackbar(
+                        message = "할 일 1개가 미완료로 표시됨",
+                        actionLabel = "실행취소",
+                        action = {
+                            viewModelScope.launch {
+                                taskItemUseCases.updateTaskItem(taskItem)
+                            }
+                        }
+                    ))
+                }
+            } catch (e: InvalidTaskItemException) {
+                Log.e("TodoListViewModel", e.message ?: "Couldn't update taskItem")
+            }
+        }
+    }
+
+    @DelicateCoroutinesApi
+    private fun deleteTaskList(selectedTaskListId: Long) {
+        GlobalScope.launch {
+            _eventFlow.emit(UiEvent.ScrollTaskListPosition(0))
+        }
+        viewModelScope.launch {
+            try {
+                val selectedTaskList =
+                    taskListsState.value.taskLists
+                        .find { el -> el.id!! == selectedTaskListId }
+                taskListUseCases.deleteTaskList(selectedTaskList!!)
+                val taskItemsToDelete =
+                    taskItemUseCases.getTaskItemsByTaskListId.noFlow(selectedTaskList.id!!)
+                taskItemUseCases.deleteTaskItem(*taskItemsToDelete.toTypedArray())
+            } catch (e: InvalidTaskListException) {
+                Log.e("TodoListViewModel", e.message ?: "Couldn't delete taskList")
+            }
+        }
+    }
+
+    @DelicateCoroutinesApi
+    private fun confirmDeleteTaskList(selectedTaskListId: Long) {
+        if (getTaskItems(selectedTaskListId).isNotEmpty()) {
+            viewModelScope.launch {
+                _dialogType.value = DialogType.DeleteTaskList
+                _eventFlow.emit(UiEvent.ShowConfirmDialog)
+            }
+        } else {
+            viewModelScope.launch {
+                onEvent(TodoListEvent.DeleteTaskList(selectedTaskListId))
+                _eventFlow.emit(UiEvent.CloseMenuRightModalBottomSheet)
+            }
+        }
+    }
+
+    private fun confirmDeleteCompletedTaskItems(selectedTaskListId: Long) {
+        viewModelScope.launch {
+            val taskItems = getTaskItems(selectedTaskListId)
+            if (taskItems.isNotEmpty()) {
+                val completedTaskItems = taskItems.filter { el ->
+                    el.isCompleted
+                }
+                if (completedTaskItems.isNotEmpty()) {
+                    _dialogType.value = DialogType.DeleteCompletedTaskItem
+                    _eventFlow.emit(UiEvent.ShowConfirmDialog)
+                }
+            }
+        }
+    }
+
+    private fun deleteCompletedTaskItems(selectedTaskListId: Long) {
+        viewModelScope.launch {
+            try {
+                val taskItems = getTaskItems(selectedTaskListId)
+                if (taskItems.isNotEmpty()) {
+                    val completedTaskItems = taskItems.filter { el ->
+                        el.isCompleted
+                    }
+                    if (completedTaskItems.isNotEmpty()) {
+                        taskItemUseCases.deleteTaskItem(*completedTaskItems.toTypedArray())
+                    }
+                }
+            } catch (e: InvalidTaskItemException) {
+                Log.e(
+                    "TodoListViewModel",
+                    e.message ?: "Couldn't delete completed taskItems"
+                )
+            }
+        }
+    }
+
+    private fun saveTaskItem(selectedTaskListId: Long) {
+        viewModelScope.launch {
+            try {
+                taskItemUseCases.addTaskItem(
+                    TaskItem(
+                        title = taskItemTitle.value.text,
+                        taskListId = selectedTaskListId
+                    )
+                )
+                _eventFlow.emit(UiEvent.SaveTaskItem)
+            } catch (e: InvalidTaskItemException) {
+                Log.e("TodoListViewModel", e.message ?: "Couldn't save taskItem")
+            }
+
+        }
+    }
+
+    private fun selectTaskList(selectedTaskListId: Long) {
+        viewModelScope.launch {
+            saveLastSelectedTaskListId(selectedTaskListId.toInt())
+        }
     }
 
     data class TaskItemStateManager(
@@ -355,6 +384,5 @@ class TodoListViewModel @Inject constructor(
         object ShowConfirmDialog : UiEvent()
         object SaveTaskItem : UiEvent()
         object CloseMenuRightModalBottomSheet : UiEvent()
-        object Recompose : UiEvent()
     }
 }

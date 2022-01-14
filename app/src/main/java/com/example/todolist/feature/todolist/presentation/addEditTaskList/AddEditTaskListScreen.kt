@@ -6,7 +6,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,22 +27,13 @@ fun AddTaskListScreen(
     taskListId: Long,
     viewModel: AddEditTaskListViewModel = hiltViewModel()
 ) {
-    applyAddEditTaskListScreenTheme()
 
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
 
-
-    LaunchedEffect(key1 = true) {
-        setUpInitialData(taskListId, viewModel)
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {
-                    navController.navigateUp()
-                }
-            }
-        }
-    }
+    ApplyAddEditTaskListScreenTheme()
+    SetUpInitialData(taskListId, viewModel)
+    ObserveUiEvent(viewModel, navController)
 
     Scaffold(
         Modifier.fillMaxSize(),
@@ -71,17 +61,20 @@ fun AddTaskListScreen(
 }
 
 @Composable
-private fun applyAddEditTaskListScreenTheme() {
+private fun ApplyAddEditTaskListScreenTheme() {
     rememberSystemUiController().setSystemBarsColor(
         color = MaterialTheme.colors.background
     )
 }
 
-private fun setUpInitialData(taskListId: Long, viewModel: AddEditTaskListViewModel) {
-    if (taskListId == -1L) {
-        viewModel.clearTaskListNameTextField()
-    } else {
-        viewModel.loadTaskListNameToModify(taskListId)
+@Composable
+private fun SetUpInitialData(taskListId: Long, viewModel: AddEditTaskListViewModel) {
+    LaunchedEffect(key1 = true) {
+        if (taskListId == -1L) {
+            viewModel.clearTaskListNameTextField()
+        } else {
+            viewModel.loadTaskListNameToModify(taskListId)
+        }
     }
 }
 
@@ -134,4 +127,17 @@ private fun AddEditTaskListTextField(
             viewModel.onEvent(AddEditTaskListEvent.EnterTaskListName(it))
         },
     )
+}
+
+@Composable
+private fun ObserveUiEvent(viewModel: AddEditTaskListViewModel, navController: NavController) {
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is AddEditTaskListViewModel.UiEvent.SaveTaskList -> {
+                    navController.navigateUp()
+                }
+            }
+        }
+    }
 }

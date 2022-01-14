@@ -48,6 +48,7 @@ fun MenuLeftModalBottomSheet(
         sheetState = state,
         sheetElevation = 0.dp,
         scrimColor = ScrimColor,
+        content = {},
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
         sheetContent = {
             LaunchedEffect(key1 = taskListsState.value.taskLists.size) {
@@ -98,7 +99,5 @@ fun MenuLeftModalBottomSheet(
                 }
             }
         },
-    ) {
-
-    }
+    )
 }

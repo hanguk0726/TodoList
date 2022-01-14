@@ -3,7 +3,6 @@ package com.example.todolist.feature.todolist.presentation.addEditTaskList
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.feature.todolist.domain.model.InvalidTaskListException
@@ -35,27 +34,10 @@ class AddEditTaskListViewModel @Inject constructor(
     fun onEvent(event: AddEditTaskListEvent) {
         when (event) {
             is AddEditTaskListEvent.EnterTaskListName -> {
-                _taskListName.value = taskListName.value.copy(
-                    text = event.value
-                )
-                _taskListName.value = taskListName.value.copy(
-                    isHintVisible = taskListName.value.text.isBlank()
-                )
+                enterTaskListName(event.value)
             }
             is AddEditTaskListEvent.SaveTaskList -> {
-                viewModelScope.launch {
-                    try {
-                        taskListUseCases.addTaskList(
-                            TaskList(
-                                name = taskListName.value.text,
-                                id = if(event.taskListId == -1L) null else event.taskListId
-                            )
-                        )
-                        _eventFlow.emit(UiEvent.SaveTaskList)
-                    } catch (e: InvalidTaskListException) {
-                        Log.e("TodoListViewModel", "${e.message ?: "Couldn't create the taskList"}")
-                    }
-                }
+                saveTaskList(event.taskListId)
             }
         }
     }
@@ -74,6 +56,31 @@ class AddEditTaskListViewModel @Inject constructor(
                 text = targetTaskList!!.name,
                 isHintVisible = false
             )
+        }
+    }
+
+    private fun enterTaskListName(value: String) {
+        _taskListName.value = taskListName.value.copy(
+            text = value
+        )
+        _taskListName.value = taskListName.value.copy(
+            isHintVisible = taskListName.value.text.isBlank()
+        )
+    }
+
+    private fun saveTaskList(taskListId: Long) {
+        viewModelScope.launch {
+            try {
+                taskListUseCases.addTaskList(
+                    TaskList(
+                        name = taskListName.value.text,
+                        id = if (taskListId == -1L) null else taskListId
+                    )
+                )
+                _eventFlow.emit(UiEvent.SaveTaskList)
+            } catch (e: InvalidTaskListException) {
+                Log.e("TodoListViewModel", e.message ?: "Couldn't create the taskList")
+            }
         }
     }
 

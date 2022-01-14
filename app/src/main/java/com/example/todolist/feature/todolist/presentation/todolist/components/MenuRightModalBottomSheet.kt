@@ -34,6 +34,7 @@ fun MenuRightModalBottomSheet(
         sheetElevation = 0.dp,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        content = {},
         sheetContent = {
             val padding = bottomPadding + itemPaddingWithSpacer * 2
             Box(
@@ -61,7 +62,5 @@ fun MenuRightModalBottomSheet(
                 }
             }
         },
-    ) {
-
-    }
+    )
 }

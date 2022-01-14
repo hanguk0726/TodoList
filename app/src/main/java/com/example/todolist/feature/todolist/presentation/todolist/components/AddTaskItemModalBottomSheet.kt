@@ -65,6 +65,7 @@ fun AddTaskItemModalBottomSheet(
         sheetElevation = 0.dp,
         scrimColor = ScrimColor,
         sheetShape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        content = {},
         sheetContent = {
             Box(
                 Modifier
@@ -83,7 +84,5 @@ fun AddTaskItemModalBottomSheet(
                 addButton()
             }
         },
-    ) {
-
-    }
+    )
 }

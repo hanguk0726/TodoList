@@ -70,124 +70,22 @@ class EditTaskItemViewModel @Inject constructor(
     fun onEvent(event: EditTaskItemEvent) {
         when (event) {
             is EditTaskItemEvent.EnterTaskItemTitle -> {
-                _taskItemTitle.value = taskItemTitle.value.copy(
-                    text = event.value
-                )
-                _taskItemTitle.value = taskItemTitle.value.copy(
-                    isHintVisible = taskItemTitle.value.text.isBlank()
-                )
+                enterTaskItemTitle(event.value)
             }
             is EditTaskItemEvent.EnterTaskItemDetail -> {
-                _taskItemDetail.value = taskItemDetail.value.copy(
-                    text = event.value
-                )
-                _taskItemDetail.value = taskItemDetail.value.copy(
-                    isHintVisible = taskItemDetail.value.text.isBlank()
-                )
+                enterTaskItemDetail(event.value)
             }
             is EditTaskItemEvent.SaveTaskItem -> {
-                viewModelScope.launch {
-                    try {
-                        val taskItem = _taskItemState.value
-                        taskItemUseCases.updateTaskItem(
-                            TaskItem(
-                                title = taskItemTitle.value.text,
-                                detail = taskItemDetail.value.text,
-                                isCompleted = taskItem!!.isCompleted,
-                                taskListId = taskItem.taskListId,
-                                createdTimestamp = taskItem.createdTimestamp,
-                                id = taskItem.id
-                            )
-                        )
-                        _eventFlow.emit(UiEvent.SaveTaskItem)
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e(
-                            "EditTaskItemViewModel",
-                            e.message ?: "Couldn't save the taskItem"
-                        )
-                    }
-                }
+                saveTaskItem()
             }
             is EditTaskItemEvent.DeleteTaskItem -> {
-                GlobalScope.launch {
-                    _eventFlow.emit(UiEvent.DeleteTaskItem)
-                }
-                viewModelScope.launch {
-                    try {
-                        taskItemUseCases.getTaskItemById(_taskItemState.value!!.id!!)
-                            ?.also { _taskItem ->
-                                taskItemUseCases.deleteTaskItem(_taskItem)
-                                lastDeletedTaskItem = _taskItem
-
-                            }
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e(
-                            "EditTaskItemViewModel",
-                            e.message ?: "Couldn't save the taskItem"
-                        )
-                    }
-                }
-                CoroutineScope(Dispatchers.Default).launch {
-                    try {
-                        delay(500L)
-                        _eventFlow.emit(
-                            UiEvent.ShowSnackbar(
-                                message = "할 일 1개가 삭제됨",
-                                actionLabel = "실행취소",
-                                action = {
-                                    CoroutineScope(Dispatchers.Default).launch {
-                                        taskItemUseCases.addTaskItem(lastDeletedTaskItem!!)
-                                    }
-                                }
-                            ))
-                    } catch (e: Exception) {
-                        Log.e(
-                            "EditTaskItemViewModel",
-                            e.message ?: "Couldn't show snackbar for deleting taskItem"
-                        )
-                    }
-                }
+                deleteTaskItem()
             }
             is EditTaskItemEvent.ToggleAndSaveTaskItemCompletionState -> {
-                viewModelScope.launch {
-                    try {
-                        _taskItemState.value = taskItemState.value!!.copy(
-                            isCompleted = !_taskItemState.value!!.isCompleted
-                        )
-                        taskItemUseCases.updateTaskItem(
-                            TaskItem(
-                                title = taskItemTitle.value.text,
-                                detail = taskItemDetail.value.text,
-                                isCompleted = _taskItemState.value!!.isCompleted,
-                                taskListId = _taskItemState.value!!.taskListId,
-                                createdTimestamp = _taskItemState.value!!.createdTimestamp,
-                                id = _taskItemState.value!!.id
-                            )
-                        )
-                        _eventFlow.emit(UiEvent.SaveTaskItem)
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e(
-                            "EditTaskItemViewModel",
-                            "${e.message ?: "Couldn't save the taskItem"}"
-                        )
-                    }
-                }
+                toggleAndSaveTaskItemCompletionState()
             }
-
             is EditTaskItemEvent.ChangeTaskListOfTaskItem -> {
-                viewModelScope.launch {
-                    try {
-                        _taskItemState.value = taskItemState.value!!.copy(
-                            taskListId = event.targetTaskListId
-                        )
-                        taskItemUseCases.updateTaskItem(taskItemState.value!!)
-                    } catch (e: InvalidTaskItemException) {
-                        Log.e(
-                            "EditTaskItemViewModel",
-                            "${e.message ?: "Couldn't update the taskItem"}"
-                        )
-                    }
-                }
+                changeTaskListOfTaskItem(event.targetTaskListId)
             }
         }
     }
@@ -210,7 +108,7 @@ class EditTaskItemViewModel @Inject constructor(
                     isHintVisible = taskItemDetail.value.text.isBlank()
                 )
             } catch (e: InvalidTaskItemException) {
-                Log.e("EditTaskItemViewModel", "${e.message ?: "Couldn't get the taskItem"}")
+                Log.e("EditTaskItemViewModel", e.message ?: "Couldn't get the taskItem")
             }
         }
     }
@@ -224,7 +122,130 @@ class EditTaskItemViewModel @Inject constructor(
                 )
             }.launchIn(viewModelScope)
     }
+    private fun enterTaskItemDetail(value: String) {
+        _taskItemDetail.value = taskItemDetail.value.copy(
+            text = value
+        )
+        _taskItemDetail.value = taskItemDetail.value.copy(
+            isHintVisible = taskItemDetail.value.text.isBlank()
+        )
+    }
+    private fun enterTaskItemTitle(value: String) {
+        _taskItemTitle.value = taskItemTitle.value.copy(
+            text = value
+        )
+        _taskItemTitle.value = taskItemTitle.value.copy(
+            isHintVisible = taskItemTitle.value.text.isBlank()
+        )
+    }
 
+    private fun saveTaskItem() {
+        viewModelScope.launch {
+            try {
+                val taskItem = _taskItemState.value
+                taskItemUseCases.updateTaskItem(
+                    TaskItem(
+                        title = taskItemTitle.value.text,
+                        detail = taskItemDetail.value.text,
+                        isCompleted = taskItem!!.isCompleted,
+                        taskListId = taskItem.taskListId,
+                        createdTimestamp = taskItem.createdTimestamp,
+                        id = taskItem.id
+                    )
+                )
+                _eventFlow.emit(UiEvent.SaveTaskItem)
+            } catch (e: InvalidTaskItemException) {
+                Log.e(
+                    "EditTaskItemViewModel",
+                    e.message ?: "Couldn't save the taskItem"
+                )
+            }
+        }
+    }
+
+    @DelicateCoroutinesApi
+    private fun deleteTaskItem() {
+        GlobalScope.launch {
+            _eventFlow.emit(UiEvent.DeleteTaskItem)
+        }
+        viewModelScope.launch {
+            try {
+                taskItemUseCases.getTaskItemById(_taskItemState.value!!.id!!)
+                    ?.also { _taskItem ->
+                        taskItemUseCases.deleteTaskItem(_taskItem)
+                        lastDeletedTaskItem = _taskItem
+
+                    }
+            } catch (e: InvalidTaskItemException) {
+                Log.e(
+                    "EditTaskItemViewModel",
+                    e.message ?: "Couldn't save the taskItem"
+                )
+            }
+        }
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                delay(500L)
+                _eventFlow.emit(
+                    UiEvent.ShowSnackbar(
+                        message = "할 일 1개가 삭제됨",
+                        actionLabel = "실행취소",
+                        action = {
+                            CoroutineScope(Dispatchers.Default).launch {
+                                taskItemUseCases.addTaskItem(lastDeletedTaskItem!!)
+                            }
+                        }
+                    ))
+            } catch (e: Exception) {
+                Log.e(
+                    "EditTaskItemViewModel",
+                    e.message ?: "Couldn't show snackbar for deleting taskItem"
+                )
+            }
+        }
+    }
+
+    private fun toggleAndSaveTaskItemCompletionState() {
+        viewModelScope.launch {
+            try {
+                _taskItemState.value = taskItemState.value!!.copy(
+                    isCompleted = !_taskItemState.value!!.isCompleted
+                )
+                taskItemUseCases.updateTaskItem(
+                    TaskItem(
+                        title = taskItemTitle.value.text,
+                        detail = taskItemDetail.value.text,
+                        isCompleted = _taskItemState.value!!.isCompleted,
+                        taskListId = _taskItemState.value!!.taskListId,
+                        createdTimestamp = _taskItemState.value!!.createdTimestamp,
+                        id = _taskItemState.value!!.id
+                    )
+                )
+                _eventFlow.emit(UiEvent.SaveTaskItem)
+            } catch (e: InvalidTaskItemException) {
+                Log.e(
+                    "EditTaskItemViewModel",
+                    e.message ?: "Couldn't save the taskItem"
+                )
+            }
+        }
+    }
+
+    private fun changeTaskListOfTaskItem(targetTaskListId: Long) {
+        viewModelScope.launch {
+            try {
+                _taskItemState.value = taskItemState.value!!.copy(
+                    taskListId = targetTaskListId
+                )
+                taskItemUseCases.updateTaskItem(taskItemState.value!!)
+            } catch (e: InvalidTaskItemException) {
+                Log.e(
+                    "EditTaskItemViewModel",
+                    e.message ?: "Couldn't update the taskItem"
+                )
+            }
+        }
+    }
     sealed class UiEvent {
         data class ShowSnackbar(
             val message: String,
