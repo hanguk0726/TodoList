@@ -229,5 +229,4 @@ fun executeSynchronizeWork(appContext: Context) {
         .getInstance(appContext)
         .enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, synchronizeWorkRequest)
 
-
 }

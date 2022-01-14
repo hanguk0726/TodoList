@@ -77,6 +77,10 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
+    fun requestSynchronizeWork() {
+        executeSynchronizeWork(appContext)
+    }
+
     private fun requestLatestData() {
         requestLatestDataJob?.cancel()
         requestLatestDataJob = getTaskLists().launchIn(viewModelScope)
@@ -114,7 +118,9 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
+
     fun getTaskItemsToDisplay(targetTaskListId: Long): List<TaskItem> {
+
         return getTaskItems(targetTaskListId).filter { !it.needToBeDeleted }
     }
 
@@ -175,6 +181,7 @@ class TodoListViewModel @Inject constructor(
                 }
             }
             taskItemStateManagerPool = newTaskItemStateManagerPool
+            _eventFlow.emit(UiEvent.RequestRecompose)
         }.launchIn(viewModelScope)
     }
 
@@ -384,5 +391,8 @@ class TodoListViewModel @Inject constructor(
         object ShowConfirmDialog : UiEvent()
         object SaveTaskItem : UiEvent()
         object CloseMenuRightModalBottomSheet : UiEvent()
+        // LazyColumn DOES NOT get noticed data change in same data holder object
+        // so it needs to be recomposed manually
+        object RequestRecompose: UiEvent()
     }
 }

@@ -89,6 +89,8 @@ fun TodoListScreen(
 
     val addTaskItemFocusRequester = remember { FocusRequester() }
 
+    val recomposeKey = remember { mutableStateOf(0) }
+
     val addTaskItemModalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
@@ -116,7 +118,7 @@ fun TodoListScreen(
 
     //Effects
     ApplyTodoListScreenTheme()
-    AlertNetworkConnectionState(mainScaffoldState)
+    AlertNetworkConnectionState(mainScaffoldState, viewModel)
     EmitSelectTaskListTabEvent(pagerState, taskListsState, viewModel, selectedTaskListId)
     DisposeMainScaffoldBottomAppBarVisibility(
         addTaskItemModalBottomSheetState,
@@ -134,7 +136,8 @@ fun TodoListScreen(
         pagerState,
         addTaskItemModalBottomSheetState,
         showDeleteTaskListDialogState,
-        menuRightModalBottomSheetState
+        menuRightModalBottomSheetState,
+        recomposeKey
     )
 
 
@@ -221,7 +224,8 @@ fun TodoListScreen(
                     taskListsState,
                     bottomAppBarPadding,
                     navController,
-                    scope
+                    scope,
+                    recomposeKey
                 )
             }
         }
@@ -282,7 +286,10 @@ private fun ApplyTodoListScreenTheme() {
 @ExperimentalCoroutinesApi
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-private fun AlertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
+private fun AlertNetworkConnectionState(
+    mainScaffoldState: ScaffoldState,
+    viewModel: TodoListViewModel
+) {
     val connection by connectivityState()
     val isDisconnected = connection == ConnectionState.Unavailable
 
@@ -291,6 +298,8 @@ private fun AlertNetworkConnectionState(mainScaffoldState: ScaffoldState) {
             mainScaffoldState.snackbarHostState.showSnackbar(
                 message = "인터넷에 연결되어 있지 않습니다. 일부 기능은 사용할 수 없으며 다시 온라인 상태가 되면 변경사항이 저장됩니다.",
             )
+        } else {
+            viewModel.requestSynchronizeWork()
         }
     }
 }
@@ -421,8 +430,10 @@ private fun TodoListTaskItems(
     taskListsState: TaskListsState,
     bottomAppBarPadding: PaddingValues,
     navController: NavController,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    recomposeKey: MutableState<Int>
 ) {
+
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val showCompletedTaskItems = remember { mutableStateOf(value = false) }
     val isShowCompletedTaskItemsButtonEnabled = remember { mutableStateOf(true) }
@@ -437,6 +448,11 @@ private fun TodoListTaskItems(
             isShowCompletedTaskItemsButtonEnabled.value = true
         }
     )
+    val taskItems = { pageIndex: Int ->
+        val taskListIdOfTaskItems = taskListsState.taskLists[pageIndex].id!!
+        viewModel.getTaskItemsToDisplay(taskListIdOfTaskItems)
+    }
+    Log.i("TodoListScreen", "recompose is requested. Key :: ${recomposeKey.value}")
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing),
         onRefresh = { viewModel.refresh() },
@@ -459,13 +475,14 @@ private fun TodoListTaskItems(
                 baseFlingBehavior = PagerDefaults.flingBehavior(pagerState)
             ),
         ) { pageIndex ->
+
             LazyColumn(
                 Modifier
                     .fillMaxSize()
                     .padding(bottom = bottomAppBarPadding.calculateBottomPadding())
             ) {
-                val eachTaskListId = taskListsState.taskLists[pageIndex].id!!
-                val itemList = viewModel.getTaskItemsToDisplay(eachTaskListId)
+                val itemList = taskItems(pageIndex)
+
                 items(
                     itemList,
                     key = { it.id!!.toString() + "uncompleted" }) { taskItem ->
@@ -854,7 +871,8 @@ private fun ObserveUiEvent(
     pagerState: PagerState,
     addTaskItemModalBottomSheetState: ModalBottomSheetState,
     showDeleteTaskListDialogState: MutableState<Boolean>,
-    menuRightModalBottomSheetState: ModalBottomSheetState
+    menuRightModalBottomSheetState: ModalBottomSheetState,
+    recomposeKey: MutableState<Int>
 ) {
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
@@ -883,6 +901,9 @@ private fun ObserveUiEvent(
                     launch {
                         menuRightModalBottomSheetState.hide()
                     }
+                }
+                is TodoListViewModel.UiEvent.RequestRecompose -> {
+                    recomposeKey.value++
                 }
             }
         }
