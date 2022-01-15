@@ -26,20 +26,17 @@ class DeleteTaskItem(
            try {
                val taskItemDto = taskItem.map { it.toTaskItemDto(androidId) }
 
-               val result = repository.deleteTaskItemOnRemote(
+                repository.deleteTaskItemOnRemote(
                    taskItemDto = taskItemDto.toTypedArray()
                )
 
-               if (result.isSuccessful) return@launch
+           } catch (e : Exception){
+               Log.e("DeleteTaskItem", e.message.toString())
 
-               Log.e("DeleteTaskItem", "Failed to execute the task on remote")
                val data = taskItem.map {
                    it.copy(needToBeDeleted = true)
                }
-               repository.updateTaskItem(*data.toTypedArray())
-
-           } catch (e : Exception){
-               Log.e("DeleteTaskItem", e.message.toString())
+               repository.insertTaskItem(*data.toTypedArray())
            }
         }
 }

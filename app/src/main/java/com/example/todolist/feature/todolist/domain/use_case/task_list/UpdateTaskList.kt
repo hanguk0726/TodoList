@@ -20,7 +20,7 @@ class UpdateTaskList(
         taskList.forEach {
             repository.updateTaskList(
                 it.copy(
-                    isSynchronizedWithRemote = false
+                    isSynchronizedWithRemote = true
                 )
             )
         }
@@ -36,17 +36,16 @@ class UpdateTaskList(
                 val taskListDto = taskList.map {
                     it.toTaskListDto(userId = androidId)
                 }
-                val result = repository.updateTaskListOnRemote(
+                repository.updateTaskListOnRemote(
                     taskListDto = taskListDto.toTypedArray()
                 )
 
-                if (!result.isSuccessful) return@launch
-                val data = taskList.map {
-                    it.copy(isSynchronizedWithRemote = true)
-                }
-                repository.updateTaskList(*data.toTypedArray())
             } catch (e: Exception) {
                 Log.e("UpdateTaskList", e.message.toString())
+                val data = taskList.map {
+                    it.copy(isSynchronizedWithRemote = false)
+                }
+                repository.updateTaskList(*data.toTypedArray())
             }
         }
 }

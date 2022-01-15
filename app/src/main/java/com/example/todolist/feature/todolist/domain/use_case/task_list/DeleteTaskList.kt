@@ -26,18 +26,17 @@ class DeleteTaskList(
             try {
                 val taskListDto = taskList.map { it.toTaskListDto(androidId) }
 
-                val result = repository.deleteTaskListOnRemote(
+                repository.deleteTaskListOnRemote(
                     taskListDto = taskListDto.toTypedArray()
                 )
 
-                if (result.isSuccessful) return@launch
+            } catch (e: Exception) {
+                Log.e("DeleteTaskItem", e.message.toString())
 
                 val data = taskList.map {
                     it.copy(needToBeDeleted = true)
                 }
-                repository.updateTaskList(*data.toTypedArray())
-            } catch (e: Exception) {
-                Log.e("DeleteTaskItem", e.message.toString())
+                repository.insertTaskList(*data.toTypedArray())
             }
         }
 }

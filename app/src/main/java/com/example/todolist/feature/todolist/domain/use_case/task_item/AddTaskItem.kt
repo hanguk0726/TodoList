@@ -36,7 +36,7 @@ class AddTaskItem(
             val id = repository.insertTaskItem(it).first()
             val item = it.copy(
                 id = id,
-                isSynchronizedWithRemote = false
+                isSynchronizedWithRemote = true
             )
             insertedTaskItem.add(item)
         }
@@ -49,18 +49,19 @@ class AddTaskItem(
                 val taskItemDto = taskItem.map {
                     it.toTaskItemDto(userId = androidId)
                 }
-                val result = repository.insertTaskItemOnRemote(
+                repository.insertTaskItemOnRemote(
                     taskItemDto = taskItemDto.toTypedArray()
                 )
 
-                if (!result.isSuccessful) return@launch
 
-                val data = taskItem.map {
-                    it.copy(isSynchronizedWithRemote = true)
-                }
-                repository.updateTaskItem(*data.toTypedArray())
             } catch (e: Exception) {
                 Log.e("AddTaskItem", e.message.toString())
+
+
+                val data = taskItem.map {
+                    it.copy(isSynchronizedWithRemote = false)
+                }
+                repository.updateTaskItem(*data.toTypedArray())
             }
         }
 }

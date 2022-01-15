@@ -23,7 +23,7 @@ class UpdateTaskItem(
         taskItem.forEach {
             repository.updateTaskItem(
                 it.copy(
-                    isSynchronizedWithRemote = false
+                    isSynchronizedWithRemote = true
                 )
             )
         }
@@ -37,17 +37,18 @@ class UpdateTaskItem(
                 val taskItemDto = taskItem.map {
                     it.toTaskItemDto(userId = androidId)
                 }
-                val result = repository.updateTaskItemOnRemote(
+                 repository.updateTaskItemOnRemote(
                     taskItemDto = taskItemDto.toTypedArray()
                 )
 
-                if (!result.isSuccessful) return@launch
-                val data = taskItem.map {
-                    it.copy(isSynchronizedWithRemote = true)
-                }
-                repository.updateTaskItem(*data.toTypedArray())
+
             } catch (e: Exception) {
                 Log.e("UpdateTaskItem", e.message.toString())
+
+                val data = taskItem.map {
+                    it.copy(isSynchronizedWithRemote = false)
+                }
+                repository.updateTaskItem(*data.toTypedArray())
             }
         }
 }

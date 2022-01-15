@@ -89,6 +89,7 @@ class SynchronizeWorker @AssistedInject constructor(
                 taskItemRepository.getTaskItemsByTaskListId(taskListId)
 
             remoteTaskItems.forEach { remoteTaskItem ->
+                println("mylogger ${remoteTaskItem}")
                 val doesNotExistInLocal = localTaskItems.none {
                     it.id == remoteTaskItem.id && it.taskListId == remoteTaskItem.taskListId
                 }

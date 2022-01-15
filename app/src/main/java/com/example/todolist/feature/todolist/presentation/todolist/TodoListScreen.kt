@@ -190,6 +190,7 @@ fun TodoListScreen(
                     modifier = Modifier.navigationBarsPadding(),
                     cutoutShape = CircleShape,
                     elevation = if (isSystemInDarkTheme()) 0.dp else 16.dp,
+                    backgroundColor =  if (isSystemInDarkTheme()) MaterialTheme.colors.surface else Color.White,
                     content = {
                        BottomMenu(
                            scope, menuLeftModalBottomSheetState, menuRightModalBottomSheetState
