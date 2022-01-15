@@ -1,25 +1,30 @@
 package com.example.todolist.feature.todolist.presentation.addEditTaskList
 
+import TransparentHintTextField
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.common.ui.theme.themedBlue
+import com.example.todolist.common.ui.theme.themedGray
 import com.example.todolist.feature.todolist.presentation.components.SemiTransparentDivider
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
-import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddTaskListScreen(
@@ -30,6 +35,7 @@ fun AddTaskListScreen(
 
     val scaffoldState = rememberScaffoldState()
     val taskListNameState = viewModel.taskListName.value
+
 
     ApplyAddEditTaskListScreenTheme()
     SetUpInitialData(taskListId, viewModel)
@@ -49,7 +55,7 @@ fun AddTaskListScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopMenu(navController, taskListId, viewModel)
+            TopMenu(taskListNameState, navController, taskListId, viewModel)
 
             SemiTransparentDivider()
 
@@ -80,6 +86,7 @@ private fun SetUpInitialData(taskListId: Long, viewModel: AddEditTaskListViewMod
 
 @Composable
 private fun TopMenu(
+    textState: TodoListTextFieldState,
     navController: NavController,
     taskListId: Long,
     viewModel: AddEditTaskListViewModel
@@ -96,7 +103,7 @@ private fun TopMenu(
             Icon(
                 Icons.Default.Close,
                 "close add task list screen",
-                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                tint = themedGray
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
@@ -104,7 +111,8 @@ private fun TopMenu(
         Spacer(modifier = Modifier.weight(1.0f))
         PureTextButton(
             text = "완료",
-            textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+            textColor =  if(textState.text.isBlank()) MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+            else themedBlue
         ) {
             viewModel.onEvent(AddEditTaskListEvent.SaveTaskList(taskListId))
         }

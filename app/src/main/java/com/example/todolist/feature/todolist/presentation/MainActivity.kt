@@ -1,9 +1,11 @@
 package com.example.todolist.feature.todolist.presentation
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.ExperimentalMaterialApi
@@ -27,6 +29,8 @@ import com.example.todolist.feature.todolist.presentation.todolist.TodoListScree
 import com.example.todolist.feature.todolist.presentation.util.Screen
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -43,6 +47,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     @Named("androidId")
     lateinit var androidId: String
+
+    @OptIn(
+        DelicateCoroutinesApi::class,
+        ExperimentalCoroutinesApi::class
+    )
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", " ANDROID_ID :: $androidId")
@@ -71,7 +81,6 @@ class MainActivity : ComponentActivity() {
                                     navController = navController,
                                     editTaskItemViewModel = editTaskItemViewModel
                                 )
-
                             }
                             composable(
                                 route = Screen.AddEditTaskListScreen.route +

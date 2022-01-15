@@ -137,7 +137,7 @@ class SynchronizeWorker @AssistedInject constructor(
                     return@taskItem
                 }
 
-                val existsAndUpdatedInRemote = allRemoteTaskItems.none {
+                val existsAndUpdatedInRemote = allRemoteTaskItems.any {
                     it.id == taskItem.id && it.taskListId == taskItem.taskListId
                             && it.userId == userId
                 } && taskItem.isSynchronizedWithRemote
@@ -147,7 +147,6 @@ class SynchronizeWorker @AssistedInject constructor(
                 val result = taskItemApi.synchronizeTaskItem(
                     taskItemDto = arrayOf(taskItem.toTaskItemDto(userId))
                 )
-
 
                 if (result.isSuccessful) {
                     taskItemUseCases.updateTaskItem(

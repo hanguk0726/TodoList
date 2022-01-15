@@ -1,4 +1,3 @@
-package com.example.todolist.feature.todolist.presentation.todolist.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import com.example.todolist.common.ui.theme.themedGray
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 
 @Composable
 fun TransparentHintTextField(
@@ -47,7 +48,7 @@ fun TransparentHintTextField(
             cursorBrush = SolidColor(MaterialTheme.colors.secondary)
         )
         if(isHintVisible) {
-            Text(text = hint, style = textStyle, color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))
+            Text(text = hint, style = textStyle, color = themedGray)
         }
     }
 }

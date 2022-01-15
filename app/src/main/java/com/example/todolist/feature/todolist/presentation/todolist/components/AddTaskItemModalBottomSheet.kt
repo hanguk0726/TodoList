@@ -4,10 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -16,6 +13,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.example.todolist.common.ui.theme.ScrimColor
+import com.example.todolist.common.ui.theme.themedBlue
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListEvent
+import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
@@ -29,11 +29,12 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun AddTaskItemModalBottomSheet(
+    textState: TodoListTextFieldState,
     scope: CoroutineScope,
     state: ModalBottomSheetState,
     focusRequester: FocusRequester,
     textField: @Composable () -> Unit,
-    addButton: @Composable () -> Unit
+    onClickAddButton: () -> Unit
 ) {
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -53,6 +54,7 @@ fun AddTaskItemModalBottomSheet(
         enabled = isShowing,
         onBack = {
             scope.launch {
+                onClickAddButton()
                 keyboardController?.hide()
                 state.hide()
             }
@@ -81,7 +83,13 @@ fun AddTaskItemModalBottomSheet(
                     .padding(top = 16.dp, bottom = 24.dp, end = 24.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                addButton()
+                PureTextButton(
+                    text = "저장",
+                    textColor = if(textState.text.isBlank()) MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                    else themedBlue,
+                    onClick = {
+                        onClickAddButton()
+                    })
             }
         },
     )

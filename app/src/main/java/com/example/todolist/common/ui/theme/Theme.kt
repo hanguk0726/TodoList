@@ -56,19 +56,27 @@ fun TodoListTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composab
         typography = TypographyInDarkTheme
         systemUiController.setNavigationBarColor(
             color = Color.DarkGray,
+            darkIcons = false,
             navigationBarContrastEnforced = false
+        )
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = false
         )
     }else{
         colors = LightColorPalette
         typography = TypographyInLightTheme
         systemUiController.setNavigationBarColor(
             color = Color.White,
+            darkIcons = true,
             navigationBarContrastEnforced = false
         )
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = true
+        )
     }
-    systemUiController.setStatusBarColor(
-        color = Color.Transparent
-    )
+
 
     MaterialTheme(
         colors = colors,

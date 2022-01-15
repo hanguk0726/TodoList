@@ -1,5 +1,6 @@
 package com.example.todolist.feature.todolist.presentation.todolist
 
+import TransparentHintTextField
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -8,11 +9,13 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -27,6 +30,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -35,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todolist.common.ui.theme.Blue
 import com.example.todolist.common.ui.theme.themedBlue
 import com.example.todolist.common.util.ConnectionState
 import com.example.todolist.common.util.connectivityState
@@ -166,6 +171,8 @@ fun TodoListScreen(
                             }
                         }
                     },
+                    backgroundColor = if (isSystemInDarkTheme()) MaterialTheme.colors.surface else Color.White,
+                    contentColor = if (isSystemInDarkTheme()) Color.Cyan else Blue
                 ) {
                     Icon(
                         Icons.Filled.Add, "add new task item",
@@ -177,17 +184,16 @@ fun TodoListScreen(
 
         isFloatingActionButtonDocked = true,
         floatingActionButtonPosition = FabPosition.Center,
-
         bottomBar = {
             FadeSlideAnimatedVisibility(showMainScaffoldBottomAppBar) {
                 BottomAppBar(
                     modifier = Modifier.navigationBarsPadding(),
-                    cutoutShape = RoundedCornerShape(50),
-                    elevation = if (isSystemInDarkTheme()) 0.dp else AppBarDefaults.BottomAppBarElevation,
+                    cutoutShape = CircleShape,
+                    elevation = if (isSystemInDarkTheme()) 0.dp else 16.dp,
                     content = {
-                        BottomMenu(
-                            scope, menuLeftModalBottomSheetState, menuRightModalBottomSheetState
-                        )
+                       BottomMenu(
+                           scope, menuLeftModalBottomSheetState, menuRightModalBottomSheetState
+                       )
                     },
                 )
             }
@@ -269,16 +275,23 @@ private fun ApplyTodoListScreenTheme() {
     rememberSystemUiController().run {
         if (isSystemInDarkTheme()) {
             setNavigationBarColor(
-                color = Color.DarkGray
+                color = Color.DarkGray,
+                darkIcons = false
+            )
+            setStatusBarColor(
+                color = Color.Transparent,
+                darkIcons = false
             )
         } else {
             setNavigationBarColor(
-                color = Color.White
+                color = Color.White,
+                darkIcons = true
+            )
+            setStatusBarColor(
+                color = Color.Transparent,
+                darkIcons = true
             )
         }
-        setStatusBarColor(
-            color = Color.Transparent
-        )
     }
 }
 
@@ -413,7 +426,7 @@ private fun TodoListScrollableTabRow(
                 tint = MaterialTheme.colors.onSurface
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("새 목록", fontSize = 14.sp)
+            Text("새 목록", fontSize = 14.sp, color = MaterialTheme.colors.onSurface)
         }
     }
 }
@@ -754,6 +767,7 @@ private fun TodoListAddTaskItemModalBottomSheet(
 ) {
     val taskItemTitleState = viewModel.taskItemTitle.value
     AddTaskItemModalBottomSheet(
+        textState = taskItemTitleState,
         scope = scope,
         state = addTaskItemModalBottomSheetState,
         focusRequester = addTaskItemFocusRequester,
@@ -771,13 +785,8 @@ private fun TodoListAddTaskItemModalBottomSheet(
                     .focusRequester(addTaskItemFocusRequester),
             )
         },
-        addButton = {
-            PureTextButton(
-                text = "저장",
-                textColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                onClick = {
-                    viewModel.onEvent(TodoListEvent.SaveTaskItem(selectedTaskListId()))
-                })
+        onClickAddButton = {
+            viewModel.onEvent(TodoListEvent.SaveTaskItem(selectedTaskListId()))
         }
     )
 

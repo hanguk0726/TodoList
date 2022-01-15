@@ -1,5 +1,7 @@
 package com.example.todolist.feature.todolist.presentation.editTaskItem
 
+import TransparentHintTextField
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -28,7 +30,6 @@ import com.example.todolist.feature.todolist.presentation.components.CustomSnack
 import com.example.todolist.feature.todolist.presentation.editTaskItem.components.EditTaskItemTaskListIdModalBottomSheet
 import com.example.todolist.feature.todolist.presentation.todolist.TodoListTextFieldState
 import com.example.todolist.feature.todolist.presentation.todolist.components.PureTextButton
-import com.example.todolist.feature.todolist.presentation.todolist.components.TransparentHintTextField
 import com.example.todolist.feature.todolist.presentation.util.noRippleClickable
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
@@ -62,6 +63,15 @@ fun EditTaskItemScreen(
     val taskListsState = viewModel.taskListsState.value
     val taskItem = viewModel.taskItemState.value
 
+    BackHandler(
+        enabled = true,
+        onBack = {
+            scope.launch {
+                viewModel.onEvent(EditTaskItemEvent.SaveTaskItem)
+            }
+        }
+    )
+
     ApplyEditTaskItemScreenTheme()
     ObserveUiEvent(viewModel, navController, taskItemId)
 
@@ -77,7 +87,7 @@ fun EditTaskItemScreen(
         bottomBar = {
             BottomAppBar(
                 modifier = Modifier.navigationBarsPadding(),
-                elevation = 0.dp,
+                elevation = if (isSystemInDarkTheme()) 0.dp else 16.dp,
                 content = {
                     Spacer(modifier = Modifier.weight(1.0f))
                     ChangeTaskItemCompleteStateBottomSheet(taskItem, viewModel)
@@ -124,16 +134,23 @@ private fun ApplyEditTaskItemScreenTheme() {
     rememberSystemUiController().run {
         if (isSystemInDarkTheme()) {
             setNavigationBarColor(
-                color = Color.DarkGray
+                color = Color.DarkGray,
+                darkIcons = false
+            )
+            setStatusBarColor(
+                color = Color.Transparent,
+                darkIcons = false
             )
         } else {
             setNavigationBarColor(
-                color = Color.White
+                color = Color.White,
+                darkIcons = true
+            )
+            setStatusBarColor(
+                color = Color.Transparent,
+                darkIcons = true
             )
         }
-        setStatusBarColor(
-            color = Color.Transparent
-        )
     }
 }
 
